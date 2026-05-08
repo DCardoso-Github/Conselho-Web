@@ -293,9 +293,9 @@ export default function AlunoPage({
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: -direction * 30 }}
                         transition={{ duration: 0.3, ease: [0.2, 0.8, 0.2, 1] }}
-                        className="absolute inset-0 grid grid-cols-1 lg:grid-cols-2 gap-6 p-6 lg:p-10 overflow-auto"
+                        className="absolute inset-0 grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 p-4 sm:p-6 lg:p-10 overflow-auto"
                     >
-                        <div className="flex flex-col items-center justify-center gap-3 lg:gap-4 min-h-0">
+                        <div className="flex flex-col items-center justify-center gap-2 sm:gap-3 lg:gap-4 min-h-0">
                             <PhotoHero student={student} hasLow={hasLow} />
                             <h1 className="h-display text-2xl sm:text-3xl lg:text-4xl text-center max-w-full leading-tight">
                                 {student.name}
@@ -533,7 +533,7 @@ function PhotoHero({
                 src={url}
                 alt={student.name}
                 className={cn(
-                    "size-56 sm:size-64 lg:size-80 xl:size-96 rounded-3xl object-cover shadow-xl border-4 shrink-0",
+                    "size-36 sm:size-52 lg:size-80 xl:size-96 rounded-3xl object-cover shadow-xl border-4 shrink-0",
                     hasLow ? "border-destructive/70" : "border-primary/40",
                 )}
             />
@@ -544,7 +544,7 @@ function PhotoHero({
             name={student.name}
             size="2xl"
             rounded="lg"
-            className="!size-56 !text-6xl sm:!size-64 sm:!text-7xl lg:!size-80 lg:!text-8xl xl:!size-96 shadow-xl shrink-0"
+            className="!size-36 !text-5xl sm:!size-52 sm:!text-7xl lg:!size-80 lg:!text-8xl xl:!size-96 shadow-xl shrink-0"
         />
     );
 }

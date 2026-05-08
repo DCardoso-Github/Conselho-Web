@@ -400,7 +400,7 @@ body {
 }
 
 .stat-value {
-  font-size: 1.625rem;
+  font-size: clamp(1.1rem, 3.5vw, 1.625rem);
   font-weight: 800;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.01em;
