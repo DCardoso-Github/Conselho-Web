@@ -180,7 +180,7 @@ export default function ApresentarPage({
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: -direction * 60 }}
                         transition={{ duration: 0.45, ease: [0.2, 0.8, 0.2, 1] }}
-                        className="absolute inset-0 grid grid-cols-1 lg:grid-cols-2 gap-8 p-6 lg:p-12 items-center overflow-auto"
+                        className="absolute inset-0 grid grid-cols-1 lg:grid-cols-[2fr_3fr] gap-8 p-6 lg:p-12 items-center overflow-auto"
                     >
                         <div className="flex justify-center">
                             {student.photo ? (
@@ -195,13 +195,13 @@ export default function ApresentarPage({
                                         name={student.name}
                                         size="2xl"
                                         rounded="full"
-                                        className="!w-[min(420px,75vw)] !h-[min(420px,75vw)] !text-[clamp(2rem,12vw,5rem)] shadow-2xl"
+                                        className="!w-[min(480px,75vw)] !h-[min(480px,75vw)] !text-[clamp(2rem,14vw,6rem)] shadow-2xl"
                                     />
                                 </div>
                             )}
                         </div>
 
-                        <div className="space-y-6 max-w-2xl">
+                        <div className="space-y-6 max-w-4xl w-full flex flex-col items-center text-center">
                             <motion.h1
                                 key={student.name}
                                 className="h-display text-foreground text-3xl sm:text-4xl lg:text-5xl"
@@ -213,13 +213,15 @@ export default function ApresentarPage({
                             </motion.h1>
 
                             {lowSubjects.length > 0 ? (
-                                <div>
-                                    <p className="text-sm uppercase font-bold tracking-wider text-destructive mb-3 flex items-center gap-2">
-                                        <AlertTriangle className="size-4 pulse-danger rounded-full" />
+                                <div className="w-full">
+                                    <p className="text-xl uppercase font-bold tracking-wider text-destructive mb-3 flex items-center justify-center gap-2">
+                                        <span className="pulse-danger rounded-full p-0.5 flex items-center justify-center">
+                                            <AlertTriangle className="size-5" />
+                                        </span>
                                         {lowSubjects.length} componente
                                         {lowSubjects.length > 1 ? "s" : ""} em vermelho
                                     </p>
-                                    <ul className="grid sm:grid-cols-2 gap-2.5">
+                                    <ul className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
                                         {lowSubjects.map(([subj, val], i) => {
                                             const absDisplay = fmtNum(student.absences[subj]);
                                             return (
@@ -231,20 +233,20 @@ export default function ApresentarPage({
                                                         delay: 0.15 + i * 0.05,
                                                         duration: 0.3,
                                                     }}
-                                                    className="flex items-center justify-between bg-card rounded-xl px-4 py-3 border-l-4 border-l-destructive shadow-sm"
+                                                    className="flex items-center justify-between bg-card rounded-xl px-5 py-4 border-l-4 border-l-destructive shadow-sm"
                                                 >
                                                     <span
-                                                        className="font-semibold truncate pr-2"
+                                                        className="text-base font-semibold truncate pr-2"
                                                         title={formatSubject(subj)}
                                                     >
                                                         {formatSubject(subj)}
                                                     </span>
                                                     <div className="flex flex-col items-end shrink-0">
-                                                        <span className="text-2xl font-extrabold text-destructive tabular-nums leading-none">
+                                                        <span className="text-5xl font-extrabold text-destructive tabular-nums leading-none">
                                                             {String(val)}
                                                         </span>
                                                         {absDisplay !== "—" && (
-                                                            <span className="text-[11px] text-muted-foreground tabular-nums mt-0.5">
+                                                            <span className="text-sm text-muted-foreground tabular-nums mt-0.5">
                                                                 {absDisplay}F
                                                             </span>
                                                         )}

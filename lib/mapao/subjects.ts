@@ -50,10 +50,10 @@ const SUBJECT_DISPLAY_OVERRIDES: Record<string, string> = {
     ROBOTICA: "Robótica",
     "TECNOLOGIA E INOVACAO": "Tecnologia e Inovação",
     "ESPORTE-MUSICA-ARTE": "Esporte · Música · Arte",
-    "ORIENTACAO DE ESTUDO – LINGUA PORTUGUESA": "Orientação de Estudo — Língua Portuguesa",
-    "ORIENTACAO DE ESTUDO - LINGUA PORTUGUESA": "Orientação de Estudo — Língua Portuguesa",
-    "ORIENTACAO DE ESTUDO – MATEMATICA": "Orientação de Estudo — Matemática",
-    "ORIENTACAO DE ESTUDO - MATEMATICA": "Orientação de Estudo — Matemática",
+    "ORIENTACAO DE ESTUDO – LINGUA PORTUGUESA": "OE de Português",
+    "ORIENTACAO DE ESTUDO - LINGUA PORTUGUESA": "OE de Português",
+    "ORIENTACAO DE ESTUDO – MATEMATICA": "OE de Matemática",
+    "ORIENTACAO DE ESTUDO - MATEMATICA": "OE de Matemática",
 };
 
 const SMALL_WORDS = new Set(["e", "de", "da", "do", "das", "dos", "em", "a", "o", "as", "os"]);

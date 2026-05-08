@@ -7,6 +7,7 @@ import { motion } from "motion/react";
 import { toast } from "sonner";
 import {
     Download,
+    FileText,
     Image as ImageIcon,
     Presentation,
     Trash2,
@@ -67,6 +68,7 @@ export default function TurmaPage({
     const [showDashboard, setShowDashboard] = React.useState(false);
     const [photoOpen, setPhotoOpen] = React.useState(false);
     const [confirmDeleteOpen, setConfirmDeleteOpen] = React.useState(false);
+    const [exportingPdf, setExportingPdf] = React.useState(false);
 
     React.useEffect(() => {
         if (debounceTimer.current) clearTimeout(debounceTimer.current);
@@ -110,6 +112,19 @@ export default function TurmaPage({
             toast.success("Planilha exportada.");
         } catch (e) {
             toast.error((e as Error).message);
+        }
+    };
+
+    const handleExportPdf = async () => {
+        setExportingPdf(true);
+        try {
+            const { exportClassToPdf } = await import("@/lib/exportPdf");
+            await exportClassToPdf(classId);
+            toast.success("PDF exportado.");
+        } catch (e) {
+            toast.error((e as Error).message);
+        } finally {
+            setExportingPdf(false);
         }
     };
 
@@ -175,6 +190,9 @@ export default function TurmaPage({
                         <DropdownMenuContent align="end">
                             <DropdownMenuItem onClick={handleExport}>
                                 <Download /> Exportar planilha
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={handleExportPdf} disabled={exportingPdf}>
+                                <FileText /> {exportingPdf ? "Gerando PDF…" : "Exportar PDF de notas"}
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem variant="destructive" onClick={() => setConfirmDeleteOpen(true)}>
