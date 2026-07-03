@@ -49,7 +49,7 @@ const SUBJECT_DISPLAY_OVERRIDES: Record<string, string> = {
     "PROJETO DE VIDA": "Projeto de Vida",
     ROBOTICA: "Robótica",
     "TECNOLOGIA E INOVACAO": "Tecnologia e Inovação",
-    "ESPORTE-MUSICA-ARTE": "Esporte · Música · Arte",
+    "ESPORTE-MUSICA-ARTE": "EMA",
     "ORIENTACAO DE ESTUDO – LINGUA PORTUGUESA": "OE de Português",
     "ORIENTACAO DE ESTUDO - LINGUA PORTUGUESA": "OE de Português",
     "ORIENTACAO DE ESTUDO – MATEMATICA": "OE de Matemática",

@@ -14,6 +14,12 @@ export interface StudentTotal {
     "FRE AN(%)"?: string | number | null;
 }
 
+export interface ProvaPaulistaRecord {
+    participacao: string | number | null; // (%) de Participação
+    acertos: string | number | null; // (%) de Acertos
+    grades: Record<string, string | number | null>; // MAT, PORT, ING, HIST, GEO, CIE, FIN, TEC
+}
+
 export interface StudentRecord {
     id?: number;
     classId: string;
@@ -27,6 +33,14 @@ export interface StudentRecord {
     notes?: string;
     /** índice de ordem dentro do mapão original */
     order: number;
+    provaPaulista?: ProvaPaulistaRecord;
+    frequenciaAnual?: string | number | null;
+    tutor?: string | null;
+    educacaoEspecial?: string | null;
+    tutoriaMatematica?: boolean;
+    tutoriaPortugues?: boolean;
+    programaSouMais?: boolean;
+    outrasInformacoes?: string | null;
 }
 
 export interface MetaRecord {

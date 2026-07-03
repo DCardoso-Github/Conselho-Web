@@ -18,6 +18,7 @@ import {
     Filter,
     Users,
     X,
+    Upload,
 } from "lucide-react";
 import { useClass, useStudents } from "@/lib/hooks";
 import { isLowGrade, deleteClass } from "@/lib/actions";
@@ -26,6 +27,8 @@ import { formatSubject } from "@/lib/mapao/subjects";
 import { StudentGrid, type StudentSort } from "@/components/student-card";
 import { ClassDashboard } from "@/components/class-dashboard";
 import { PhotoImporter } from "@/components/photo-importer";
+import { ProvaPaulistaImporter } from "@/components/prova-paulista-importer";
+import { FrequenciaTutorImporter } from "@/components/frequencia-tutor-importer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -67,6 +70,8 @@ export default function TurmaPage({
     const [sort, setSort] = React.useState<StudentSort>("order");
     const [showDashboard, setShowDashboard] = React.useState(false);
     const [photoOpen, setPhotoOpen] = React.useState(false);
+    const [provaPaulistaOpen, setProvaPaulistaOpen] = React.useState(false);
+    const [freqTutorOpen, setFreqTutorOpen] = React.useState(false);
     const [confirmDeleteOpen, setConfirmDeleteOpen] = React.useState(false);
     const [exportingPdf, setExportingPdf] = React.useState(false);
 
@@ -175,6 +180,18 @@ export default function TurmaPage({
                         onClick={() => setPhotoOpen(true)}
                     >
                         <ImageIcon /> <span className="hidden sm:inline">Fotos</span>
+                    </Button>
+                    <Button
+                        variant="outline"
+                        onClick={() => setProvaPaulistaOpen(true)}
+                    >
+                        <Upload className="size-4" /> <span className="hidden sm:inline">Prova Paulista</span>
+                    </Button>
+                    <Button
+                        variant="outline"
+                        onClick={() => setFreqTutorOpen(true)}
+                    >
+                        <Upload className="size-4" /> <span className="hidden sm:inline">Frequência/Tutor</span>
                     </Button>
                     <Button asChild>
                         <Link href={`/turmas/${encodeURIComponent(classId)}/apresentar`}>
@@ -307,6 +324,16 @@ export default function TurmaPage({
                 classId={classId}
                 open={photoOpen}
                 onOpenChange={setPhotoOpen}
+            />
+            <ProvaPaulistaImporter
+                classId={classId}
+                open={provaPaulistaOpen}
+                onOpenChange={setProvaPaulistaOpen}
+            />
+            <FrequenciaTutorImporter
+                classId={classId}
+                open={freqTutorOpen}
+                onOpenChange={setFreqTutorOpen}
             />
             <ConfirmDialog
                 open={confirmDeleteOpen}

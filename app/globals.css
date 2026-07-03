@@ -371,28 +371,20 @@ body {
 
 .stat {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 0.75rem;
-  min-width: 0;
+  justify-content: center;
+  min-width: 125px;
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  padding: 0.875rem 1rem;
+  padding: 0.625rem 0.75rem;
   box-shadow: var(--shadow-xs);
-}
-
-.stat-icon {
-  width: 2.25rem;
-  height: 2.25rem;
-  border-radius: 0.625rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
+  gap: 0.375rem;
 }
 
 .stat-label {
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   font-weight: 600;
@@ -400,11 +392,11 @@ body {
 }
 
 .stat-value {
-  font-size: clamp(1.1rem, 3.5vw, 1.625rem);
-  font-weight: 800;
+  font-size: 1.125rem;
+  font-weight: 500;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.01em;
-  line-height: 1.05;
+  line-height: 1.2;
 }
 
 /* ================================================================
