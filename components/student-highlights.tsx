@@ -35,11 +35,6 @@ export function StudentHighlights({
           </Button>
         )}
       </div>
-      <p className="highlight-criteria">
-        Somente notas numéricas de 0 a 10 entram na média. Informações ausentes
-        e conceitos como ET ficam fora do cálculo. Em empate: menos notas
-        vermelhas e depois nome em ordem alfabética.
-      </p>
       {highlights.length ? (
         <>
           <p className="results-count" role="status">
