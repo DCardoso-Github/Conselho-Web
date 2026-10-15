@@ -159,7 +159,7 @@ function Academic({
       </div>
       {entries.length ? (
         <div
-          className={`grade-grid all-grades ${entries.length > 8 ? "grades-dense" : ""} ${entries.length > 15 ? "grades-many" : ""} ${onlyLow && !prova ? "grades-filtered" : ""}`}
+          className={`grade-grid all-grades ${entries.length > 8 ? "grades-dense" : ""} ${entries.length > 15 ? "grades-many" : ""} ${onlyLow && !prova && entries.length <= 4 ? "grades-filtered" : ""}`}
           tabIndex={0}
           role="region"
           aria-label={
