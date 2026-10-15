@@ -39,7 +39,8 @@ function field(header: string, kind: ComplementaryKind): string | undefined {
   if (isStudentHeader(header)) return "name";
   if (kind === "attendance") {
     if (header.includes("TUTOR")) return "tutor";
-    if (/\b(FREQUENCIA|FREQ|FRE)\b/.test(header)) return "frequenciaAnual";
+    if (/\b(FREQUENCIA|FREQ|FRE)\b/.test(header) ||
+        /\bPRESENCA\b/.test(header) && /\bANUAL\b/.test(header)) return "frequenciaAnual";
     return;
   }
   if (header.includes("PARTICIPAC")) return "participacao";

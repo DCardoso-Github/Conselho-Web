@@ -663,6 +663,37 @@ test("multi-sheet imports route names within each class, review unknown tabs, an
   await assert.rejects(() => importFrequenciaTutor("5X", input), /revisão/);
 });
 
+test("annual presence headers import attendance across sheets with and without tutor", async () => {
+  const values = [0.9, 0, 1, null, "72,5%", 98];
+  for (const classId of ["PRES-A", "PRES-B"]) {
+    await db.classes.put({ id: classId, name: classId, importedAt: 0, subjects: [] });
+    for (let i = 0; i < values.length; i++) {
+      await db.students.add({ ...student(950 + i + (classId === "PRES-A" ? 0 : 10), 7), classId, tutor: "Tutor anterior", frequenciaAnual: 10, notes: "Preservar" });
+    }
+  }
+  const input = file(multiWorkbook([
+    { name: "PRES-A", rows: [["Aluno(a)", "(%) Presença Anual na Turma Atual", "Tutor"], ...values.map((v, i) => [student(950 + i, 7).name, v, "Tutor atualizado"])], percentages: ["B2", "B3", "B4"] },
+    { name: "PRES-B", rows: [["Aluno(a)", "Presenca Anual"], ...values.map((v, i) => [student(960 + i, 7).name, v])] },
+  ]), "frequencia-tutor.xlsx");
+  const preview = await prepareComplementaryImport("PRES-A", input, "attendance");
+  assert.ok(preview.sheets.every(sheet => !sheet.error));
+  const result = await applyComplementaryImport(preview, [{ index: 0, classId: "PRES-A" }, { index: 1, classId: "PRES-B" }]);
+  assert.equal(result.matched, 12);
+  assert.deepEqual(result.unmatched, []);
+  for (let i = 0; i < values.length; i++) {
+    const a = (await db.students.get(950 + i))!, b = (await db.students.get(960 + i))!;
+    const expected = ["90%", "0%", "100%", "Sem informação", "72,5%", "98%"][i];
+    assert.equal(percentage(a.frequenciaAnual), expected);
+    assert.equal(percentage(b.frequenciaAnual), expected);
+    assert.equal(a.tutor, "Tutor atualizado");
+    assert.equal(b.tutor, "Tutor anterior");
+    assert.equal(a.notes, "Preservar");
+    assert.deepEqual(a.grades, student(950 + i, 7).grades);
+  }
+  const monthly = await prepareComplementaryImport("PRES-A", file(workbook([["Aluno(a)", "Presença mensal", "Tutor"], [student(950, 7).name, 0.5, "Novo tutor"]]), "mensal.xlsx"), "attendance");
+  assert.ok(!Object.hasOwn(monthly.sheets[0].rows[0].attendance!, "frequenciaAnual"));
+});
+
 test("Prova Paulista keeps period history, percentages, and latest display during out-of-order imports", async () => {
   const ppFile = (acertos: unknown, part: unknown) => file(multiWorkbook([
     { name: "5X", rows: [["ALUNO", "ACERTOS", "PARTICIPAÇÃO", "MAT"], ["Ana Silva", acertos, part, 0.01]], percentages: ["D2"] },
