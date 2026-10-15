@@ -25,8 +25,8 @@ export function StudentProfile({
     <div className={compact ? "profile profile-compact" : "profile"}>
       <div className="profile-photo">
         {/* Local photo blobs are attached and revoked with their element lifecycle. */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
         {student.photo ? (
+          // eslint-disable-next-line @next/next/no-img-element
           <img ref={image} alt={compact ? "" : student.name} />
         ) : (
           <span aria-hidden="true">{initials}</span>

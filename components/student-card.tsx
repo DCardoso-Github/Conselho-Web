@@ -1,13 +1,11 @@
 "use client";
-import { useState } from "react";
 import Link from "next/link";
 import { AlertTriangle, ArrowUpRight, SearchX } from "lucide-react";
 import type { StudentRecord } from "@/lib/db";
 import { useStudents } from "@/lib/hooks";
 import { isLowGrade } from "@/lib/actions";
-import { hasValue, hasLowGrades, PAGE_SIZE } from "@/lib/presentation";
+import { hasValue, hasLowGrades } from "@/lib/presentation";
 import { StudentProfile } from "./student-profile";
-import { Pagination } from "./pagination";
 import { Button } from "./ui/button";
 export interface StudentCardProps {
   classId: string;
@@ -70,7 +68,7 @@ export function StudentGrid(props: StudentGridProps) {
     filtered = [...filtered].sort((a, b) => count(b) - count(a));
   }
   return (
-    <StudentPages
+    <StudentResults
       key={JSON.stringify([
         props.classId,
         props.search,
@@ -83,16 +81,11 @@ export function StudentGrid(props: StudentGridProps) {
     />
   );
 }
-function StudentPages({
+function StudentResults({
   students,
   classId,
   onClearFilters,
 }: StudentGridProps & { students: StudentRecord[] }) {
-  const [page, setPage] = useState(0);
-  const safePage = Math.min(
-    page,
-    Math.max(0, Math.ceil(students.length / PAGE_SIZE) - 1),
-  );
   if (!students.length)
     return (
       <div className="empty-panel">
@@ -109,23 +102,13 @@ function StudentPages({
   return (
     <>
       <p className="results-count" aria-live="polite">
-        {students.length} alunos · mostrando {safePage * PAGE_SIZE + 1}–
-        {Math.min((safePage + 1) * PAGE_SIZE, students.length)}
+        {students.length} alunos · todos nesta página
       </p>
-      <div className="selection-grid">
-        {students
-          .slice(safePage * PAGE_SIZE, (safePage + 1) * PAGE_SIZE)
-          .map((student) => (
-            <StudentCard key={student.id} classId={classId} student={student} />
-          ))}
+      <div className="selection-grid student-selection-grid">
+        {students.map((student) => (
+          <StudentCard key={student.id} classId={classId} student={student} />
+        ))}
       </div>
-      <Pagination
-        page={safePage}
-        total={students.length}
-        size={PAGE_SIZE}
-        onChange={setPage}
-        label="Alunos"
-      />
     </>
   );
 }

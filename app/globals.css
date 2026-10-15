@@ -685,3 +685,201 @@ button:not(:disabled), select { cursor: pointer; }
 [role=dialog] .text-sm { font-size:18px;line-height:1.5; }
 [cmdk-item] { min-height:48px;font-size:18px; }
 @media(max-width:767px) { .overview-metrics { grid-template-columns:1fr; } .subject-summary article { grid-template-columns:1fr;gap:12px; } }
+
+/* Unified academic view: identity 25%, results 75%. */
+:root {
+  --primary: #5250d9;
+  --ring: #6562e8;
+  --console-accent: #117b8e;
+  --console-shadow: 0 10px 32px rgb(30 41 70 / .07), 0 1px 2px rgb(30 41 70 / .04);
+}
+.dark {
+  --background: #0d1320;
+  --card: #182132;
+  --surface: #182132;
+  --surface-2: #202c40;
+  --secondary: #26324a;
+  --muted: #202c40;
+  --border: #34425a;
+  --muted-foreground: #b8c5d9;
+  --primary: #aba9ff;
+  --ring: #c6c2ff;
+  --console-accent: #76d3df;
+  --danger: #ffadbc;
+  --console-shadow: 0 14px 36px rgb(0 0 0 / .18), inset 0 1px rgb(255 255 255 / .035);
+}
+.console-app {
+  background: radial-gradient(ellipse at 10% 0%,color-mix(in srgb,var(--primary) 9%,transparent),transparent 55%),radial-gradient(ellipse at 100% 65%,color-mix(in srgb,var(--console-accent) 5%,transparent),transparent 60%);
+}
+.presentation-screen { padding:20px 24px;gap:16px; }
+.student-stage { grid-template-columns:minmax(0,1fr) minmax(0,3fr);gap:24px; }
+.student-stage>.profile, .profile-column {
+  position:relative;
+  background:radial-gradient(ellipse at 50% 5%,color-mix(in srgb,var(--primary) 12%,transparent),transparent 75%),var(--card);
+  box-shadow:var(--console-shadow);
+  padding:22px;
+  scrollbar-width:thin;
+}
+.student-stage>.profile::before,.profile-column::before {
+  content:"";position:absolute;top:0;left:25%;right:25%;height:2px;
+  background:linear-gradient(90deg,transparent,var(--primary),transparent);
+}
+.profile { gap:24px; }
+.profile-photo {
+  height:clamp(160px,27vh,290px);max-width:100%;aspect-ratio:4/5;
+  border-radius:22px;box-shadow:0 10px 24px rgb(0 0 0 / .12),0 0 0 7px color-mix(in srgb,var(--primary) 6%,transparent);
+}
+.profile h1 { font-size:clamp(28px,2.5vw,44px);line-height:1.15;text-wrap:balance;letter-spacing:-.025em; }
+.profile .eyebrow { display:flex;align-items:center;justify-content:center;gap:8px;font-size:14px; }
+.profile .eyebrow::before { content:"";width:6px;height:6px;border-radius:50%;background:var(--console-accent);box-shadow:0 0 10px color-mix(in srgb,var(--console-accent) 40%,transparent); }
+.panel-tabs { grid-template-columns:repeat(3,minmax(0,1fr));border:1px solid var(--border);border-radius:18px;padding:5px;background:color-mix(in srgb,var(--card) 80%,transparent);gap:4px;box-shadow:var(--console-shadow); }
+.panel-tabs>button { text-align:center;font-size:17px;border-radius:13px;min-height:48px;transition:background-color 180ms,color 180ms,box-shadow 180ms; }
+.panel-tabs>button[data-state=active] { background:var(--primary);box-shadow:0 3px 14px color-mix(in srgb,var(--primary) 18%,transparent); }
+.panel-tabs>button:not([data-state=active]):hover { background:var(--secondary);color:var(--foreground); }
+.panel-tabs svg { display:block;width:21px;height:21px; }
+.panel-content[data-state=active] { padding-top:12px;gap:12px; }
+.academic-caption { display:flex;align-items:center;justify-content:center;gap:12px;flex-shrink:0;text-align:center; }
+.academic-caption h2 { font-size:18px;font-weight:600; }
+.academic-caption>span { font-size:14px;color:var(--muted-foreground);border-left:1px solid var(--border);padding-left:12px; }
+.all-grades {
+  grid-template-columns:repeat(4,minmax(0,1fr));grid-auto-rows:minmax(148px,1fr);gap:12px;
+  overflow:auto;padding:2px 4px 4px;scrollbar-width:thin;border-radius:20px;
+}
+.all-grades .grade-tile {
+  align-items:center;text-align:center;justify-content:center;gap:8px;padding:14px 10px;
+  border-radius:20px;overflow:visible;box-shadow:var(--console-shadow);position:relative;
+  background:linear-gradient(160deg,color-mix(in srgb,var(--primary) 4%,var(--card)),var(--card));
+}
+.subject-heading { display:flex;flex-direction:row;min-height:44px;align-items:center;justify-content:center;gap:8px;min-width:0;width:100%; }
+.subject-symbol { display:grid;place-items:center;width:36px;height:36px;flex-shrink:0;border-radius:11px;color:var(--primary);background:color-mix(in srgb,var(--primary) 10%,transparent); }
+.subject-symbol svg { width:23px;height:23px;color:inherit;stroke-width:1.8; }
+.all-grades h3 { font-size:clamp(18px,1.45vw,25px);line-height:1.2;text-wrap:balance; }
+.all-grades .grade-value { font-size:clamp(40px,3.6vw,66px);line-height:1; }
+.all-grades .grade-low { border-left-width:1px;border-color:color-mix(in srgb,var(--danger) 42%,var(--border));background:linear-gradient(155deg,color-mix(in srgb,var(--danger) 7%,var(--card)),var(--card)); }
+.all-grades .grade-low::after { content:"";position:absolute;bottom:0;left:30%;right:30%;height:2px;background:var(--danger);border-radius:2px; }
+.all-grades .grade-status { justify-content:center;font-size:14px;gap:5px; }
+.all-grades .grade-status svg { width:15px;height:15px; }
+.all-grades .missing-value { font-size:20px; }
+.grade-missing { border-style:dashed; }
+.academic-metrics { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;flex-shrink:0; }
+.academic-metrics .metric-tile {
+  flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:8px;padding:14px 10px;border-radius:18px;
+  background:linear-gradient(135deg,color-mix(in srgb,var(--console-accent) 5%,var(--card)),var(--card));box-shadow:var(--console-shadow);
+}
+.academic-metrics h3 { display:flex;align-items:center;justify-content:center;gap:8px;font-size:16px;max-width:none;line-height:1.25;color:var(--muted-foreground); }
+.academic-metrics h3 svg { color:var(--console-accent);width:20px;height:20px;flex-shrink:0; }
+.academic-metrics .metric-value { font-size:clamp(28px,2.5vw,42px);line-height:1;color:var(--foreground); }
+.academic-metrics .missing-value { font-size:20px; }
+.academic-empty { flex:1;padding:24px; }
+.support-grid dt,.notes-block h3 { display:flex;align-items:center;justify-content:center;gap:8px;text-align:center; }
+.support-grid dt svg,.notes-block h3 svg { color:var(--primary);width:23px;height:23px;flex-shrink:0; }
+.support-grid dd { text-align:center; }
+.support-grid>div,.notes-block { box-shadow:var(--console-shadow); }
+.panel-heading:has(.eyebrow) { justify-content:center;text-align:center; }
+.class-tile,.student-tile { box-shadow:var(--console-shadow);background:linear-gradient(145deg,color-mix(in srgb,var(--primary) 3%,var(--card)),var(--card)); }
+.student-selection-grid { gap:20px; }
+.student-tile { align-items:center;padding:22px;gap:18px;min-height:210px; }
+.student-tile-content { text-align:center;align-self:stretch;justify-content:center; }
+.student-tile h2 { text-wrap:balance; }
+.student-tile p,.student-tile .tile-action { justify-content:center;align-items:center; }
+.student-tile .tile-action { gap:12px;width:100%; }
+.profile-compact .profile-photo { box-shadow:0 4px 14px rgb(0 0 0 / .10);height:130px; }
+.class-tile { align-items:center;text-align:center; }
+.class-tile .tile-top { width:100%; }
+.class-tile .tile-stat,.class-tile .tile-note { justify-content:center; }
+.class-tile .tile-action { width:100%;justify-content:center;gap:14px; }
+.overview-metrics article { text-align:center;box-shadow:var(--console-shadow); }
+.presentation-footer { border-top-color:color-mix(in srgb,var(--border) 70%,transparent); }
+@keyframes console-arrive { from { opacity:0;transform:translateY(7px); } to { opacity:1;transform:translateY(0); } }
+@media(prefers-reduced-motion:no-preference) {
+  .student-stage>.profile,.student-panels,.panel-content[data-state=active] { animation:console-arrive 200ms ease-out both; }
+  .class-tile:hover,.student-tile:hover { box-shadow:0 16px 36px color-mix(in srgb,var(--primary) 12%,transparent); }
+}
+@media(min-width:1600px) {
+  .presentation-screen { padding:28px 36px;gap:20px; }
+  .student-stage { gap:28px; }
+  .all-grades { gap:16px; }
+  .all-grades .grade-tile { padding:20px 14px;gap:12px; }
+  .subject-symbol { width:44px;height:44px;border-radius:14px; }
+  .subject-symbol svg { width:28px;height:28px; }
+  .academic-metrics h3 { font-size:20px; }
+  .academic-metrics .metric-tile { padding:20px; }
+}
+@media(min-width:1101px) {
+  .all-grades.grades-dense { grid-template-columns:repeat(5,minmax(0,1fr));grid-auto-rows:minmax(108px,1fr);gap:10px; }
+  .all-grades.grades-dense .grade-tile { padding:6px;gap:4px; }
+  .all-grades.grades-dense .subject-heading { min-height:38px;gap:5px; }
+  .all-grades.grades-dense .subject-symbol { width:26px;height:26px;border-radius:8px; }
+  .all-grades.grades-dense .subject-symbol svg { width:19px;height:19px; }
+  .all-grades.grades-dense .grade-status { font-size:12px; }
+  .all-grades.grades-dense h3 { font-size:17px; }
+  .all-grades.grades-dense .grade-value { font-size:36px; }
+}
+@media(max-width:1100px) {
+  .student-stage { grid-template-columns:minmax(180px,1fr) minmax(0,3fr);gap:16px; }
+  .all-grades { grid-template-columns:repeat(3,minmax(0,1fr)); }
+  .panel-tabs>button { font-size:15px;padding:8px 6px;gap:6px; }
+  .panel-tabs svg { width:18px;height:18px; }
+  .academic-metrics h3 { flex-direction:column;font-size:15px; }
+  .academic-metrics .missing-value { font-size:18px; }
+}
+@media(max-width:767px) {
+  .presentation-screen { padding:16px; }
+  .student-stage { display:flex;gap:20px; }
+  .student-stage>.profile,.profile-column .profile { gap:20px;align-items:center; }
+  .student-stage>.profile .profile-photo,.profile-column .profile-photo { width:92px;height:116px;border-radius:16px; }
+  .student-stage>.profile h1,.profile-column .profile h1 { font-size:26px;text-align:left; }
+  .profile .eyebrow { justify-content:flex-start; }
+  .panel-tabs>button { flex-direction:column;gap:6px;font-size:14px; }
+  .panel-tabs svg { width:21px;height:21px; }
+  .all-grades { grid-template-columns:repeat(2,minmax(0,1fr));overflow:visible;padding:0; }
+  .all-grades .grade-tile { min-height:184px; }
+  .all-grades .grade-value { font-size:44px; }
+  .academic-metrics { grid-template-columns:1fr; }
+  .academic-metrics .metric-tile { flex-direction:row;justify-content:space-between;padding:16px;gap:16px; }
+  .academic-metrics h3 { flex-direction:row;text-align:left;justify-content:flex-start;max-width:65%; }
+  .academic-metrics .missing-value { max-width:45%;font-size:18px; }
+  .student-selection-grid { grid-template-columns:1fr; }
+  .academic-caption { flex-wrap:wrap; }
+  .subject-heading { flex-direction:column; }
+}
+
+.subject-summary h3 { display:flex;align-items:center;gap:12px; }
+.subject-summary h3 svg { width:24px;height:24px;flex-shrink:0;color:var(--primary); }
+
+@media(min-width:1600px) {
+  .all-grades.grades-dense .subject-symbol { width:36px;height:36px; }
+  .all-grades.grades-dense .subject-symbol svg { width:25px;height:25px; }
+  .all-grades.grades-dense h3 { font-size:24px; }
+  .all-grades.grades-dense .grade-value { font-size:56px; }
+  .all-grades.grades-dense .grade-status { font-size:16px; }
+  .all-grades.grades-dense .grade-tile { gap:10px; }
+}
+
+.presentation-context { min-width:0; }
+.presentation-context strong { overflow-wrap:anywhere; }
+@media(max-width:767px) {
+  .presentation-context { flex-wrap:wrap;gap:8px;max-width:100%; }
+  .panel-tabs>button { min-width:0;font-size:13px;padding-inline:3px; }
+  .panel-tabs>button span { overflow-wrap:anywhere; }
+}
+
+.profile-photo { max-width:100%; }
+.profile h1 { overflow-wrap:anywhere; }
+@media(min-width:768px) and (max-width:1100px) {
+  .subject-heading { flex-direction:column; }
+  .student-stage>.profile { padding:18px 12px; }
+  .student-stage>.profile h1 { font-size:26px; }
+}
+@media(max-width:767px) {
+  .panel-tabs>button:last-child { font-size:12px;letter-spacing:-.02em; }
+}
+
+.profile>div { max-width:100%;min-width:0; }
+.profile .eyebrow { overflow-wrap:anywhere; }
+.academic-metrics .metric-tile { min-width:0; }
+.academic-metrics strong { overflow-wrap:anywhere;max-width:100%; }
+@media(min-width:768px) and (max-width:1100px) {
+  .all-grades { grid-auto-rows:minmax(210px,1fr); }
+  .subject-heading { flex-shrink:0; }
+}

@@ -2,7 +2,6 @@ import type { StudentRecord } from "./db";
 import { isLowGrade } from "./actions";
 
 export const PAGE_SIZE = 6;
-export const SUBJECT_PAGE_SIZE = 4;
 export const hasValue = (value: unknown) =>
   value !== null &&
   value !== undefined &&

@@ -1,10 +1,9 @@
 "use client";
-import { useState } from "react";
 import type { StudentRecord } from "@/lib/db";
 import { isLowGrade } from "@/lib/actions";
 import { hasLowGrades, hasValue } from "@/lib/presentation";
 import { formatSubject } from "@/lib/mapao/subjects";
-import { Pagination } from "./pagination";
+import { SubjectIcon } from "./subject-icon";
 export function ClassDashboard({
   students,
   subjects,
@@ -12,7 +11,6 @@ export function ClassDashboard({
   students: StudentRecord[];
   subjects: string[];
 }) {
-  const [page, setPage] = useState(0);
   const withLow = students.filter(hasLowGrades).length;
   const perSubject = subjects
     .map((subject) => {
@@ -29,10 +27,6 @@ export function ClassDashboard({
     })
     .sort((a, b) => b.pct - a.pct);
   const critical = perSubject.filter((subject) => subject.pct >= 30).length;
-  const safePage = Math.min(
-    page,
-    Math.max(0, Math.ceil(subjects.length / 4) - 1),
-  );
   return (
     <section className="overview-panel">
       <div className="overview-metrics">
@@ -63,35 +57,29 @@ export function ClassDashboard({
         vermelhas.
       </p>
       <div className="subject-summary">
-        {perSubject
-          .slice(safePage * 4, (safePage + 1) * 4)
-          .map(({ subject, lowCount, pct }) => (
-            <article key={subject}>
-              <h3>{formatSubject(subject)}</h3>
-              <div
-                className="subject-bar"
-                role="meter"
-                aria-label={formatSubject(subject)}
-                aria-valuemin={0}
-                aria-valuemax={100}
-                aria-valuenow={Math.round(pct)}
-                aria-valuetext={`${lowCount} alunos, ${Math.round(pct)}%`}
-              >
-                <span style={{ width: `${pct}%` }} />
-              </div>
-              <p>
-                <strong>{lowCount}</strong> alunos · {Math.round(pct)}%
-              </p>
-            </article>
-          ))}
+        {perSubject.map(({ subject, lowCount, pct }) => (
+          <article key={subject}>
+            <h3>
+              <SubjectIcon name={subject} />
+              {formatSubject(subject)}
+            </h3>
+            <div
+              className="subject-bar"
+              role="meter"
+              aria-label={formatSubject(subject)}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={Math.round(pct)}
+              aria-valuetext={`${lowCount} alunos, ${Math.round(pct)}%`}
+            >
+              <span style={{ width: `${pct}%` }} />
+            </div>
+            <p>
+              <strong>{lowCount}</strong> alunos · {Math.round(pct)}%
+            </p>
+          </article>
+        ))}
       </div>
-      <Pagination
-        page={safePage}
-        total={subjects.length}
-        size={4}
-        onChange={setPage}
-        label="Disciplinas"
-      />
     </section>
   );
 }
