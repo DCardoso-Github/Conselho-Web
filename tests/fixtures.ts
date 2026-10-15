@@ -1,4 +1,14 @@
 import * as XLSX from "xlsx";
+export function multiWorkbook(sheets: { name: string; rows: unknown[][]; hidden?: boolean; percentages?: string[] }[]) {
+  const wb = XLSX.utils.book_new();
+  sheets.forEach(sheet => {
+    const ws = XLSX.utils.aoa_to_sheet(sheet.rows);
+    sheet.percentages?.forEach(address => { ws[address].z = "0%"; });
+    XLSX.utils.book_append_sheet(wb, ws, sheet.name);
+  });
+  wb.Workbook = { Sheets: sheets.map(sheet => ({ name: sheet.name, Hidden: sheet.hidden ? 1 : 0 })) };
+  return XLSX.write(wb, { type: "buffer", bookType: "xlsx" }) as Buffer;
+}
 export const subjects = [
   "MATEMATICA",
   "LINGUA PORTUGUESA",

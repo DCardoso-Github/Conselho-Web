@@ -1511,3 +1511,43 @@ label.student-tile { cursor:pointer; }
   .import-file-review>svg { display:none; }
 }
 @media(max-width:600px) { .bulk-student-toolbar>button { width:100%; } }
+
+/* Multi-class supplementary imports and secondary Prova Paulista indicators. */
+.complementary-import-dialog { max-width:860px; display:flex; flex-direction:column; overflow:hidden; }
+.complementary-import-body { overflow-y:auto; min-height:0; padding:4px; display:grid; gap:20px; }
+.complementary-import-footer { display:flex; justify-content:flex-end; gap:12px; padding-top:12px; border-top:1px solid var(--border); flex-shrink:0; }
+.import-sheet-list { display:grid; gap:14px; margin-block:16px; }
+.import-sheet-list article,.import-period-fields { border:1px solid var(--border); border-radius:18px; padding:18px; background:var(--background); }
+.import-sheet-list h3,.import-sheet-list h4 { font-size:20px; font-weight:700; }
+.import-sheet-list p { margin-block:8px; }
+.import-sheet-list label,.import-period-fields label { display:grid; gap:8px; font-size:16px; }
+.import-sheet-list select,.import-period-fields select,.import-period-fields input { width:100%; min-height:48px; padding:10px 12px; border:1px solid var(--border); border-radius:12px; background:var(--card); color:var(--foreground); }
+.import-sheet-list details { margin-top:12px; }
+.import-sheet-list summary { cursor:pointer; padding:10px 0; }
+.import-sheet-list li { overflow-wrap:anywhere; padding:4px 0; }
+.import-period-fields { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.import-period-fields legend { font-size:18px; font-weight:700; padding-inline:8px; }
+.import-period-fields p { grid-column:1 / -1; color:var(--muted-foreground); }
+.import-file-name,.import-result-heading { display:flex; align-items:center; justify-content:center; gap:10px; overflow-wrap:anywhere; }
+.import-file-name svg,.import-result-heading svg { flex-shrink:0; }
+.prova-evolution { display:grid; gap:18px; padding:20px; border:1px solid var(--border); border-radius:20px; background:var(--card); }
+.comparison-panel>.prova-evolution { flex:none; }
+.prova-evolution h3 { display:flex; align-items:center; justify-content:center; gap:8px; font-size:24px; font-weight:700; }
+.prova-evolution h3 svg { width:24px; height:24px; flex-shrink:0; color:var(--primary); }
+.prova-evolution-metrics { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+.prova-evolution-metrics>div { display:flex; flex-direction:column; align-items:center; gap:8px; text-align:center; min-width:0; }
+.prova-evolution-metrics strong { font-size:30px; font-weight:750; }
+.prova-evolution-metrics small { color:var(--muted-foreground); font-size:16px; }
+.prova-evolution-table { overflow-x:auto; }
+.prova-evolution table { border-collapse:collapse; width:100%; text-align:center; }
+.prova-evolution caption { padding:14px; color:var(--muted-foreground); }
+.prova-evolution th,.prova-evolution td { padding:14px 12px; border-bottom:1px solid var(--border); font-size:20px; }
+.prova-evolution.compact { padding:12px 8px; gap:12px; background:color-mix(in srgb,var(--primary) 3%,var(--card)); }
+.student-tile .prova-evolution.compact h3 { font-size:16px; }
+.prova-evolution.compact h3 svg { width:18px; height:18px; }
+.student-selection-grid .evolution-tile>.prova-evolution,.student-selection-grid .evolution-tile>.tile-action { grid-column:1 / -1; }
+.prova-evolution.compact .prova-evolution-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+.prova-evolution.compact .prova-evolution-metrics>div { gap:2px; font-size:14px; }
+.prova-evolution.compact .prova-evolution-metrics strong { font-size:21px; }
+.prova-evolution.compact .prova-evolution-metrics small,.prova-evolution.compact p { font-size:14px; }
+@media(max-width:600px) { .complementary-import-dialog { padding:18px; } .complementary-import-footer { flex-direction:column; } .prova-evolution { padding:14px; } .prova-evolution-metrics { grid-template-columns:1fr; } }

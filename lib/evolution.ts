@@ -1,5 +1,6 @@
 import type { GradePeriodRecord, SchoolPeriod, StudentRecord } from "./db";
 import { normalizeName } from "./mapao/normalize";
+import { compareProvaPaulista, type ProvaEvolution } from "./prova-evolution";
 
 export const periodId = (classId: string, period: SchoolPeriod) =>
   JSON.stringify([classId, period.year, period.term]);
@@ -19,6 +20,7 @@ export function numericGrade(raw: unknown): number | null {
 }
 
 export interface StudentEvolution {
+  provaPaulista?: ProvaEvolution;
   student: StudentRecord;
   before: number;
   after: number;
@@ -77,7 +79,7 @@ export function comparePeriods(
       subjects.reduce((sum, row) => sum + row.after, 0) / subjects.length;
     const gain =
       subjects.reduce((sum, row) => sum + row.gain, 0) / subjects.length;
-    return [{ student, before: a, after: b, gain, subjects }];
+    return [{ student, before: a, after: b, gain, subjects, provaPaulista: compareProvaPaulista(student, before, after) }];
   });
 }
 

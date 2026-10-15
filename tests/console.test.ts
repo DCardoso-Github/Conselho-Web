@@ -24,7 +24,9 @@ import {
 import { studentHighlights } from "../lib/highlights";
 import { studentAverage } from "../lib/highlights";
 import { detectMapaoPeriod } from "../lib/mapao/period";
-import { workbook } from "./fixtures";
+import { workbook, multiWorkbook } from "./fixtures";
+import { prepareComplementaryImport, applyComplementaryImport } from "../lib/complementary-import";
+import { compareProvaPaulista, numericPercentage } from "../lib/prova-evolution";
 import { studentDraft, validateStudentDraft } from "../lib/student-edit";
 
 test("student editor retains support information and validates changed grades across tabs", async () => {
@@ -633,4 +635,105 @@ test("new imports label periods and reject empty or duplicate mapoes atomically"
   await assert.rejects(persistMapao({ ...parsed, students: [...parsed.students, parsed.students[0]] }, { period: { year: 2026, term: 2 } }), /nomes de alunos repetidos/);
   assert.deepEqual(await db.classes.get("8B"), old);
   assert.equal(await db.gradePeriods.where("classId").equals("8B").count(), 1);
+});
+
+test("multi-sheet imports route names within each class, review unknown tabs, and preserve absent columns", async () => {
+  for (const classId of ["5X", "5Y"]) {
+    await db.classes.put({ id: classId, name: classId, importedAt: 0, subjects: ["MATEMATICA"], currentPeriod: { year: 2026, term: 3 } });
+    await db.students.add({ ...student(classId === "5X" ? 801 : 802, 7), classId, name: "ANA SILVA", tutor: "Tutor original", frequenciaAnual: 80 });
+  }
+  const input = file(multiWorkbook([
+    { name: "5X", rows: [["NOME DO ALUNO", "FREQUÊNCIA ANUAL"], ["Ana Silva", "90%"]] },
+    { name: "5º ano Y", rows: [["ALUNO", "NOME DO TUTOR"], ["ÁNA SILVA", "Tutor Y"], ["Sem cadastro", "Tutor Y"]] },
+    { name: "9Z", rows: [["ALUNO", "TUTOR"], ["Ana Silva", "Não importar"]] },
+    { name: "Instruções", rows: [["Como utilizar este documento"]] },
+    { name: "Oculta", hidden: true, rows: [["ALUNO", "TUTOR"], ["Ana Silva", "Oculto"]] },
+  ]), "frequencia-multiturmas.xlsx");
+  const preview = await prepareComplementaryImport("5X", input, "attendance");
+  assert.deepEqual(preview.sheets.map(s => s.suggestedClassId), ["5X", "5Y", "", "", ""]);
+  assert.ok(preview.sheets[3].error);
+  const result = await applyComplementaryImport(preview, [{ index: 0, classId: "5X" }, { index: 1, classId: "5Y" }]);
+  assert.equal(result.matched, 2);
+  assert.deepEqual(result.unmatched, ["5Y · SEM CADASTRO"]);
+  const x = (await db.students.get(801))!, y = (await db.students.get(802))!;
+  assert.equal(x.frequenciaAnual, "90%"); assert.equal(x.tutor, "Tutor original");
+  assert.equal(y.frequenciaAnual, 80); assert.equal(y.tutor, "Tutor Y");
+  await assert.rejects(() => applyComplementaryImport(preview, [{ index: 0, classId: "5X" }, { index: 1, classId: "5X" }]), /uma aba por turma/);
+  await assert.rejects(() => importFrequenciaTutor("5X", input), /revisão/);
+});
+
+test("Prova Paulista keeps period history, percentages, and latest display during out-of-order imports", async () => {
+  const ppFile = (acertos: unknown, part: unknown) => file(multiWorkbook([
+    { name: "5X", rows: [["ALUNO", "ACERTOS", "PARTICIPAÇÃO", "MAT"], ["Ana Silva", acertos, part, 0.01]], percentages: ["D2"] },
+    { name: "5Y", rows: [["ALUNO", "ACERTOS", "PARTICIPAÇÃO"], ["Ana Silva", "10%", "0%"]] },
+  ]), "PP_3_bimestre_2026.xlsx");
+  const preview = await prepareComplementaryImport("5X", ppFile("60%", "100%"), "pp");
+  assert.deepEqual(preview.suggestedPeriod, { year: 2026, term: 3 });
+  assert.equal((await importProvaPaulista("5X", ppFile("60%", "100%"), { year: 2026, term: 3 })).matched, 2);
+  await importProvaPaulista("5X", ppFile(0.4, "80%"), { year: 2026, term: 1 });
+  let saved = (await db.students.get(801))!;
+  assert.equal(saved.provaPaulista?.acertos, "60%");
+  assert.deepEqual(saved.provaPaulistaPeriod, { year: 2026, term: 3 });
+  const comparison = compareProvaPaulista(saved, { year: 2026, term: 1 }, { year: 2026, term: 3 })!;
+  assert.equal(comparison.hasBothPeriods, true);
+  assert.equal(comparison.acertos?.gain, 20);
+  assert.equal(comparison.participacao?.gain, 20);
+  assert.equal(comparison.subjects[0].before, 1);
+  const partial = file(multiWorkbook([{ name: "5X", rows: [["ALUNO", "ACERTOS"], ["Ana Silva", "70%"]] }]), "partial.xlsx");
+  await importProvaPaulista("5X", partial, { year: 2026, term: 3 });
+  saved = (await db.students.get(801))!;
+  assert.equal(saved.provaPaulista?.acertos, "70%");
+  assert.equal(saved.provaPaulista?.participacao, "100%");
+  assert.equal(saved.provaPaulista?.grades.MAT, "1%");
+  assert.equal(compareProvaPaulista(saved, { year: 2026, term: 1 }, { year: 2026, term: 3 })!.acertos?.gain, 30);
+});
+
+test("supplementary imports are atomic and reject duplicate student names and wrong years", async () => {
+  const input = file(multiWorkbook([
+    { name: "5X", rows: [["ALUNO", "TUTOR"], ["Ana Silva", "Deve reverter"]] },
+    { name: "5Y", rows: [["ALUNO", "TUTOR"], ["Ana Silva", "Duplicado"]] },
+  ]), "atomic.xlsx");
+  const preview = await prepareComplementaryImport("5X", input, "attendance");
+  const id = await db.students.add({ ...student(803, 7), classId: "5Y", name: "ANA SILVA" });
+  await assert.rejects(() => applyComplementaryImport(preview, [{ index: 0, classId: "5X" }, { index: 1, classId: "5Y" }]), /nomes repetidos/);
+  assert.equal((await db.students.get(801))!.tutor, "Tutor original");
+  await db.students.delete(id);
+  const duplicate = await prepareComplementaryImport("5X", file(multiWorkbook([{ name: "5X", rows: [["ALUNO", "ACERTOS"], ["Ana Silva", 50], ["Ána Silva", 70]] }]), "duplicate.xlsx"), "pp");
+  assert.match(duplicate.sheets[0].error!, /nomes repetidos/);
+  await assert.rejects(() => applyComplementaryImport(duplicate, [{ index: 0, classId: "5X" }], { year: 2026, term: 3 }), /Confira/);
+  const pp = await prepareComplementaryImport("5X", file(workbook([["ALUNO", "ACERTOS"], ["Ana Silva", 80]]), "pp.xlsx"), "pp");
+  await assert.rejects(() => applyComplementaryImport(pp, [{ index: 0, classId: "5X" }], { year: 2027, term: 3 }), /ano 2026/);
+  assert.equal((await db.students.get(801))!.provaPaulista?.acertos, "70%");
+});
+
+test("Prova Paulista comparison never fabricates missing history and does not change grade ranking", () => {
+  for (const [value, expected] of [[0, 0], [1, 100], ["1%", 1], ["0,92", 92], ["95%", 95], ["", null], [null, null], ["ET", null], [-1, null], [101, null]] as const) assert.equal(numericPercentage(value), expected);
+  const current = [student(901, 7), student(902, 8)];
+  const before = periodRecord(1, current.map(s => ({ ...s, grades: { MATEMATICA: 5 } })));
+  const after = periodRecord(3, current);
+  const baseline = evolutionLeaders(comparePeriods(current, before, after)).map(r => r.student.id);
+  const withPP = current.map((s, i) => ({ ...s, provaPaulistaHistory: {
+    [periodId(s.classId, before)]: { participacao: "50%", acertos: i ? "100%" : "0%", grades: { MAT: "1%", PORT: null } },
+    [periodId(s.classId, after)]: { participacao: null, acertos: i ? "0%" : "100%", grades: { MAT: "0%", PORT: "90%" } },
+  } }));
+  assert.deepEqual(evolutionLeaders(comparePeriods(withPP, before, after)).map(r => r.student.id), baseline);
+  const compared = compareProvaPaulista(withPP[0], before, after)!;
+  assert.equal(compared.acertos?.gain, 100);
+  assert.equal(compared.participacao, null);
+  assert.equal(compared.subjects.find(s => s.subject === "PORT")!.change, null);
+  assert.equal(compared.subjects.find(s => s.subject === "MAT")!.change!.gain, -1);
+  assert.equal(compareProvaPaulista({ ...current[0], provaPaulista: { participacao: 1, acertos: 1, grades: {} } }, before, after)!.hasBothPeriods, false);
+  assert.equal(compareProvaPaulista(withPP[0], after, before), undefined);
+  assert.equal(compareProvaPaulista(withPP[0], before, { ...after, year: 2027 }), undefined);
+});
+
+test("Prova Paulista history survives mapao replacement and student edits", async () => {
+  const original = (await db.students.get(801))!;
+  const previousHistory = original.provaPaulistaHistory;
+  await updateStudent(original.id!, { notes: "Observação preservada" });
+  await persistMapao({ className: "5X", subjects: ["MATEMATICA"], students: [{ ...original, grades: { MATEMATICA: 8 } }] }, { period: { year: 2026, term: 3 }, replace: true });
+  const saved = (await db.students.where("classId").equals("5X").toArray())[0];
+  assert.deepEqual(saved.provaPaulistaHistory, previousHistory);
+  assert.equal(saved.notes, "Observação preservada");
+  assert.equal(saved.provaPaulista?.acertos, "70%");
 });

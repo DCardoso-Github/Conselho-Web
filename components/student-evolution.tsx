@@ -23,6 +23,8 @@ import { studentAverage } from "@/lib/highlights";
 import { remainingPresentationStudents } from "@/lib/presentation";
 import { StudentProfile } from "./student-profile";
 import { StudentActions } from "./student-actions";
+import { ProvaEvolutionSummary } from "./prova-evolution";
+import { compareProvaPaulista, type ProvaEvolution } from "@/lib/prova-evolution";
 import { SubjectIcon } from "./subject-icon";
 import { Button } from "./ui/button";
 
@@ -167,7 +169,7 @@ function EvolutionSelection({
           </div>
           {leaders.length ? (
             <div className="selection-grid student-selection-grid">
-              {leaders.map(row => <EvolutionCard key={row.student.id} classId={cls.id} student={row.student} row={row} leader />)}
+              {leaders.map(row => <EvolutionCard key={row.student.id} classId={cls.id} student={row.student} row={row} prova={row.provaPaulista} leader />)}
             </div>
           ) : (
             <div className="empty-panel">
@@ -188,7 +190,7 @@ function EvolutionSelection({
               {showAll ? "Ocultar restante da turma" : `Mostrar restante da turma (${rest.length})`}
             </Button>
             {showAll && <div id="evolution-rest" className="selection-grid student-selection-grid">
-              {rest.map(student => <EvolutionCard key={student.id} classId={cls.id} student={student} row={comparisonById.get(student.id)} />)}
+              {rest.map(student => <EvolutionCard key={student.id} classId={cls.id} student={student} row={comparisonById.get(student.id)} prova={compareProvaPaulista(student, before, after)} />)}
             </div>}
           </>}
         </>
@@ -199,10 +201,11 @@ function EvolutionSelection({
 
 const gainTone = (gain: number) => gain > 1e-9 ? "evolution-positive" : gain < -1e-9 ? "evolution-negative" : "";
 
-function EvolutionCard({ classId, student, row, leader = false }: {
+function EvolutionCard({ classId, student, row, prova, leader = false }: {
   classId: string;
   student: StudentRecord;
   row?: Evolution;
+  prova?: ProvaEvolution;
   leader?: boolean;
 }) {
   const average = studentAverage(student);
@@ -223,8 +226,9 @@ function EvolutionCard({ classId, student, row, leader = false }: {
         <strong>{average === null ? "Sem informação" : formatGrade(average)}</strong>
         <small>Sem comparação neste intervalo</small>
       </div>}
-      <Link className="tile-action" href={`/turmas/${encodeURIComponent(classId)}/alunos/${student.id}`}>Abrir aluno <ArrowUpRight aria-hidden="true" /></Link>
     </div>
+    <ProvaEvolutionSummary compact comparison={prova} />
+    <Link className="tile-action" href={`/turmas/${encodeURIComponent(classId)}/alunos/${student.id}`}>Abrir aluno <ArrowUpRight aria-hidden="true" /></Link>
   </article></StudentActions>;
 }
 

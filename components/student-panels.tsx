@@ -18,6 +18,8 @@ import {
 } from "lucide-react";
 import type { StudentEvolution } from "@/lib/evolution";
 import { EvolutionDetail } from "./student-evolution";
+import { ProvaEvolutionSummary } from "./prova-evolution";
+import { PP_NAMES, type ProvaEvolution } from "@/lib/prova-evolution";
 import type { StudentRecord } from "@/lib/db";
 import { isLowGrade } from "@/lib/actions";
 import { displayValue, hasValue, percentage } from "@/lib/presentation";
@@ -25,16 +27,6 @@ import { formatSubject } from "@/lib/mapao/subjects";
 import { Button } from "./ui/button";
 import { SubjectIcon } from "./subject-icon";
 
-const PP_NAMES: Record<string, string> = {
-  MAT: "Matemática",
-  PORT: "Língua Portuguesa",
-  ING: "Língua Inglesa",
-  HIST: "História",
-  GEO: "Geografia",
-  CIE: "Ciências",
-  FIN: "Educação Financeira",
-  TEC: "Tecnologia e Inovação",
-};
 
 export function StudentPanels({
   student,
@@ -44,7 +36,9 @@ export function StudentPanels({
   onOnlyLowChange,
   evolution,
   comparisonLabels,
+  provaEvolution,
 }: {
+  provaEvolution?: ProvaEvolution;
   evolution?: StudentEvolution;
   comparisonLabels?: [string, string];
   student: StudentRecord;
@@ -103,8 +97,8 @@ export function StudentPanels({
           onOnlyLowChange={onOnlyLowChange}
         />
       </Tabs.Content>
-      <Tabs.Content value="pp" className="panel-content academic-panel">
-        <Academic student={student} subjects={subjects} prova />
+      <Tabs.Content value="pp" className={`panel-content ${comparisonLabels ? "comparison-panel" : "academic-panel"}`}>
+        {comparisonLabels ? <ProvaEvolutionSummary comparison={provaEvolution} labels={comparisonLabels} /> : <Academic student={student} subjects={subjects} prova />}
       </Tabs.Content>
       <Tabs.Content value="support" className="panel-content">
         <Support student={student} />
@@ -120,12 +114,12 @@ export function StudentPanels({
         />
         <Metric
           icon={ClipboardCheck}
-          label="Participação · Prova Paulista"
+          label={comparisonLabels ? "Participação atual · Prova Paulista" : "Participação · Prova Paulista"}
           value={percentage(student.provaPaulista?.participacao)}
         />
         <Metric
           icon={Target}
-          label="Acertos · Prova Paulista"
+          label={comparisonLabels ? "Acertos atuais · Prova Paulista" : "Acertos · Prova Paulista"}
           value={percentage(student.provaPaulista?.acertos)}
         />
       </div>

@@ -4,7 +4,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useLiveQuery } from "dexie-react-hooks";
 import { ChevronLeft, ChevronRight, Maximize, Users, X } from "lucide-react";
-import { db, type ClassRecord, type StudentRecord } from "@/lib/db";
+import { db, type ClassRecord, type StudentRecord, type SchoolPeriod } from "@/lib/db";
+import { compareProvaPaulista } from "@/lib/prova-evolution";
 import { presentationStudents, remainingPresentationStudents, shortcutBlocked } from "@/lib/presentation";
 import {
   comparePeriods,
@@ -89,6 +90,7 @@ function PresentationLoader({ classId }: { classId: string }) {
     <Presentation
       key={`${classId}:${query.toString()}`}
       evolution={evolution}
+      comparisonPeriods={evolution && before && after ? [before, after] : undefined}
       groupLabel={groupLabel}
       remaining={groupLabel ? remainingPresentationStudents(data.students, list, data.cls.subjects, evolution) : []}
       comparisonLabels={
@@ -106,6 +108,7 @@ function Presentation({
   from,
   evolution,
   comparisonLabels,
+  comparisonPeriods,
   remaining,
   groupLabel,
 }: {
@@ -113,6 +116,7 @@ function Presentation({
   groupLabel?: string;
   evolution?: StudentEvolution[];
   comparisonLabels?: [string, string];
+  comparisonPeriods?: [SchoolPeriod, SchoolPeriod];
   cls: ClassRecord;
   students: StudentRecord[];
   from: string | null;
@@ -220,6 +224,7 @@ function Presentation({
         </p>
       )}
       <StudentPanels
+        provaEvolution={comparisonPeriods ? compareProvaPaulista(student, ...comparisonPeriods) : undefined}
         evolution={evolution?.find((row) => row.student.id === student.id)}
         comparisonLabels={comparisonLabels}
         onlyLow={onlyLow}

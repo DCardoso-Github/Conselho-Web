@@ -44,6 +44,9 @@ export interface StudentRecord {
     /** índice de ordem dentro do mapão original */
     order: number;
     provaPaulista?: ProvaPaulistaRecord;
+    /** Resultados identificados por turma/ano/bimestre; dados legados permanecem sem período. */
+    provaPaulistaHistory?: Record<string, ProvaPaulistaRecord>;
+    provaPaulistaPeriod?: SchoolPeriod;
     frequenciaAnual?: string | number | null;
     tutor?: string | null;
     educacaoEspecial?: string | null;

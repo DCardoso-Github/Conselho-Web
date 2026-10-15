@@ -62,3 +62,13 @@ Validação manual realizada com dados fictícios:
 Redução de movimento é respeitada por CSS e por MotionConfig. A preferência do sistema não foi modificada durante os testes.
 
 Para testar evolução, importe `7B_2026_3bim.xlsx` como terceiro bimestre e depois `7B_2026_1bim.xlsx` como primeiro. Os dados fictícios têm cinco ganhos positivos (6, 5, 4, 3 e 2 pontos), uma queda, estabilidade, zero e ausência de notas.
+
+### Importações complementares com várias turmas
+
+Em **Gerenciar turma → Prova Paulista** ou **Frequência/Tutor**, selecione um arquivo `.xlsx` com uma aba por turma. A revisão sugere o destino pelo nome da aba (por exemplo, `6A` ou `7º ano B`), permite escolher outra turma cadastrada e ignorar abas extras. Abas ocultas e cabeçalhos inválidos não entram automaticamente. Os alunos são associados pelo nome dentro da turma escolhida; o resultado informa os não encontrados por aba. Nomes repetidos impedem a atualização e todo o lote é atômico.
+
+Na Prova Paulista, confira ano e bimestre antes de importar. O histórico é guardado em campos opcionais dos alunos, sem migração de tabelas. Importar um bimestre anterior não substitui o resultado mais recente exibido na ficha. Importar novamente o mesmo período atualiza somente as colunas presentes; colunas ausentes são preservadas. Dados antigos sem período continuam visíveis, mas precisam ser reimportados com o bimestre correto para participar das comparações.
+
+**Alunos evolução** mantém a seleção e ordenação pela melhora das notas. Acertos e participação na Prova Paulista aparecem como indicadores complementares em pontos percentuais, usando os mesmos bimestres selecionados. Em **Apresentar evolução → Prova Paulista**, são exibidos os valores inicial/final e a comparação por disciplina. Dados ausentes não são convertidos em zero.
+
+`npx tsx tests/make-complementary-fixtures.ts` gera planilhas fictícias de duas turmas em `artifacts/complementary-fixtures` para testar as duas importações e a evolução entre o primeiro e o terceiro bimestre.
