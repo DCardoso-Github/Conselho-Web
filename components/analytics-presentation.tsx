@@ -16,7 +16,6 @@ import {
   Users,
   ChartColumn,
   AlertTriangle,
-  Database,
 } from "lucide-react";
 import type { ClassRecord, GradePeriodRecord, StudentRecord } from "@/lib/db";
 import { classOverview, classEvolution } from "@/lib/class-analytics";
@@ -167,7 +166,6 @@ export function AnalyticsPresentation({
           />
         </div>
       );
-      note = `${overview.count} notas numéricas no cálculo. Ausências e conceitos como ET ficam fora da média.`;
     } else if (panel.kind === "distribution") {
       content = overview.count ? (
         <Distribution
@@ -188,32 +186,8 @@ export function AnalyticsPresentation({
           ]}
         />
       ) : (
-        <Empty>Sem notas numéricas para gerar o gráfico.</Empty>
+        <Empty>Sem dados para gerar o gráfico.</Empty>
       );
-      note = `Distribuição das ${overview.count} notas numéricas. ${overview.expected - overview.count} registros ausentes ou não numéricos.`;
-    } else if (panel.kind === "coverage") {
-      content = (
-        <div className="projection-stats two">
-          <StatCard
-            icon={<Database />}
-            label="Cobertura das notas"
-            value={
-              overview.expected
-                ? `${Math.round((overview.count / overview.expected) * 100)}%`
-                : "Sem informação"
-            }
-            detail={`${overview.count} de ${overview.expected} registros com nota numérica`}
-          />
-          <StatCard
-            icon={<Users />}
-            label="Alunos sem notas numéricas"
-            value={overview.withoutGrades}
-            detail={`De um total de ${students.length} alunos`}
-          />
-        </div>
-      );
-      note =
-        "Dados ausentes não representam nota zero nem desempenho positivo.";
     } else {
       content = (
         <div className="projection-subjects">
@@ -230,7 +204,7 @@ export function AnalyticsPresentation({
               <p className={row.low ? "negative" : ""}>
                 {row.count
                   ? `${row.low} ${row.low === 1 ? "nota vermelha" : "notas vermelhas"}`
-                  : "Sem notas numéricas"}
+                  : "Sem informação"}
               </p>
               <div className="bar-track" aria-hidden="true">
                 <i
@@ -240,9 +214,6 @@ export function AnalyticsPresentation({
                   }}
                 />
               </div>
-              <small>
-                {row.count} de {students.length} alunos com nota
-              </small>
             </article>
           ))}
         </div>
@@ -254,7 +225,7 @@ export function AnalyticsPresentation({
     if (panel.kind === "mean") {
       content =
         evolution.before === null || evolution.after === null ? (
-          <Empty>Sem notas comparáveis entre os bimestres escolhidos.</Empty>
+          <Empty>Sem dados para comparar os bimestres escolhidos.</Empty>
         ) : (
           <div className="projection-mean">
             <Legend before={before!} after={after!} />
@@ -284,7 +255,6 @@ export function AnalyticsPresentation({
             </p>
           </div>
         );
-      note = `Mesmo peso para cada um dos ${comparisons.length} alunos comparáveis. Somente disciplinas com nota numérica nos dois bimestres.`;
     } else if (panel.kind === "movement") {
       content = students.length ? (
         <Distribution
@@ -316,7 +286,7 @@ export function AnalyticsPresentation({
       ) : (
         <Empty>Nenhum aluno cadastrado nesta turma.</Empty>
       );
-      note = `Distribuição dos ${students.length} alunos atuais. A variação considera as mesmas disciplinas de cada aluno.`;
+      note = `Distribuição dos ${students.length} alunos atuais.`;
     } else if (panel.kind === "low") {
       content = (
         <div className="projection-stats two">
@@ -334,26 +304,6 @@ export function AnalyticsPresentation({
           />
         </div>
       );
-      note = `${evolution.pairCount} pares de notas comparados. Cada nota é contada separadamente; um aluno pode ter várias notas vermelhas.`;
-    } else if (panel.kind === "coverage") {
-      content = (
-        <div className="projection-stats two">
-          <StatCard
-            icon={<Users />}
-            label="Alunos comparáveis"
-            value={`${comparisons.length} / ${students.length}`}
-            detail={`${evolution.pairCount} pares de notas disponíveis`}
-          />
-          <StatCard
-            icon={<Database />}
-            label="Sem comparação"
-            value={students.length - comparisons.length}
-            detail="Nome sem correspondência única ou sem notas nas mesmas disciplinas"
-          />
-        </div>
-      );
-      note =
-        "A comparação considera somente alunos da turma atual. Dados ausentes nunca são tratados como zero.";
     } else {
       content = (
         <div className="projection-subjects two">
@@ -385,13 +335,12 @@ export function AnalyticsPresentation({
               >
                 {formatGain(row.gain)} pontos
               </p>
-              <small>{row.count} alunos comparados</small>
             </article>
           ))}
         </div>
       );
       note =
-        "Médias na escala de 0 a 10. Disciplinas ordenadas pela variação; cada uma pode ter uma quantidade diferente de alunos comparáveis.";
+        "Médias na escala de 0 a 10. Disciplinas ordenadas pela variação.";
     }
   }
   return (
@@ -437,7 +386,7 @@ export function AnalyticsPresentation({
       >
         {content}
       </section>
-      <p className="projection-note">{note}</p>
+      {note && <p className="projection-note">{note}</p>}
       <footer className="projection-footer">
         <label className="projection-jump">
           Ir para painel

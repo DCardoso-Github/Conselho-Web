@@ -5,7 +5,6 @@ import {
   Users,
   AlertTriangle,
   ChartColumn,
-  Database,
   Play,
 } from "lucide-react";
 import type { StudentRecord } from "@/lib/db";
@@ -42,9 +41,6 @@ export function ClassDashboard({
         ? (a.average ?? 11) - (b.average ?? 11)
         : b.low - a.low || a.subject.localeCompare(b.subject, "pt-BR"),
   );
-  const coverage = data.expected
-    ? Math.round((data.count / data.expected) * 100)
-    : 0;
   return (
     <section className="analytics-dashboard" aria-label="Visão geral da turma">
       <header className="analytics-heading">
@@ -52,7 +48,7 @@ export function ClassDashboard({
           <p className="eyebrow">Retrato do bimestre atual</p>
           <h2>Como está a turma?</h2>
           <p>
-            Resultados, pontos de atenção e cobertura das notas em um só lugar.
+            Resultados e pontos de atenção da turma em um só lugar.
           </p>
         </div>
         <Button asChild>
@@ -67,13 +63,12 @@ export function ClassDashboard({
           icon={<Users />}
           label="Alunos na turma"
           value={students.length}
-          detail={`${data.withoutGrades} sem notas numéricas`}
         />
         <StatCard
           icon={<ChartColumn />}
           label="Média das notas"
           value={gradeLabel(data.average)}
-          detail={`${data.count} notas numéricas · escala de 0 a 10`}
+          detail="Escala de 0 a 10"
         />
         <StatCard
           icon={<AlertTriangle />}
@@ -82,12 +77,6 @@ export function ClassDashboard({
           detail="Alunos com pelo menos uma nota de 0 a 4"
           tone="stat-attention"
         />
-        <StatCard
-          icon={<Database />}
-          label="Cobertura das notas"
-          value={data.expected ? `${coverage}%` : "Sem informação"}
-          detail={`${data.count} de ${data.expected} registros com nota numérica`}
-        />
       </div>
       <div className="analytics-columns">
         <section className="analytics-card">
@@ -95,7 +84,6 @@ export function ClassDashboard({
             <ChartColumn aria-hidden="true" />
             <h3>Distribuição das notas</h3>
           </header>
-          <p>Percentual sobre as {data.count} notas numéricas cadastradas.</p>
           {data.count ? (
             <Distribution
               label="Faixas das notas"
@@ -116,13 +104,9 @@ export function ClassDashboard({
             />
           ) : (
             <p className="analytics-empty">
-              Sem notas numéricas para gerar o gráfico.
+              Sem dados para gerar o gráfico.
             </p>
           )}
-          <p className="analytics-footnote">
-            {data.expected - data.count} registros ausentes ou não numéricos
-            (como ET) ficam fora dos cálculos.
-          </p>
         </section>
         <section className="analytics-card">
           <header>
@@ -182,16 +166,13 @@ export function ClassDashboard({
         <TableFrame label="Resultados por disciplina">
           <table className="analytics-table">
             <caption>
-              Médias usam apenas notas numéricas. O percentual de notas
-              vermelhas considera os alunos com nota na disciplina.
+              Resultados por disciplina.
             </caption>
             <thead>
               <tr>
                 <th scope="col">Disciplina</th>
                 <th scope="col">Média</th>
                 <th scope="col">Notas vermelhas</th>
-                <th scope="col">Com nota</th>
-                <th scope="col">Sem nota numérica</th>
               </tr>
             </thead>
             <tbody>
@@ -213,10 +194,6 @@ export function ClassDashboard({
                         : `${row.low} · ${Math.round(row.lowPercent)}%`}
                     </span>
                   </td>
-                  <td>
-                    {row.count}/{students.length}
-                  </td>
-                  <td>{row.missing}</td>
                 </tr>
               ))}
             </tbody>

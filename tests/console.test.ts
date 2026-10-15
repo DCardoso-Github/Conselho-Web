@@ -298,7 +298,7 @@ test("presentation batches include every discipline exactly once with stable nav
       assert.deepEqual(indices, Array.from({ length: count }, (_, index) => index));
       assert.ok(batches.every((panel) => panel.end! - panel.start! <= (view === "overview" ? 3 : 2)));
       assert.equal(panels[0].kind, view === "overview" ? "summary" : "mean");
-      assert.ok(panels.length >= (view === "overview" ? 3 : 4));
+      assert.ok(panels.length >= (view === "overview" ? 2 : 3));
     }
   }
 });

@@ -13,7 +13,7 @@ export function StatCard({
   icon: ReactNode;
   label: string;
   value: ReactNode;
-  detail: string;
+  detail?: string;
   tone?: string;
 }) {
   return (
@@ -23,7 +23,7 @@ export function StatCard({
       </span>
       <p>{label}</p>
       <strong>{value}</strong>
-      <small>{detail}</small>
+      {detail && <small>{detail}</small>}
     </article>
   );
 }

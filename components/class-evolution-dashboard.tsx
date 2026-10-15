@@ -126,10 +126,6 @@ export function ClassEvolutionDashboard({
             </select>
           </label>
         </div>
-        <p className="analytics-footnote">
-          Mesmos alunos, mesmas disciplinas e notas numéricas nos dois
-          bimestres. A média da turma dá o mesmo peso a cada aluno comparável.
-        </p>
         {valid && (
           <div className="analytics-heading projection-launch">
             <Button asChild>
@@ -164,7 +160,7 @@ export function ClassEvolutionDashboard({
                   <span className="stat-arrow">→</span> {gradeLabel(data.after)}
                 </>
               }
-              detail="Escala de 0 a 10 · mesma base de comparação"
+              detail="Escala de 0 a 10"
             />
             <StatCard
               icon={<TrendingUp />}
@@ -174,14 +170,8 @@ export function ClassEvolutionDashboard({
                   ? "Sem informação"
                   : `${formatGain(data.gain)} pts`
               }
-              detail="Pontos na média dos alunos comparáveis"
+              detail="Variação entre os bimestres"
               tone={data.gain === null ? "" : tone(data.gain)}
-            />
-            <StatCard
-              icon={<Users />}
-              label="Alunos comparáveis"
-              value={`${rows.length} / ${students.length}`}
-              detail={`${students.length - rows.length} sem comparação disponível`}
             />
             <StatCard
               icon={<AlertTriangle />}
@@ -191,15 +181,14 @@ export function ClassEvolutionDashboard({
                   ? `${data.lowBefore} → ${data.lowAfter}`
                   : "Sem informação"
               }
-              detail={`${data.pairCount} pares de notas · limite de 0 a 4`}
+              detail="Notas de 0 a 4"
             />
           </div>
           {!rows.length ? (
             <div className="empty-panel">
-              <h2>Sem notas comparáveis</h2>
+              <h2>Sem dados para comparação</h2>
               <p>
-                Confira nomes únicos e disciplinas com notas numéricas nos dois
-                mapões. Dados ausentes não viram zero.
+                Confira os mapões dos bimestres selecionados.
               </p>
             </div>
           ) : (
@@ -264,9 +253,7 @@ export function ClassEvolutionDashboard({
                     <span>10</span>
                   </div>
                   <p className="analytics-footnote">
-                    Variação: {formatGain(data.gain!)} pontos. A comparação
-                    inclui apenas os {rows.length} alunos com notas
-                    correspondentes.
+                    Variação: {formatGain(data.gain!)} pontos.
                   </p>
                 </section>
               </div>
@@ -276,8 +263,7 @@ export function ClassEvolutionDashboard({
                   <h3>Evolução por disciplina</h3>
                 </header>
                 <p>
-                  Comparação das mesmas notas em cada disciplina · escala de 0 a
-                  10.
+                  Resultados por disciplina entre os bimestres.
                 </p>
                 <div className="chart-legend">
                   <span>
@@ -305,7 +291,6 @@ export function ClassEvolutionDashboard({
                         <span className={`data-pill ${tone(item.gain)}`}>
                           {formatGain(item.gain)} pts
                         </span>
-                        <small>{item.count} alunos comparados</small>
                       </p>
                     </article>
                   ))}
@@ -356,8 +341,7 @@ export function ClassEvolutionDashboard({
             <TableFrame label="Evolução de todos os alunos">
               <table className="analytics-table">
                 <caption>
-                  {periodLabel(before!)} → {periodLabel(after!)}. Cada média
-                  considera somente as disciplinas comparáveis daquele aluno.
+                  {periodLabel(before!)} → {periodLabel(after!)}
                 </caption>
                 <thead>
                   <tr>
@@ -365,7 +349,6 @@ export function ClassEvolutionDashboard({
                     <th scope="col">Inicial</th>
                     <th scope="col">Final</th>
                     <th scope="col">Variação</th>
-                    <th scope="col">Disciplinas</th>
                     <th scope="col">Resultado</th>
                   </tr>
                 </thead>
@@ -390,7 +373,6 @@ export function ClassEvolutionDashboard({
                           "—"
                         )}
                       </td>
-                      <td>{row?.subjects.length ?? "—"}</td>
                       <td>{row ? status(row.gain) : "Sem comparação"}</td>
                     </tr>
                   ))}
@@ -402,11 +384,6 @@ export function ClassEvolutionDashboard({
                 Nenhum aluno corresponde à busca e aos filtros.
               </p>
             )}
-            <p className="analytics-footnote">
-              “Sem comparação”: nome sem correspondência única ou nenhuma
-              disciplina com nota numérica nos dois bimestres. Alunos que não
-              estão na turma atual ficam fora.
-            </p>
           </section>
           <div className="analytics-heading">
             <Button asChild variant="outline">

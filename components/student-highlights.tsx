@@ -61,7 +61,7 @@ export function StudentHighlights({
         <div className="empty-panel">
           <Star aria-hidden="true" />
           <h3>Ainda não há notas para selecionar destaques</h3>
-          <p>Importe ou preencha notas numéricas dos alunos desta turma.</p>
+          <p>Importe ou preencha as notas dos alunos desta turma.</p>
         </div>
       )}
       {rest.length > 0 && <>

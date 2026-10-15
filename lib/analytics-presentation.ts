@@ -16,13 +16,11 @@ export function analyticsPanels(
       ? [
           { kind: "summary", title: "Panorama da turma" },
           { kind: "distribution", title: "Distribuição das notas" },
-          { kind: "coverage", title: "Cobertura das notas" },
         ]
       : [
           { kind: "mean", title: "Comparação das médias" },
           { kind: "movement", title: "Movimento da turma" },
           { kind: "low", title: "Notas vermelhas entre bimestres" },
-          { kind: "coverage", title: "Base da comparação" },
         ];
   const size = view === "overview" ? 3 : 2;
   for (let start = 0; start < subjectCount; start += size) {

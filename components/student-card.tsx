@@ -43,10 +43,6 @@ export function StudentCard({ classId, student, highlight, selection, onSelect }
             <strong>
               {average === null ? "Sem informação" : formatGrade(average)}
             </strong>
-            {highlight && <small>
-              {highlight.gradeCount} de {highlight.subjectCount} disciplinas com
-              nota numérica
-            </small>}
           </div>
         <p className={low ? "attention" : "supporting-text"}>
           <AlertTriangle /> {low} nota{low === 1 ? "" : "s"} vermelha

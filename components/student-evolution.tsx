@@ -152,8 +152,7 @@ function EvolutionSelection({
         <>
           <div className="highlights-heading">
             <p className="results-count" role="status">
-              {leaders.length} alunos em evolução · {comparisons.length} de{" "}
-              {students.length} alunos com notas comparáveis
+              {leaders.length} alunos em evolução
             </p>
             {leaders.length > 0 && (
               <Button asChild>
@@ -175,12 +174,12 @@ function EvolutionSelection({
               <h3>
                 {comparisons.length
                   ? "Nenhuma melhora positiva neste intervalo"
-                  : "Sem notas comparáveis"}
+                  : "Sem dados para comparação"}
               </h3>
               <p>
                 {comparisons.length
-                  ? "Os alunos mantiveram ou reduziram a média nas disciplinas comparadas."
-                  : "Confira os nomes dos alunos e as disciplinas com nota nos dois mapões."}
+                  ? "Os alunos mantiveram ou reduziram a média."
+                  : "Confira os mapões dos bimestres selecionados."}
               </p>
             </div>
           )}
@@ -215,11 +214,10 @@ function EvolutionCard({ classId, student, row, leader = false }: {
         <strong>{formatGrade(row.after)}</strong>
         <span>Média inicial: {formatGrade(row.before)}</span>
         <span className={row.gain > 1e-9 ? "evolution-positive" : ""}>{formatGain(row.gain)} pontos</span>
-        <small>{row.subjects.length} disciplinas comparadas</small>
       </div> : <div className="highlight-average">
         <span>Média atual</span>
         <strong>{average === null ? "Sem informação" : formatGrade(average)}</strong>
-        <small>Sem notas comparáveis neste intervalo</small>
+        <small>Sem comparação neste intervalo</small>
       </div>}
       <Link className="tile-action" href={`/turmas/${encodeURIComponent(classId)}/alunos/${student.id}`}>Abrir aluno</Link>
     </div>
@@ -259,9 +257,6 @@ export function EvolutionDetail({
           </strong>
         </span>
       </div>
-      <p className="supporting-text">
-        {row.subjects.length} disciplinas com nota nos dois bimestres.
-      </p>
       <div className="comparison-subjects">
         {row.subjects.map((item) => (
           <article key={item.subject}>
