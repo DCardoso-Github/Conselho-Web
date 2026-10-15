@@ -9,16 +9,18 @@ import {
   Edit2,
   ImagePlus,
   Play,
+  Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { db } from "@/lib/db";
-import { setStudentPhoto } from "@/lib/actions";
+import { deleteStudent, setStudentPhoto } from "@/lib/actions";
 import { processPhoto } from "@/lib/photos";
 import { shortcutBlocked } from "@/lib/presentation";
 import { StudentProfile } from "@/components/student-profile";
 import { StudentPanels } from "@/components/student-panels";
 import { StudentEditor } from "@/components/student-editor";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 export default function AlunoPage({
   params,
 }: {
@@ -30,6 +32,7 @@ export default function AlunoPage({
   const [onlyLow, setOnlyLow] = useState(false);
   const [editing, setEditing] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const closeEditor = useCallback(() => setEditing(false), []);
   const data = useLiveQuery(
     async () => ({
@@ -106,6 +109,9 @@ export default function AlunoPage({
           <ArrowLeft /> Turma {data.cls.name}
         </Button>
         <div className="presentation-actions">
+          <Button variant="outline" className="text-destructive" disabled={uploading} onClick={() => setConfirmDelete(true)}>
+            <Trash2 /> Excluir aluno
+          </Button>
           <Button variant="outline" onClick={() => setEditing(true)}>
             <Edit2 /> Editar aluno
           </Button>
@@ -182,6 +188,19 @@ export default function AlunoPage({
           onClose={closeEditor}
         />
       )}
+      <ConfirmDialog
+        open={confirmDelete}
+        onOpenChange={setConfirmDelete}
+        title={`Excluir ${student.name}?`}
+        description={`O aluno será removido da turma ${data.cls.name}, incluindo suas notas atuais, foto, frequência, Prova Paulista e anotações. Os registros dos bimestres anteriores serão mantidos no histórico. Esta ação não pode ser desfeita.`}
+        confirmLabel="Excluir aluno"
+        onConfirm={async () => {
+          if (student.id === undefined) return;
+          await deleteStudent(classId, student.id);
+          toast.success("Aluno excluído.");
+          router.replace(`/turmas/${encodeURIComponent(classId)}`);
+        }}
+      />
     </section>
   );
 }

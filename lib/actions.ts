@@ -27,7 +27,19 @@ export async function setStudentPhoto(id: number, photo: Blob): Promise<void> {
     await db.students.update(id, { photo });
 }
 
-/** Apaga uma turma e todos os seus alunos. */
+/** Remove o aluno da turma atual, preservando os retratos dos bimestres anteriores. */
+export async function deleteStudent(classId: string, studentId: number): Promise<void> {
+    await db.transaction("rw", db.classes, db.students, db.gradePeriods, async () => {
+        const student = await db.students.get(studentId);
+        if (!student || student.classId !== classId) {
+            throw new Error("Aluno não encontrado nesta turma.");
+        }
+        await db.students.delete(studentId);
+        await syncCurrentPeriod(classId);
+    });
+}
+
+/** Apaga uma turma, seus alunos e todos os bimestres salvos. */
 export async function deleteClass(classId: string): Promise<void> {
     await db.transaction("rw", db.classes, db.students, db.gradePeriods, async () => {
         await db.students.where("classId").equals(classId).delete();

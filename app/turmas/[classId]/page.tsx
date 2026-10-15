@@ -373,8 +373,7 @@ export default function TurmaPage({
             </Button>
           </div>
           <Button
-            variant="ghost"
-            className="text-destructive justify-start"
+            variant="destructive"
             onClick={() => {
               setManage(false);
               setConfirmDelete(true);

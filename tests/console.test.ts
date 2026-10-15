@@ -286,7 +286,7 @@ test("search ignores accents and matches all terms without a pre-filter limit", 
   assert.equal(matchesSearch("JOAO 8A", "JOAO 8B"), false);
 });
 import { identifyCurrentPeriod, persistMapao } from "../lib/grade-history";
-import { deleteClass } from "../lib/actions";
+import { deleteClass, deleteStudent } from "../lib/actions";
 import { exportGradePeriod } from "../lib/mapao/exporter";
 import { evolutionMapao } from "./fixtures";
 
@@ -396,6 +396,38 @@ test("period imports preserve current data, synchronize edits and require explic
   await deleteClass("7B");
   assert.equal(await db.gradePeriods.where("classId").equals("7B").count(), 0);
   assert.equal(await db.students.where("classId").equals("7B").count(), 0);
+});
+
+test("deleting students and classes is scoped and updates the active period atomically", async (t) => {
+  const cls = { id: "EXCLUSAO", name: "EXCLUSAO", importedAt: 0, subjects: ["MATEMATICA"], currentPeriod: { year: 2026, term: 2 } };
+  await db.classes.put(cls);
+  const first = { ...student(9101, 8), classId: cls.id, photo: new Blob(["photo"]), notes: "nota privada" };
+  const second = { ...student(9102, 6), classId: cls.id };
+  const outsider = { ...student(9103, 7), classId: "OUTRA" };
+  await db.students.bulkPut([first, second, outsider]);
+  const oldPeriod = { ...periodRecord(1, [first, second]), id: periodId(cls.id, { year: 2026, term: 1 }), classId: cls.id };
+  const activePeriod = { ...oldPeriod, id: periodId(cls.id, cls.currentPeriod), term: 2 };
+  await db.gradePeriods.bulkPut([oldPeriod, activePeriod]);
+  await assert.rejects(deleteStudent("OUTRA", 9101), /nesta turma/);
+  assert.ok(await db.students.get(9101));
+  // A storage failure must roll back the deletion, including the photo and notes.
+  const put = t.mock.method(db.gradePeriods, "put", async () => { throw new Error("storage failure"); });
+  await assert.rejects(deleteStudent(cls.id, 9101), /storage failure/);
+  assert.equal((await db.students.get(9101))?.notes, first.notes);
+  put.mock.restore();
+  await deleteStudent(cls.id, 9101);
+  assert.equal(await db.students.get(9101), undefined);
+  assert.deepEqual((await db.gradePeriods.get(activePeriod.id))?.students.map(s => s.name), [second.name]);
+  assert.equal((await db.gradePeriods.get(oldPeriod.id))?.students.length, 2);
+  assert.ok(await db.students.get(9103));
+  await deleteStudent(cls.id, 9102);
+  assert.equal((await db.gradePeriods.get(activePeriod.id))?.students.length, 0);
+  assert.ok(await db.classes.get(cls.id), "deleting the last student keeps an empty class");
+  await deleteClass(cls.id);
+  assert.equal(await db.classes.get(cls.id), undefined);
+  assert.equal(await db.gradePeriods.where("classId").equals(cls.id).count(), 0);
+  assert.ok(await db.students.get(9103));
+  await db.students.delete(9103);
 });
 
 test("photo imports crop around the face, fall back safely and preserve student data", async (t) => {
