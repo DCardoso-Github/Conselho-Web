@@ -15,7 +15,7 @@ Consulte a documentação da versão instalada em `node_modules/next/dist/docs` 
 - Todas as disciplinas juntas, com ícones e títulos centralizados. Filtro Somente notas vermelhas com contagem por aluno, mantido ao navegar entre alunos e abas.
 - Cabeçalho centralizado, controles compactos e cartões com altura mínima baseada no conteúdo. Em janelas menores, rolagem acessível evita sobreposição. Fotos são exibidas inteiras, sem corte para preencher o espaço. Novas importações preservam a proporção original (até 1200 px); fotos já recortadas precisam ser reenviadas para recuperar as áreas removidas.
 - Abas para notas do bimestre, resultados por disciplina da Prova Paulista e acompanhamento. Trocar o aluno retorna às notas do bimestre.
-- Grade adaptável: até quinze disciplinas simultâneas em 1280×720; em telas menores ou conjuntos maiores, rolagem acessível mantém todos os resultados disponíveis sem paginação.
+- Grade adaptável: dezoito disciplinas simultâneas em 1886×886 e 1886×1065; em telas menores ou conjuntos maiores, rolagem acessível mantém todos os resultados disponíveis sem paginação.
 - Ferramentas de importação, fotos, exportação e exclusão em Gerenciar turma.
 - Tema escuro inicial; a preferência salva e o tema claro continuam disponíveis no Menu.
 - Edição explícita, com confirmação de descarte e proteção ao sair da página.
@@ -42,7 +42,7 @@ Validação manual realizada com dados fictícios:
 - Reflow em 640×360, equivalente à área útil de 1280×720 com ampliação de 200%. O zoom real do navegador embutido não respondeu ao atalho; precisa de conferência final em um navegador comum.
 - Temas claro e escuro, busca fora da primeira página, filtros e ordenação.
 - Painéis independentes, retorno às notas do bimestre ao trocar de aluno e navegação por setas.
-- Visão integrada com oito e quinze disciplinas, lista completa com nove alunos e indicadores ausentes tratados como Sem informação.
+- Visão integrada com oito, quinze e dezoito disciplinas, lista completa com nove alunos e indicadores ausentes tratados como Sem informação.
 - Edição, salvamento, confirmação ao voltar com alterações pendentes e observações extensas com rolagem.
 - Importações de mapão, Prova Paulista e frequência; downloads de XLSX e PDF.
 - Comparação visual com o commit original usando os mesmos alunos fictícios.
