@@ -1,6 +1,7 @@
 "use client";
 import { use, useState, useDeferredValue } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useLiveQuery } from "dexie-react-hooks";
 import * as Tabs from "@radix-ui/react-tabs";
 import { toast } from "sonner";
@@ -122,6 +123,7 @@ export default function TurmaPage({
           </p>
         </div>
         <div className="heading-actions">
+          <Button asChild variant="outline"><Link href={`/turmas/${encodeURIComponent(classId)}/evolucao`}><TrendingUp />Evolução da turma</Link></Button>
           <Button variant="outline" onClick={() => setManage(true)}>
             <Settings2 /> Gerenciar turma
           </Button>
@@ -206,7 +208,7 @@ export default function TurmaPage({
           />
         </Tabs.Content>
         <Tabs.Content value="overview">
-          <ClassDashboard students={students} subjects={cls.subjects} />
+          <ClassDashboard students={students} subjects={cls.subjects} classId={classId} />
         </Tabs.Content>
       </Tabs.Root>
       <Dialog open={filters} onOpenChange={setFilters}>

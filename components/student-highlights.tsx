@@ -23,7 +23,7 @@ export function StudentHighlights({
           <h2>
             <Star aria-hidden="true" /> Alunos destaque
           </h2>
-          <p>Até cinco alunos com maior média nas notas do bimestre.</p>
+          <p>Até seis alunos com maior média nas notas do bimestre.</p>
         </div>
         {highlights.length > 0 && (
           <Button asChild>

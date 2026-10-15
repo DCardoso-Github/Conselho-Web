@@ -82,7 +82,7 @@ function EvolutionSelection({
           Alunos evolução
         </h2>
         <p>
-          Até cinco alunos com as maiores melhoras de notas entre bimestres.
+          Até seis alunos com as maiores melhoras de notas entre bimestres.
         </p>
       </div>
       <Button variant="outline" onClick={onImport}>

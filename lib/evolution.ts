@@ -94,7 +94,7 @@ export function evolutionLeaders(rows: StudentEvolution[]) {
         ) ||
         a.student.order - b.student.order,
     )
-    .slice(0, 5);
+    .slice(0, 6);
 }
 
 export const formatGrade = (value: number) =>

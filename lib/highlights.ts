@@ -47,5 +47,5 @@ export function studentHighlights(
         a.student.order - b.student.order ||
         (a.student.id ?? 0) - (b.student.id ?? 0),
     )
-    .slice(0, 5);
+    .slice(0, 6);
 }

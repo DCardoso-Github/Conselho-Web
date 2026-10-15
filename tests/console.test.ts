@@ -140,7 +140,7 @@ after(async () => {
   await db.delete();
 });
 
-test("highlights select at most five by numeric average without mutating students", () => {
+test("highlights select at most six by numeric average without mutating students", () => {
   const students = [
     student(1, null),
     student(2, "9,5"),
@@ -154,7 +154,7 @@ test("highlights select at most five by numeric average without mutating student
   const selected = studentHighlights(students, ["MATEMATICA", "PORTUGUES"]);
   assert.deepEqual(
     selected.map(({ student }) => student.id),
-    [3, 2, 4, 5, 6],
+    [3, 2, 4, 5, 6, 7],
   );
   assert.equal(selected[1].average, 9.5);
   assert.equal(selected[1].gradeCount, 1);
@@ -179,7 +179,7 @@ test("highlights select at most five by numeric average without mutating student
     presentationStudents(students, "top", null, ["MATEMATICA"]).map(
       (s) => s.id,
     ),
-    [3, 2, 4, 5, 6],
+    [3, 2, 4, 5, 6, 7],
   );
   assert.equal(
     presentationStudents(students, "top", "1", ["MATEMATICA"]).length,
@@ -213,6 +213,48 @@ test("highlight ties use fewer low grades then alphabetical names", () => {
 import Dexie from "dexie";
 import { ConselhoDB, type GradePeriodRecord } from "../lib/db";
 import { comparePeriods, evolutionLeaders, periodId } from "../lib/evolution";
+import { classOverview, classEvolution, matchesSearch } from "../lib/class-analytics";
+
+test("overview keeps missing and nonnumeric values out of means and coverage", () => {
+  const rows = [student(1, 0), student(2, "4,5"), student(3, "ET"), student(4, null)];
+  const result = classOverview(rows, ["MATEMATICA", "MATEMATICA", "PORTUGUES"]);
+  assert.equal(result.count, 2);
+  assert.equal(result.expected, 8);
+  assert.equal(result.average, 2.25);
+  assert.equal(result.withoutGrades, 2);
+  assert.equal(result.withLow, 1);
+  assert.deepEqual(result.bands, [1, 1, 0]);
+  assert.equal(result.rows[0].lowPercent, 50);
+  assert.equal(result.rows[1].average, null);
+  assert.equal(result.rows[1].lowPercent, null);
+  assert.equal(classOverview([], ["MATEMATICA"]).average, null);
+});
+
+test("class evolution weights students equally and reports only matched low grades", () => {
+  const data = classEvolution([
+    { student: student(1, 5), before: 2, after: 6, gain: 4, subjects: [{ subject: "MAT", before: 2, after: 6, gain: 4 }] },
+    { student: student(2, 5), before: 5, after: 4, gain: -1, subjects: [{ subject: "MAT", before: 6, after: 4, gain: -2 }, { subject: "PORT", before: 4, after: 4, gain: 0 }] },
+  ]);
+  assert.equal(data.before, 3.5);
+  assert.equal(data.after, 5);
+  assert.equal(data.gain, 1.5);
+  assert.equal(data.pairCount, 3);
+  assert.equal(data.lowBefore, 2);
+  assert.equal(data.lowAfter, 2);
+  assert.equal(data.improved, 1);
+  assert.equal(data.declined, 1);
+  assert.equal(data.subjects[0].count, 2);
+  assert.equal(data.subjects[0].gain, 1);
+  assert.equal(classEvolution([]).gain, null);
+});
+
+test("search ignores accents and matches all terms without a pre-filter limit", () => {
+  const names = Array.from({ length: 250 }, (_, i) => `Aluno ${i}`);
+  names.push("JOÃO DA SILVA 8A");
+  assert.deepEqual(names.filter((name) => matchesSearch(name, "8a joao")), ["JOÃO DA SILVA 8A"]);
+  assert.equal(matchesSearch("Evolução da turma", "evolucao"), true);
+  assert.equal(matchesSearch("JOAO 8A", "JOAO 8B"), false);
+});
 import { identifyCurrentPeriod, persistMapao } from "../lib/grade-history";
 import { deleteClass } from "../lib/actions";
 import { exportGradePeriod } from "../lib/mapao/exporter";
@@ -250,12 +292,12 @@ test("evolution compares only shared numeric subjects, retaining zero and exclud
   assert.deepEqual(comparePeriods(current, undefined, after), []);
 });
 
-test("evolution leaders select five positive gains and break ties by coverage then name", () => {
+test("evolution leaders select six positive gains and break ties by coverage then name", () => {
   const students = Array.from({ length: 9 }, (_, index) => student(index + 1, 5));
   const previous = periodRecord(1, students.map((s) => ({ ...s, grades: { MATEMATICA: 2, PORTUGUES: s.id === 2 ? null : 2 } })));
   const next = periodRecord(2, students.map((s) => ({ ...s, grades: { MATEMATICA: s.id! < 7 ? 5 : 1, PORTUGUES: s.id! < 7 ? 5 : 1 } })));
   const rows = comparePeriods(students, previous, next);
-  assert.deepEqual(evolutionLeaders(rows).map((row) => row.student.id), [1, 3, 4, 5, 6]);
+  assert.deepEqual(evolutionLeaders(rows).map((row) => row.student.id), [1, 3, 4, 5, 6, 2]);
   assert.equal(rows.length, 9);
   assert.equal(evolutionLeaders(rows.filter((row) => row.student.id === 1)).length, 1);
   assert.equal(evolutionLeaders(rows.map((row) => ({ ...row, gain: 0 }))).length, 0);
