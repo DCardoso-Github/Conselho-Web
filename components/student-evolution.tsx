@@ -19,6 +19,7 @@ import {
   type StudentEvolution as Evolution,
 } from "@/lib/evolution";
 import { formatSubject } from "@/lib/mapao/subjects";
+import { studentAverage } from "@/lib/highlights";
 import { StudentProfile } from "./student-profile";
 import { SubjectIcon } from "./subject-icon";
 import { Button } from "./ui/button";
@@ -74,6 +75,9 @@ function EvolutionSelection({
     before.term < after.term;
   const comparisons = comparePeriods(students, before, after);
   const leaders = evolutionLeaders(comparisons);
+  const leaderIds = new Set(leaders.map(row => row.student.id));
+  const rest = students.filter(student => !leaderIds.has(student.id)).sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
+  const comparisonById = new Map(comparisons.map(row => [row.student.id, row]));
   const heading = (
     <div className="highlights-heading">
       <div>
@@ -139,12 +143,6 @@ function EvolutionSelection({
           </select>
         </label>
       </div>
-      <p className="highlight-criteria">
-        Ganho da média nas mesmas disciplinas com nota de 0 a 10 nos dois
-        bimestres. Ausências e conceitos como ET ficam fora. Participam alunos
-        da turma atual identificados pelo mesmo nome. Em empate: mais
-        disciplinas comparadas e depois nome.
-      </p>
       {!valid ? (
         <p role="alert" className="empty-panel">
           Escolha um bimestre final posterior ao inicial, do mesmo ano.
@@ -169,48 +167,7 @@ function EvolutionSelection({
           </div>
           {leaders.length ? (
             <div className="selection-grid student-selection-grid">
-              {leaders.map((row) => (
-                <article
-                  key={row.student.id}
-                  className="student-tile student-highlight evolution-tile"
-                >
-                  <StudentProfile compact student={row.student} />
-                  <div className="student-tile-content">
-                    <span className="highlight-label">
-                      <TrendingUp aria-hidden="true" />
-                      Aluno evolução
-                    </span>
-                    <h3>{row.student.name}</h3>
-                    <div className="highlight-average">
-                      <span>Ganho na média</span>
-                      <strong className="evolution-positive">
-                        {formatGain(row.gain)} <small>pontos</small>
-                      </strong>
-                      <span>
-                        {formatGrade(row.before)} → {formatGrade(row.after)}
-                      </span>
-                      <small>
-                        {row.subjects.length} disciplinas comparadas
-                      </small>
-                    </div>
-                    <Link
-                      className="tile-action"
-                      href={`/turmas/${encodeURIComponent(cls.id)}/alunos/${row.student.id}`}
-                    >
-                      Abrir aluno
-                    </Link>
-                  </div>
-                  <details className="evolution-details">
-                    <summary>Ver comparação por disciplina</summary>
-                    <EvolutionDetail
-                      row={row}
-                      beforeLabel={periodLabel(before!)}
-                      afterLabel={periodLabel(after!)}
-                      compact
-                    />
-                  </details>
-                </article>
-              ))}
+              {leaders.map(row => <EvolutionCard key={row.student.id} classId={cls.id} student={row.student} row={row} leader />)}
             </div>
           ) : (
             <div className="empty-panel">
@@ -226,56 +183,46 @@ function EvolutionSelection({
               </p>
             </div>
           )}
-          <Button
-            variant="outline"
-            className="comparison-toggle"
-            aria-expanded={showAll}
-            onClick={() => setShowAll(!showAll)}
-          >
-            {showAll ? "Ocultar comparação da turma" : "Comparar turma inteira"}
-          </Button>
-          {showAll && (
-            <div className="class-comparisons">
-              {students.map((student) => {
-                const row = comparisons.find(
-                  (item) => item.student.id === student.id,
-                );
-                return (
-                  <details key={student.id}>
-                    <summary>
-                      <span>{student.name}</span>
-                      <strong
-                        className={
-                          row && row.gain > 1e-9 ? "evolution-positive" : ""
-                        }
-                      >
-                        {row
-                          ? `${formatGain(row.gain)} pontos`
-                          : "Sem comparação"}
-                      </strong>
-                    </summary>
-                    {row ? (
-                      <EvolutionDetail
-                        row={row}
-                        beforeLabel={periodLabel(before!)}
-                        afterLabel={periodLabel(after!)}
-                      />
-                    ) : (
-                      <p>
-                        Sem correspondência única de nome ou sem notas numéricas
-                        nas mesmas disciplinas dos dois bimestres. Dados
-                        ausentes não são tratados como zero.
-                      </p>
-                    )}
-                  </details>
-                );
-              })}
-            </div>
-          )}
+          {rest.length > 0 && <>
+            <Button variant="outline" className="comparison-toggle" aria-expanded={showAll} aria-controls="evolution-rest" onClick={() => setShowAll(!showAll)}>
+              {showAll ? "Ocultar restante da turma" : `Mostrar restante da turma (${rest.length})`}
+            </Button>
+            {showAll && <div id="evolution-rest" className="selection-grid student-selection-grid">
+              {rest.map(student => <EvolutionCard key={student.id} classId={cls.id} student={student} row={comparisonById.get(student.id)} />)}
+            </div>}
+          </>}
         </>
       )}
     </section>
   );
+}
+
+function EvolutionCard({ classId, student, row, leader = false }: {
+  classId: string;
+  student: StudentRecord;
+  row?: Evolution;
+  leader?: boolean;
+}) {
+  const average = studentAverage(student);
+  return <article className={`student-tile evolution-tile ${leader ? "student-highlight" : ""}`}>
+    <StudentProfile compact student={student} />
+    <div className="student-tile-content">
+      {leader && <span className="highlight-label"><TrendingUp aria-hidden="true" /> Aluno evolução</span>}
+      <h3>{student.name}</h3>
+      {row ? <div className="highlight-average">
+        <span>Média final</span>
+        <strong>{formatGrade(row.after)}</strong>
+        <span>Média inicial: {formatGrade(row.before)}</span>
+        <span className={row.gain > 1e-9 ? "evolution-positive" : ""}>{formatGain(row.gain)} pontos</span>
+        <small>{row.subjects.length} disciplinas comparadas</small>
+      </div> : <div className="highlight-average">
+        <span>Média atual</span>
+        <strong>{average === null ? "Sem informação" : formatGrade(average)}</strong>
+        <small>Sem notas comparáveis neste intervalo</small>
+      </div>}
+      <Link className="tile-action" href={`/turmas/${encodeURIComponent(classId)}/alunos/${student.id}`}>Abrir aluno</Link>
+    </div>
+  </article>;
 }
 
 export function EvolutionDetail({

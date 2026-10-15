@@ -149,7 +149,7 @@ export async function persistMapao(
         importedAt: Date.now(),
         currentPeriod: period,
       };
-      const records: StudentRecord[] = parsed.students.map(
+      const records: StudentRecord[] = [...parsed.students].sort((a, b) => a.name.localeCompare(b.name, "pt-BR")).map(
         (student, order) => ({
           ...student,
           name: nameKey(student.name),

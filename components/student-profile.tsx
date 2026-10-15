@@ -3,6 +3,8 @@ import { useEffect, useRef } from "react";
 import { AlertTriangle } from "lucide-react";
 import { lowGradeCount } from "@/lib/presentation";
 import type { StudentRecord } from "@/lib/db";
+import { studentAverage } from "@/lib/highlights";
+import { formatGrade } from "@/lib/evolution";
 export function StudentProfile({
   student,
   compact = false,
@@ -11,6 +13,7 @@ export function StudentProfile({
   compact?: boolean;
 }) {
   const lowCount = lowGradeCount(student);
+  const average = studentAverage(student);
   const image = useRef<HTMLImageElement>(null);
   useEffect(() => {
     if (!student.photo || !image.current) return;
@@ -39,6 +42,7 @@ export function StudentProfile({
         <div>
           <p className="eyebrow">Aluno · {student.classId}</p>
           <h1>{student.name}</h1>
+          <p className="profile-average">Média das notas <strong>{average === null ? "Sem informação" : formatGrade(average)}</strong></p>
           <p
             className={`profile-grade-count ${lowCount ? "has-low-grades" : ""}`}
           >

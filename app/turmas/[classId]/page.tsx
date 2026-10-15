@@ -113,7 +113,7 @@ export default function TurmaPage({
     setImporter(type);
   };
   return (
-    <div className="console-container">
+    <div className="console-container class-screen">
       <header className="page-heading">
         <div>
           <p className="eyebrow">Sua turma</p>

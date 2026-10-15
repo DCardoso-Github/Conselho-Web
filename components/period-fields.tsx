@@ -35,6 +35,7 @@ export function PeriodFields({
             onChange({ ...value, term: Number(event.target.value) })
           }
         >
+          <option value={0} disabled>Selecione o bimestre</option>
           {[1, 2, 3, 4].map((term) => (
             <option key={term} value={term}>
               {term}º bimestre

@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { useState } from "react";
 import { Play, Star } from "lucide-react";
 import type { StudentRecord } from "@/lib/db";
 import { studentHighlights } from "@/lib/highlights";
@@ -16,6 +17,9 @@ export function StudentHighlights({
   classId: string;
 }) {
   const highlights = studentHighlights(students, subjects);
+  const [showRest, setShowRest] = useState(false);
+  const highlightIds = new Set(highlights.map(item => item.student.id));
+  const rest = students.filter(student => !highlightIds.has(student.id)).sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
   return (
     <section aria-label="Alunos destaque da turma">
       <div className="highlights-heading">
@@ -60,6 +64,14 @@ export function StudentHighlights({
           <p>Importe ou preencha notas numéricas dos alunos desta turma.</p>
         </div>
       )}
+      {rest.length > 0 && <>
+        <Button variant="outline" className="comparison-toggle" aria-expanded={showRest} aria-controls="highlight-rest" onClick={() => setShowRest(!showRest)}>
+          {showRest ? "Ocultar restante da turma" : `Mostrar restante da turma (${rest.length})`}
+        </Button>
+        {showRest && <div id="highlight-rest" className="selection-grid student-selection-grid">
+          {rest.map(student => <StudentCard key={student.id} classId={classId} student={student} />)}
+        </div>}
+      </>}
     </section>
   );
 }

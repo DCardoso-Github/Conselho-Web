@@ -1,4 +1,10 @@
 import type { StudentRecord } from "./db";
+import { numericGrade } from "./evolution";
+
+export function studentAverage(student: StudentRecord, subjects = Object.keys(student.grades)): number | null {
+  const grades = subjects.map(subject => numericGrade(student.grades[subject])).filter((grade): grade is number => grade !== null);
+  return grades.length ? grades.reduce((sum, grade) => sum + grade, 0) / grades.length : null;
+}
 
 export interface StudentHighlight {
   student: StudentRecord;

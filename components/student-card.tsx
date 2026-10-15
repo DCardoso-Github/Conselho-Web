@@ -4,6 +4,8 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { AlertTriangle, ArrowUpRight, SearchX, Star, CheckSquare, Trash2 } from "lucide-react";
 import type { StudentHighlight } from "@/lib/highlights";
+import { studentAverage } from "@/lib/highlights";
+import { formatGrade } from "@/lib/evolution";
 import type { StudentRecord } from "@/lib/db";
 import { useStudents } from "@/lib/hooks";
 import { deleteStudents, isLowGrade } from "@/lib/actions";
@@ -19,6 +21,7 @@ export interface StudentCardProps {
   selection?: { checked: boolean; onChange: () => void };
 }
 export function StudentCard({ classId, student, highlight, selection }: StudentCardProps) {
+  const average = highlight?.average ?? studentAverage(student);
   const low = Object.values(student.grades).filter(
     (grade) => hasValue(grade) && isLowGrade(grade),
   ).length;
@@ -33,21 +36,16 @@ export function StudentCard({ classId, student, highlight, selection }: StudentC
           </span>
         )}
         <h2>{student.name}</h2>
-        {highlight && (
-          <div className="highlight-average">
+          <div className={highlight ? "highlight-average" : "card-average"}>
             <span>Média das notas</span>
             <strong>
-              {highlight.average.toLocaleString("pt-BR", {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
+              {average === null ? "Sem informação" : formatGrade(average)}
             </strong>
-            <small>
+            {highlight && <small>
               {highlight.gradeCount} de {highlight.subjectCount} disciplinas com
               nota numérica
-            </small>
+            </small>}
           </div>
-        )}
         <p className={low ? "attention" : "supporting-text"}>
           <AlertTriangle /> {low} nota{low === 1 ? "" : "s"} vermelha
           {low === 1 ? "" : "s"}

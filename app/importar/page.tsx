@@ -18,6 +18,7 @@ import {
 import type { SchoolPeriod } from "@/lib/db";
 import { PeriodFields } from "@/components/period-fields";
 import { periodLabel } from "@/lib/evolution";
+import { detectMapaoPeriod } from "@/lib/mapao/period";
 import { importMapaoFile } from "@/lib/actions";
 import { FileDrop } from "@/components/file-drop";
 import { Button } from "@/components/ui/button";
@@ -38,20 +39,30 @@ interface FileResult {
 
 export default function ImportarPage() {
     const [step, setStep] = React.useState<Step>("select");
-    const [files, setFiles] = React.useState<File[]>([]);
+    const [files, setFiles] = React.useState<{ file: File; period: SchoolPeriod; suggestion: string }[]>([]);
     const [busy, setBusy] = React.useState(false);
     const [results, setResults] = React.useState<FileResult[]>([]);
-    const [period, setPeriod] = React.useState<SchoolPeriod>({ year: new Date().getFullYear(), term: 1 });
     const [replace, setReplace] = React.useState(false);
     const [progress, setProgress] = React.useState(0);
 
-    const onPicked = (picked: File[]) => {
-        setFiles(picked);
+    const onPicked = async (picked: File[]) => {
+        setBusy(true);
+        const reviewed = await Promise.all(picked.map(async file => {
+            try {
+                const suggestion = detectMapaoPeriod(file.name, await file.arrayBuffer());
+                return { file, period: { year: new Date().getFullYear(), term: 0, ...suggestion.period }, suggestion: suggestion.message };
+            } catch {
+                return { file, period: { year: new Date().getFullYear(), term: 0 }, suggestion: "Não foi possível identificar o período. Confira o arquivo e selecione o bimestre." };
+            }
+        }));
+        setFiles(reviewed);
+        setReplace(false);
+        setBusy(false);
         setStep("review");
     };
 
-    const removeFile = (name: string) => {
-        setFiles((f) => f.filter((x) => x.name !== name));
+    const removeFile = (index: number) => {
+        setFiles(previous => previous.filter((_, i) => i !== index));
     };
 
     const startImport = async () => {
@@ -59,7 +70,7 @@ export default function ImportarPage() {
         setProgress(0);
         const out: FileResult[] = [];
         let i = 0;
-        for (const f of files) {
+        for (const { file: f, period } of files) {
             try {
                 const r = await importMapaoFile(f, { period, replace });
                 out.push({
@@ -136,7 +147,8 @@ export default function ImportarPage() {
                                         [".xlsx"],
                                 }}
                                 onFiles={onPicked}
-                                label="Clique ou arraste arquivos .xlsx"
+                                disabled={busy}
+                                label={busy ? "Identificando os bimestres…" : "Clique ou arraste arquivos .xlsx"}
                                 hint="O nome da turma é extraído do nome do arquivo (ex.: 9º_ANO_A → 9A)"
                                 icon={<FileSpreadsheet className="size-6" />}
                             />
@@ -152,8 +164,7 @@ export default function ImportarPage() {
                             transition={{ duration: 0.25 }}
                             className="space-y-4"
                         >
-                            <PeriodFields value={period} onChange={(value) => { setPeriod(value); setReplace(false); }} disabled={busy} label="Período dos arquivos selecionados" />
-                            <p className="supporting-text">Importe arquivos do mesmo ano e bimestre por vez. Bimestres anteriores ficam no histórico; o mais recente aparece na turma. Para turmas já cadastradas sem período, identifique primeiro o mapão atual em Gerenciar turma → Mapões e bimestres.</p>
+                            <p className="supporting-text">Confira o período de cada arquivo. Bimestres anteriores ficam no histórico; o mais recente aparece na turma. Os alunos serão organizados em ordem alfabética.</p>
                             <label className="check-row"><input type="checkbox" checked={replace} disabled={busy} onChange={(event) => setReplace(event.target.checked)} />Atualizar este bimestre se ele já estiver salvo. Os outros bimestres serão mantidos.</label>
                             <Card>
                                 <CardContent className="p-4">
@@ -161,25 +172,28 @@ export default function ImportarPage() {
                                         {files.length} arquivo(s) selecionado(s)
                                     </div>
                                     <ul className="divide-y divide-border">
-                                        {files.map((f) => (
+                                        {files.map(({ file: f, period, suggestion }, index) => (
                                             <li
-                                                key={f.name}
-                                                className="flex items-center gap-3 py-2 first:pt-0 last:pb-0"
+                                                key={index}
+                                                className="import-file-review"
                                             >
                                                 <FileSpreadsheet className="size-4 text-primary shrink-0" />
                                                 <div className="min-w-0 flex-1">
-                                                    <div className="text-sm font-medium truncate">
+                                                    <div className="font-medium break-words">
                                                         {f.name}
                                                     </div>
                                                     <div className="text-xs text-muted-foreground">
                                                         {(f.size / 1024).toFixed(1)} KB
                                                     </div>
+                                                    <p className="supporting-text period-suggestion">{suggestion}</p>
+                                                    <PeriodFields value={period} onChange={value => { setFiles(previous => previous.map((entry, i) => i === index ? { ...entry, period: value } : entry)); setReplace(false); }} disabled={busy} label={`Período · ${f.name}`} />
                                                 </div>
                                                 <Button
                                                     variant="ghost"
                                                     size="icon-sm"
-                                                    onClick={() => removeFile(f.name)}
-                                                    aria-label="Remover"
+                                                    onClick={() => removeFile(index)}
+                                                    disabled={busy}
+                                                    aria-label={`Remover ${f.name}`}
                                                 >
                                                     <Trash2 className="size-4" />
                                                 </Button>
@@ -211,7 +225,7 @@ export default function ImportarPage() {
                                 </Button>
                                 <Button
                                     onClick={startImport}
-                                    disabled={busy || files.length === 0 || period.year < 2000 || period.year > 2100 || !Number.isInteger(period.year)}
+                                    disabled={busy || files.length === 0 || files.some(({ period }) => period.term < 1 || period.term > 4 || period.year < 2000 || period.year > 2100 || !Number.isInteger(period.year))}
                                     size="lg"
                                 >
                                     {busy ? (

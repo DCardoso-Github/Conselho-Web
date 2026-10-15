@@ -21,6 +21,44 @@ import {
   lowGradeCount,
 } from "../lib/presentation";
 import { studentHighlights } from "../lib/highlights";
+import { studentAverage } from "../lib/highlights";
+import { detectMapaoPeriod } from "../lib/mapao/period";
+import { workbook } from "./fixtures";
+
+test("period suggestions recognize explicit labels and never mistake students or class numbers for terms", () => {
+  const buffer = (rows: unknown[][] = []) => new Uint8Array(workbook(rows)).buffer;
+  for (const [name, term] of [["7B_2026_3bim.xlsx", 3], ["8A_primeiro_bimestre.xlsx", 1], ["9B_Bimestre-IV.xlsx", 4], ["6A_2º_Bimestre.xlsx", 2]] as const) {
+    assert.equal(detectMapaoPeriod(name, buffer()).period.term, term);
+  }
+  assert.deepEqual(detectMapaoPeriod("7B.xlsx", buffer([["Ano letivo", 2026], ["Bimestre", 2], ["ALUNO", "SITUACAO"], ["3 bimestre", "ATIVO"]])).period, { term: 2, year: 2026 });
+  assert.equal(detectMapaoPeriod("7B_1_2026.xlsx", buffer([["ALUNO", "SITUACAO"], ["4 bimestre", "ATIVO"]])).period.term, 1);
+  assert.equal(detectMapaoPeriod("1º_ANO_A_2026.xlsx", buffer()).period.term, undefined);
+  assert.equal(detectMapaoPeriod("7B.xlsx", buffer([["Bimestre"], [4], ["ALUNO", "SITUACAO"]])).period.term, 4);
+  const conflict = detectMapaoPeriod("7B_1bim.xlsx", buffer([["Terceiro bimestre"]]));
+  assert.equal(conflict.period.term, undefined);
+  assert.match(conflict.message, /diferentes/);
+});
+
+test("student average preserves zero and excludes missing or nonnumeric concepts", () => {
+  assert.equal(studentAverage({ ...student(1, 0), grades: { A: 0, B: 10, C: "ET", D: null, E: "", F: "7,5" } }), 17.5 / 3);
+  assert.equal(studentAverage(student(1, null)), null);
+  assert.equal(studentAverage(student(1, 0)), 0);
+});
+
+test("imports sort current students and history alphabetically while preserving existing identities", async () => {
+  const parsed = parseMapao("6Z.xlsx", new Uint8Array(mapao()).buffer);
+  await persistMapao(parsed, { period: { year: 2026, term: 1 } });
+  const saved = await db.students.where("classId").equals("6Z").sortBy("order");
+  assert.deepEqual(saved.map(s => s.name), [...names].sort((a, b) => a.localeCompare(b, "pt-BR")));
+  await db.students.update(saved[0].id!, { tutor: "Tutor preservado" });
+  await persistMapao({ ...parsed, students: [...parsed.students].reverse() }, { period: { year: 2026, term: 2 } });
+  const updated = await db.students.where("classId").equals("6Z").sortBy("order");
+  assert.deepEqual(updated.map(s => s.id), saved.map(s => s.id));
+  assert.equal(updated[0].tutor, "Tutor preservado");
+  const history = await db.gradePeriods.get(periodId("6Z", { year: 2026, term: 2 }));
+  assert.deepEqual(history!.students.map(s => s.name), saved.map(s => s.name));
+  await deleteClass("6Z");
+});
 import { exportClassToXlsx } from "../lib/mapao/exporter";
 import { parseMapao } from "../lib/mapao/parser";
 import { mapao, prova, frequencia, names } from "./fixtures";

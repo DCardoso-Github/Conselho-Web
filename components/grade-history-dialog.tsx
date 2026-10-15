@@ -7,6 +7,7 @@ import { db, type ClassRecord, type SchoolPeriod } from "@/lib/db";
 import { importMapaoFile } from "@/lib/actions";
 import { identifyCurrentPeriod, validatePeriod } from "@/lib/grade-history";
 import { periodId, periodLabel, periodOrder } from "@/lib/evolution";
+import { detectMapaoPeriod } from "@/lib/mapao/period";
 import { parseMapao } from "@/lib/mapao/parser";
 import { exportGradePeriod } from "@/lib/mapao/exporter";
 import { PeriodFields } from "./period-fields";
@@ -56,6 +57,7 @@ function HistoryForm({ cls }: { cls: ClassRecord }) {
   );
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState("");
+  const [suggestion, setSuggestion] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [replace, setReplace] = useState(false);
@@ -75,13 +77,17 @@ function HistoryForm({ cls }: { cls: ClassRecord }) {
       const selected = files[0];
       if (!selected?.name.toLowerCase().endsWith(".xlsx"))
         throw new Error("Selecione um arquivo .xlsx.");
-      const parsed = parseMapao(selected.name, await selected.arrayBuffer());
+      const buffer = await selected.arrayBuffer();
+      const parsed = parseMapao(selected.name, buffer);
       if (parsed.className !== cls.id)
         throw new Error(
           `O arquivo é da turma ${parsed.className}. Selecione um mapão da turma ${cls.name}.`,
         );
       if (!parsed.students.length || !parsed.subjects.length)
         throw new Error("Nenhum aluno ativo ou disciplina foi identificado.");
+      const detected = detectMapaoPeriod(selected.name, buffer);
+      setPeriod({ year: cls.currentPeriod?.year ?? new Date().getFullYear(), term: 0, ...detected.period });
+      setSuggestion(detected.message);
       setFile(selected);
       setPreview(
         `${parsed.students.length} alunos ativos · ${parsed.subjects.length} disciplinas`,
@@ -158,8 +164,9 @@ function HistoryForm({ cls }: { cls: ClassRecord }) {
           {file && (
             <p className="history-file" role="status">
               <strong>{file.name}</strong>
+              <span>{suggestion}</span>
               <span>
-                {preview} · {periodLabel(period)}
+                {preview}{period.term > 0 ? ` · ${periodLabel(period)}` : ""}
               </span>
             </p>
           )}
@@ -185,7 +192,7 @@ function HistoryForm({ cls }: { cls: ClassRecord }) {
       <Button
         onClick={save}
         disabled={
-          busy || (!!cls.currentPeriod && (!file || (exists && !replace)))
+          busy || period.term < 1 || (!!cls.currentPeriod && (!file || (exists && !replace)))
         }
       >
         <Upload />
