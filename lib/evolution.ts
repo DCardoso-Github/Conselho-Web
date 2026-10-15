@@ -81,9 +81,8 @@ export function comparePeriods(
   });
 }
 
-export function evolutionLeaders(rows: StudentEvolution[]) {
-  return rows
-    .filter((row) => row.gain > 1e-9)
+export function evolutionRanking(rows: StudentEvolution[]) {
+  return [...rows]
     .sort(
       (a, b) =>
         b.gain - a.gain ||
@@ -93,8 +92,11 @@ export function evolutionLeaders(rows: StudentEvolution[]) {
           "pt-BR",
         ) ||
         a.student.order - b.student.order,
-    )
-    .slice(0, 6);
+    );
+}
+
+export function evolutionLeaders(rows: StudentEvolution[]) {
+  return evolutionRanking(rows.filter((row) => row.gain > 1e-9)).slice(0, 6);
 }
 
 export const formatGrade = (value: number) =>

@@ -14,8 +14,8 @@ export interface StudentHighlight {
   lowCount: number;
 }
 
-/** Calcula os destaques da turma inteira, sem alterar os registros. */
-export function studentHighlights(
+/** Ordena as médias da turma inteira, sem alterar os registros. */
+export function studentRanking(
   students: StudentRecord[],
   subjects?: string[],
 ): StudentHighlight[] {
@@ -52,6 +52,9 @@ export function studentHighlights(
         a.student.name.localeCompare(b.student.name, "pt-BR") ||
         a.student.order - b.student.order ||
         (a.student.id ?? 0) - (b.student.id ?? 0),
-    )
-    .slice(0, 6);
+    );
+}
+
+export function studentHighlights(students: StudentRecord[], subjects?: string[]) {
+  return studentRanking(students, subjects).slice(0, 6);
 }

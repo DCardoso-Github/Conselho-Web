@@ -90,7 +90,7 @@ function PresentationLoader({ classId }: { classId: string }) {
       key={`${classId}:${query.toString()}`}
       evolution={evolution}
       groupLabel={groupLabel}
-      remaining={groupLabel ? remainingPresentationStudents(data.students, list) : []}
+      remaining={groupLabel ? remainingPresentationStudents(data.students, list, data.cls.subjects, evolution) : []}
       comparisonLabels={
         evolution && before && after ? [periodLabel(before), periodLabel(after)] : undefined
       }
@@ -119,7 +119,7 @@ function Presentation({
 }) {
   const router = useRouter();
   const [showRemaining, setShowRemaining] = useState(false);
-  const students = showRemaining ? remaining : selected;
+  const students = showRemaining ? [...selected, ...remaining] : selected;
   const [index, setIndex] = useState(() =>
     Math.max(
       0,
@@ -131,15 +131,13 @@ function Presentation({
   const [fullscreenMessage, setFullscreenMessage] = useState("");
   const safeIndex = Math.min(index, Math.max(0, students.length - 1));
   const canContinue = !showRemaining && remaining.length > 0;
-  const changeGroup = useCallback((rest: boolean) => {
-    setShowRemaining(rest);
-    setIndex(0);
-    setOnlyLow(false);
+  const includeRemaining = useCallback(() => {
+    setShowRemaining(true);
   }, []);
   const nextStudent = useCallback(() => {
-    if (safeIndex >= students.length - 1 && canContinue) changeGroup(true);
+    if (safeIndex >= students.length - 1 && canContinue) includeRemaining();
     else setIndex(Math.min(safeIndex + 1, Math.max(0, students.length - 1)));
-  }, [safeIndex, students.length, canContinue, changeGroup]);
+  }, [safeIndex, students.length, canContinue, includeRemaining]);
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (shortcutBlocked(event.target)) return;
@@ -177,7 +175,7 @@ function Presentation({
     return (
       <div className="empty-panel">
         <h1>Nenhum aluno nesta seleção</h1>
-        {canContinue && <Button onClick={() => changeGroup(true)}>Apresentar restante da turma ({remaining.length})</Button>}
+        {canContinue && <Button onClick={includeRemaining}>Apresentar restante da turma ({remaining.length})</Button>}
         <Button onClick={leave}>Voltar à turma</Button>
       </div>
     );
@@ -189,15 +187,16 @@ function Presentation({
           <Button
             variant="outline"
             className="presentation-group-toggle"
-            onClick={() => changeGroup(!showRemaining)}
+            onClick={includeRemaining}
+            disabled={showRemaining}
             aria-label={showRemaining ? undefined : `Apresentar restante da turma (${remaining.length})`}
           >
             <Users aria-hidden="true" />
-            {showRemaining ? (groupLabel === "Alunos destaque" ? "Voltar aos destaques" : "Voltar aos alunos evolução") : `Restante da turma (${remaining.length})`}
+            {showRemaining ? `Turma completa (${students.length})` : `Restante da turma (${remaining.length})`}
           </Button>
         )}
         <div className="presentation-context">
-          <span className="eyebrow">{showRemaining ? "Restante da turma" : groupLabel ?? "Conselho em apresentação"}</span>
+          <span className="eyebrow">{groupLabel ?? "Conselho em apresentação"}</span>
           <strong>{cls.name}</strong>
         </div>
         <div className="presentation-actions">

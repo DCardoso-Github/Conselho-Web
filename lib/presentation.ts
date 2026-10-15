@@ -1,4 +1,5 @@
-import { studentHighlights } from "./highlights";
+import { studentHighlights, studentRanking } from "./highlights";
+import { evolutionRanking, type StudentEvolution } from "./evolution";
 import type { StudentRecord } from "./db";
 import { isLowGrade } from "./actions";
 
@@ -23,11 +24,18 @@ export const hasLowGrades = (student: StudentRecord) =>
 export function remainingPresentationStudents(
   students: StudentRecord[],
   selected: StudentRecord[],
+  subjects?: string[],
+  evolution?: StudentEvolution[],
 ) {
   const selectedIds = new Set(selected.map((student) => student.id));
-  return students
-    .filter((student) => !selectedIds.has(student.id))
+  const ranked = evolution
+    ? evolutionRanking(evolution).map((row) => row.student)
+    : studentRanking(students, subjects).map((row) => row.student);
+  const rankedIds = new Set(ranked.map((student) => student.id));
+  const missing = students
+    .filter((student) => !rankedIds.has(student.id))
     .sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
+  return [...ranked, ...missing].filter((student) => !selectedIds.has(student.id));
 }
 
 export function percentage(value: unknown) {

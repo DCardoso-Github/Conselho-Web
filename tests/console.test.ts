@@ -260,7 +260,7 @@ test("highlights select at most six by numeric average without mutating students
     students.length,
   );
 });
-test("presentation remainder includes every other student once, including missing grades and nonpositive evolution", () => {
+test("presentation expands in descending score order, keeping the selected prefix and missing data last", () => {
   const students = Array.from({ length: 9 }, (_, i) => ({
     ...student(i + 1, i === 8 ? null : 10 - i),
     name: `ALUNO ${9 - i}`,
@@ -269,7 +269,8 @@ test("presentation remainder includes every other student once, including missin
   const top = presentationStudents(students, "top", null);
   const rest = remainingPresentationStudents(students, top);
   assert.equal(top.length, 6);
-  assert.deepEqual(rest.map(s => s.id), [9, 8, 7]);
+  assert.deepEqual(rest.map(s => s.id), [7, 8, 9]);
+  assert.deepEqual([...top, ...rest].slice(0, top.length), top);
   assert.equal(new Set([...top, ...rest].map(s => s.id)).size, students.length);
   assert.deepEqual(students.map(s => s.id), originalOrder);
   assert.deepEqual(remainingPresentationStudents(students, students), []);
@@ -281,8 +282,16 @@ test("presentation remainder includes every other student once, including missin
     subjects: [{ subject: "MATEMATICA", before: 3, after: 9 - i, gain: 6 - i }],
   }));
   const leaders = evolutionLeaders(comparisons).map(row => row.student);
-  const evolutionRest = remainingPresentationStudents(students, leaders);
-  assert.deepEqual(evolutionRest.map(s => s.id), [9, 8, 7]);
+  const evolutionRest = remainingPresentationStudents(students, leaders, undefined, comparisons);
+  assert.deepEqual(evolutionRest.map(s => s.id), [7, 8, 9]);
+  assert.deepEqual([...leaders, ...evolutionRest].slice(0, leaders.length), leaders);
+  // Evolution order must follow gains even when current averages rank differently.
+  const differentGains = comparisons.map((row, i) => ({ ...row, gain: i - 3 }));
+  const differentLeaders = evolutionLeaders(differentGains).map(row => row.student);
+  assert.deepEqual([
+    ...differentLeaders,
+    ...remainingPresentationStudents(students, differentLeaders, undefined, differentGains),
+  ].map(s => s.id), [8, 7, 6, 5, 4, 3, 2, 1, 9]);
   assert.equal(comparisons.find(row => row.student.id === 7)?.gain, 0);
   assert.equal(comparisons.find(row => row.student.id === 8)?.gain, -1);
   assert.equal(comparisons.find(row => row.student.id === 9), undefined);
