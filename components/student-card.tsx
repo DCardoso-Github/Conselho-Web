@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
-import { AlertTriangle, ArrowUpRight, SearchX } from "lucide-react";
+import { AlertTriangle, ArrowUpRight, SearchX, Star } from "lucide-react";
+import type { StudentHighlight } from "@/lib/highlights";
 import type { StudentRecord } from "@/lib/db";
 import { useStudents } from "@/lib/hooks";
 import { isLowGrade } from "@/lib/actions";
@@ -11,19 +12,40 @@ export interface StudentCardProps {
   classId: string;
   student: StudentRecord;
   index?: number;
+  highlight?: StudentHighlight;
 }
-export function StudentCard({ classId, student }: StudentCardProps) {
+export function StudentCard({ classId, student, highlight }: StudentCardProps) {
   const low = Object.values(student.grades).filter(
     (grade) => hasValue(grade) && isLowGrade(grade),
   ).length;
   return (
     <Link
-      className="student-tile"
+      className={`student-tile ${highlight ? "student-highlight" : ""}`}
       href={`/turmas/${encodeURIComponent(classId)}/alunos/${student.id}`}
     >
       <StudentProfile compact student={student} />
       <div className="student-tile-content">
+        {highlight && (
+          <span className="highlight-label">
+            <Star aria-hidden="true" /> Aluno destaque
+          </span>
+        )}
         <h2>{student.name}</h2>
+        {highlight && (
+          <div className="highlight-average">
+            <span>Média das notas</span>
+            <strong>
+              {highlight.average.toLocaleString("pt-BR", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
+            </strong>
+            <small>
+              {highlight.gradeCount} de {highlight.subjectCount} disciplinas com
+              nota numérica
+            </small>
+          </div>
+        )}
         <p className={low ? "attention" : "supporting-text"}>
           <AlertTriangle /> {low} nota{low === 1 ? "" : "s"} vermelha
           {low === 1 ? "" : "s"}

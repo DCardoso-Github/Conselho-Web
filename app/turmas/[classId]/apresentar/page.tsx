@@ -50,6 +50,7 @@ function PresentationLoader({ classId }: { classId: string }) {
     data.students,
     query.get("scope"),
     query.get("from"),
+    data.cls.subjects,
   );
   return (
     <Presentation

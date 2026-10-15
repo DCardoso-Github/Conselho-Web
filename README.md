@@ -9,6 +9,7 @@ Consulte a documentação da versão instalada em `node_modules/next/dist/docs` 
 ## Interface para reuniões
 
 - Início: seis turmas por página. Lista da turma: todos os alunos na mesma página, com busca, filtros e ordenação.
+- Alunos destaque: até cinco alunos com maior média de notas numéricas de 0 a 10 nas disciplinas da turma. Ausências e conceitos não numéricos são ignorados; alunos sem nota numérica ficam fora. Empates: menos notas vermelhas, nome e ordem original. A lista exibe a média e a quantidade de disciplinas consideradas, com apresentação exclusiva via `scope=top`. A seleção é calculada sobre a turma inteira, independentemente dos filtros da lista.
 - Iniciar conselho: escolha explícita entre todos os alunos e alunos com notas vermelhas.
 - Ficha e apresentação: foto ampliada e identidade do aluno em aproximadamente 28% da largura e informações acadêmicas em 72%, com adaptação para celular.
 - Abas ocupam toda a faixa superior; foto ampliada e disciplinas ficam no centro. Frequência anual, participação e acertos da Prova Paulista ocupam toda a faixa inferior e permanecem visíveis em qualquer aba.
@@ -20,7 +21,7 @@ Consulte a documentação da versão instalada em `node_modules/next/dist/docs` 
 - Tema escuro inicial; a preferência salva e o tema claro continuam disponíveis no Menu.
 - Edição explícita, com confirmação de descarte e proteção ao sair da página.
 
-As rotas permanecem iguais. A apresentação aceita `scope=all|low` e `from=<id>`.
+As rotas permanecem iguais. A apresentação aceita `scope=all|low|top` e `from=<id>`.
 Sem `scope`, mantém o recorte anterior: alunos com notas vermelhas, ou a turma toda quando não houver nenhum.
 Se `from` apontar para um aluno fora do recorte, a sequência passa a incluir toda a turma.
 

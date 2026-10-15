@@ -1,3 +1,4 @@
+import { studentHighlights } from "./highlights";
 import type { StudentRecord } from "./db";
 import { isLowGrade } from "./actions";
 
@@ -33,16 +34,19 @@ export function presentationStudents(
   students: StudentRecord[],
   scope: string | null,
   from: string | null,
+  subjects?: string[],
 ) {
   const low = students.filter(hasLowGrades);
   const selected =
-    scope === "all"
-      ? students
-      : scope === "low"
-        ? low
-        : low.length
+    scope === "top"
+      ? studentHighlights(students, subjects).map(({ student }) => student)
+      : scope === "all"
+        ? students
+        : scope === "low"
           ? low
-          : students;
+          : low.length
+            ? low
+            : students;
   const requested = from
     ? students.find((student) => String(student.id) === from)
     : undefined;

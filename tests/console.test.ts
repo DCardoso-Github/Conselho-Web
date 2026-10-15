@@ -16,6 +16,7 @@ import {
   hasLowGrades,
   lowGradeCount,
 } from "../lib/presentation";
+import { studentHighlights } from "../lib/highlights";
 import { exportClassToXlsx } from "../lib/mapao/exporter";
 import { parseMapao } from "../lib/mapao/parser";
 import { mapao, prova, frequencia, names } from "./fixtures";
@@ -137,4 +138,74 @@ test("import, edit, reimport and XLSX export retain local student data", async (
 });
 after(async () => {
   await db.delete();
+});
+
+test("highlights select at most five by numeric average without mutating students", () => {
+  const students = [
+    student(1, null),
+    student(2, "9,5"),
+    student(3, 10),
+    student(4, 8),
+    student(5, 7),
+    student(6, 6),
+    student(7, 0),
+    student(8, "ET"),
+  ];
+  const selected = studentHighlights(students, ["MATEMATICA", "PORTUGUES"]);
+  assert.deepEqual(
+    selected.map(({ student }) => student.id),
+    [3, 2, 4, 5, 6],
+  );
+  assert.equal(selected[1].average, 9.5);
+  assert.equal(selected[1].gradeCount, 1);
+  assert.equal(selected[1].subjectCount, 2);
+  assert.deepEqual(
+    students.map((s) => s.id),
+    [1, 2, 3, 4, 5, 6, 7, 8],
+  );
+  assert.equal(studentHighlights([student(1, 0)])[0].average, 0);
+  assert.deepEqual(
+    studentHighlights([
+      student(1, null),
+      student(2, "ET"),
+      student(3, ""),
+      student(4, Infinity),
+      student(5, 11),
+      student(6, -1),
+    ]),
+    [],
+  );
+  assert.deepEqual(
+    presentationStudents(students, "top", null, ["MATEMATICA"]).map(
+      (s) => s.id,
+    ),
+    [3, 2, 4, 5, 6],
+  );
+  assert.equal(
+    presentationStudents(students, "top", "1", ["MATEMATICA"]).length,
+    students.length,
+  );
+});
+test("highlight ties use fewer low grades then alphabetical names", () => {
+  const a = {
+    ...student(1, 4),
+    name: "ANA",
+    grades: { MATEMATICA: 4, PORTUGUES: 10 },
+  };
+  const b = {
+    ...student(2, 7),
+    name: "ZELIA",
+    grades: { MATEMATICA: 7, PORTUGUES: 7 },
+  };
+  const c = {
+    ...student(3, 7),
+    name: "BEATRIZ",
+    grades: { MATEMATICA: 7, PORTUGUES: 7, OLD: 10 },
+  };
+  assert.deepEqual(
+    studentHighlights([a, b, c], ["MATEMATICA", "PORTUGUES"]).map(
+      (x) => x.student.id,
+    ),
+    [3, 2, 1],
+  );
 });

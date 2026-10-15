@@ -15,6 +15,7 @@ import {
   Download,
   Trash2,
   Users,
+  Star,
 } from "lucide-react";
 import { db } from "@/lib/db";
 import { deleteClass, isLowGrade } from "@/lib/actions";
@@ -22,6 +23,7 @@ import { hasLowGrades, hasValue } from "@/lib/presentation";
 import { formatSubject } from "@/lib/mapao/subjects";
 import { exportClassToXlsx } from "@/lib/mapao/exporter";
 import { StudentGrid, type StudentSort } from "@/components/student-card";
+import { StudentHighlights } from "@/components/student-highlights";
 import { ClassDashboard } from "@/components/class-dashboard";
 import { PhotoImporter } from "@/components/photo-importer";
 import { ProvaPaulistaImporter } from "@/components/prova-paulista-importer";
@@ -132,6 +134,9 @@ export default function TurmaPage({
       <Tabs.Root defaultValue="students">
         <Tabs.List className="section-tabs" aria-label="Visualização da turma">
           <Tabs.Trigger value="students">Alunos</Tabs.Trigger>
+          <Tabs.Trigger value="highlights">
+            <Star aria-hidden="true" /> Alunos destaque
+          </Tabs.Trigger>
           <Tabs.Trigger value="overview">Visão geral</Tabs.Trigger>
         </Tabs.List>
         <Tabs.Content value="students">
@@ -174,6 +179,13 @@ export default function TurmaPage({
             redSubject={redSubject}
             sort={sort}
             onClearFilters={clear}
+          />
+        </Tabs.Content>
+        <Tabs.Content value="highlights">
+          <StudentHighlights
+            students={students}
+            subjects={cls.subjects}
+            classId={classId}
           />
         </Tabs.Content>
         <Tabs.Content value="overview">
