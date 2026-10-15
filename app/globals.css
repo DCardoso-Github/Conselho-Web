@@ -1450,10 +1450,7 @@ label.student-tile { cursor:pointer; }
 .import-file-review .period-fields legend { overflow-wrap:anywhere; }
 .period-suggestion { margin-top:8px; }
 .student-card-shell { position:relative; min-width:0; height:100%; }
-.student-card-shell>.student-tile { height:100%; padding-top:54px; }
-.student-actions-trigger { position:absolute; right:8px; top:6px; display:grid; place-items:center; width:44px; min-height:44px; border-radius:14px; color:var(--muted-foreground); background:var(--card); border:1px solid var(--border); cursor:pointer; transition:background .18s,color .18s; }
-.student-actions-trigger:hover,.student-actions-trigger[data-state=open] { background:var(--primary); color:var(--primary-foreground); }
-.student-actions-trigger svg { width:22px; height:22px; }
+.student-card-shell>.student-tile { height:100%; }
 .student-action-menu { z-index:60; min-width:240px; width:min(320px,calc(100vw - 24px)); max-height:var(--radix-context-menu-content-available-height,var(--radix-dropdown-menu-content-available-height,80dvh)); overflow-y:auto; border:1px solid var(--border); border-radius:20px; padding:8px; background:var(--popover); color:var(--popover-foreground); box-shadow:0 16px 48px rgb(0 0 0 / .2); }
 .student-action-name { padding:10px 12px 14px; font-size:14px; font-weight:700; color:var(--muted-foreground); border-bottom:1px solid var(--border); margin-bottom:6px; overflow-wrap:anywhere; line-height:1.4; }
 .student-action-item { display:flex; align-items:center; gap:12px; min-height:48px; padding:10px 12px; border-radius:12px; cursor:pointer; font-size:17px; outline:none; }

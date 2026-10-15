@@ -3,8 +3,7 @@
 import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import * as ContextMenu from "@radix-ui/react-context-menu";
-import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { CheckSquare, ExternalLink, MoreHorizontal, Pencil, Play, Trash2 } from "lucide-react";
+import { CheckSquare, ExternalLink, Pencil, Play, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import type { StudentRecord } from "@/lib/db";
 import { deleteStudent } from "@/lib/actions";
@@ -58,7 +57,7 @@ export function StudentActionsProvider({ children, subjects, onSelect }: {
   </ActionsContext.Provider>;
 }
 
-/** The same commands are available with right click, keyboard and the touch button. */
+/** Student commands live in the card's context menu. */
 export function StudentActions({ student, children, onSelect, selected = false }: {
   student: StudentRecord;
   children: ReactNode;
@@ -67,11 +66,11 @@ export function StudentActions({ student, children, onSelect, selected = false }
 }) {
   const actions = useContext(ActionsContext);
   const router = useRouter();
-  const trigger = useRef<HTMLButtonElement>(null);
+  const trigger = useRef<HTMLDivElement>(null);
   const pendingDialog = useRef<(() => void) | null>(null);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
   if (!actions) return children;
   const base = `/turmas/${encodeURIComponent(student.classId)}`;
+  const cardFocusTarget = () => trigger.current?.querySelector<HTMLElement>("a, button") ?? trigger.current;
   const commands = [
     { id: "select", label: selected ? "Desmarcar aluno" : "Selecionar aluno", icon: CheckSquare },
     { id: "edit", label: "Editar aluno", icon: Pencil },
@@ -81,8 +80,8 @@ export function StudentActions({ student, children, onSelect, selected = false }
   ] as const;
   const runCommand = (id: typeof commands[number]["id"]) => {
     if (id === "select") { if (onSelect) onSelect(); else actions.select(student); }
-    if (id === "edit") pendingDialog.current = () => actions.edit(student, trigger.current);
-    if (id === "delete") pendingDialog.current = () => actions.remove(student, trigger.current);
+    if (id === "edit") pendingDialog.current = () => actions.edit(student, cardFocusTarget());
+    if (id === "delete") pendingDialog.current = () => actions.remove(student, cardFocusTarget());
     if (id === "open") router.push(`${base}/alunos/${student.id}`);
     if (id === "present") router.push(`${base}/apresentar?scope=all&from=${student.id}`);
   };
@@ -92,30 +91,21 @@ export function StudentActions({ student, children, onSelect, selected = false }
     pendingDialog.current = null;
     // Open only after the menu releases its modal pointer lock and focus scope.
     if (openDialog) requestAnimationFrame(openDialog);
-    else trigger.current?.focus();
+    else cardFocusTarget()?.focus();
   };
   return <ContextMenu.Root>
     <ContextMenu.Trigger asChild>
-      <div className="student-card-shell" data-student-id={student.id} onKeyDown={event => {
+      <div ref={trigger} tabIndex={-1} className="student-card-shell" data-student-id={student.id} onKeyDown={event => {
         if (event.key === "ContextMenu" || (event.shiftKey && event.key === "F10")) {
           event.preventDefault();
-          setDropdownOpen(true);
+          const rect = event.currentTarget.getBoundingClientRect();
+          event.currentTarget.dispatchEvent(new MouseEvent("contextmenu", {
+            bubbles: true, cancelable: true, button: 2,
+            clientX: rect.left + rect.width / 2, clientY: rect.top + 24,
+          }));
         }
       }}>
         {children}
-        <DropdownMenu.Root open={dropdownOpen} onOpenChange={setDropdownOpen}>
-          <DropdownMenu.Trigger asChild>
-            <button ref={trigger} type="button" className="student-actions-trigger" aria-label={`Ações de ${student.name}`} title="Ações do aluno">
-              <MoreHorizontal aria-hidden="true" />
-            </button>
-          </DropdownMenu.Trigger>
-          <DropdownMenu.Portal>
-            <DropdownMenu.Content className="student-action-menu" sideOffset={6} align="end" collisionPadding={12} onCloseAutoFocus={restoreFocus}>
-              <DropdownMenu.Label className="student-action-name">{student.name}</DropdownMenu.Label>
-              {commands.map(({ id, label, icon: Icon }) => <DropdownMenu.Item key={id} className="student-action-item" data-destructive={id === "delete" || undefined} disabled={id === "delete" && student.id === undefined} onSelect={() => runCommand(id)}><Icon aria-hidden="true" />{label}</DropdownMenu.Item>)}
-            </DropdownMenu.Content>
-          </DropdownMenu.Portal>
-        </DropdownMenu.Root>
       </div>
     </ContextMenu.Trigger>
     <ContextMenu.Portal>
