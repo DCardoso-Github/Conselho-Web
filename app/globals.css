@@ -1031,6 +1031,16 @@ button:not(:disabled), select { cursor: pointer; }
 .comparison-controls { display:flex; flex-wrap:wrap; align-items:center; gap:1rem; margin:1.5rem 0; }
 .comparison-controls label { flex:1; min-width:220px; }
 .evolution-positive { color:var(--success); }
+.evolution-negative { color:var(--danger); }
+.student-selection-grid .highlight-average > .evolution-gain {
+  display:flex;align-items:baseline;justify-content:center;flex-wrap:wrap;gap:6px;
+  margin-top:6px;padding:10px 14px;border-radius:14px;
+  font-size:clamp(24px,2.1vw,32px);font-weight:800;line-height:1.15;
+  background:color-mix(in srgb,currentColor 8%,var(--card));
+  border:1px solid color-mix(in srgb,currentColor 20%,transparent);
+}
+.evolution-gain:not(.evolution-positive):not(.evolution-negative) { color:var(--muted-foreground); }
+.evolution-gain > span { font-size:16px;font-weight:650; }
 .evolution-tile { cursor:default; }
 .evolution-tile h3 { font-size:1.35rem; font-weight:800; line-height:1.3; overflow-wrap:anywhere; }
 .evolution-tile .highlight-average strong small { font-size:1rem; }

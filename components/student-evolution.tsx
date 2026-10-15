@@ -197,6 +197,8 @@ function EvolutionSelection({
   );
 }
 
+const gainTone = (gain: number) => gain > 1e-9 ? "evolution-positive" : gain < -1e-9 ? "evolution-negative" : "";
+
 function EvolutionCard({ classId, student, row, leader = false }: {
   classId: string;
   student: StudentRecord;
@@ -213,7 +215,9 @@ function EvolutionCard({ classId, student, row, leader = false }: {
         <span>Média final</span>
         <strong>{formatGrade(row.after)}</strong>
         <span>Média inicial: {formatGrade(row.before)}</span>
-        <span className={row.gain > 1e-9 ? "evolution-positive" : ""}>{formatGain(row.gain)} pontos</span>
+        <strong className={`evolution-gain ${gainTone(row.gain)}`}>
+          {formatGain(row.gain)} <span>pontos</span>
+        </strong>
       </div> : <div className="highlight-average">
         <span>Média atual</span>
         <strong>{average === null ? "Sem informação" : formatGrade(average)}</strong>
@@ -252,7 +256,7 @@ export function EvolutionDetail({
         </span>
         <span>
           Variação
-          <strong className={row.gain > 1e-9 ? "evolution-positive" : ""}>
+          <strong className={gainTone(row.gain)}>
             {formatGain(row.gain)}
           </strong>
         </span>
@@ -268,7 +272,7 @@ export function EvolutionDetail({
               {formatGrade(item.before)} <span aria-label="para">→</span>{" "}
               {formatGrade(item.after)}
             </p>
-            <strong className={item.gain > 1e-9 ? "evolution-positive" : ""}>
+            <strong className={gainTone(item.gain)}>
               {formatGain(item.gain)} pontos
             </strong>
           </article>
