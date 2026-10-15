@@ -1,182 +1,240 @@
 "use client";
-
-import * as React from "react";
-import NumberFlow from "@number-flow/react";
-import { AlertTriangle, Users, CheckCircle2, BookX } from "lucide-react";
+import { useState } from "react";
+import Link from "next/link";
+import {
+  Users,
+  AlertTriangle,
+  ChartColumn,
+  Database,
+  TrendingUp,
+  ArrowUpRight,
+  Play,
+} from "lucide-react";
 import type { StudentRecord } from "@/lib/db";
-import { isLowGrade } from "@/lib/actions";
+import { classOverview } from "@/lib/class-analytics";
+import { analyticsPresentationHref } from "@/lib/analytics-presentation";
 import { formatSubject } from "@/lib/mapao/subjects";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { cn } from "@/lib/utils";
+import { SubjectIcon } from "./subject-icon";
+import { Button } from "./ui/button";
+import {
+  Distribution,
+  StatCard,
+  TableFrame,
+  gradeLabel,
+} from "./analytics-primitives";
 
-interface DashboardProps {
-    students: StudentRecord[];
-    subjects: string[];
-}
-
-export function ClassDashboard({ students, subjects }: DashboardProps) {
-    const stats = React.useMemo(() => {
-        const total = students.length;
-        const withLow = students.filter((s) =>
-            Object.values(s.grades).some((g) => isLowGrade(g))
-        ).length;
-        const approval = total === 0 ? 0 : Math.round(((total - withLow) / total) * 100);
-
-        const perSubject = subjects
-            .map((subj) => {
-                const lowCount = students.filter((s) => isLowGrade(s.grades[subj])).length;
-                const pct = total === 0 ? 0 : (lowCount / total) * 100;
-                return { subject: subj, lowCount, pct };
-            })
-            .sort((a, b) => b.pct - a.pct);
-
-        const critical = perSubject.filter((p) => p.pct >= 30).length;
-
-        return { total, withLow, approval, perSubject, critical };
-    }, [students, subjects]);
-
-    return (
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-4">
-            <div className="grid grid-cols-2 gap-3">
-                <Kpi
-                    label="Alunos"
-                    value={stats.total}
-                    icon={<Users className="size-4" />}
-                    tone="primary"
-                />
-                <Kpi
-                    label="Com vermelha"
-                    value={stats.withLow}
-                    hint={`${stats.total === 0 ? 0 : Math.round((stats.withLow / stats.total) * 100)}% da turma`}
-                    icon={<AlertTriangle className="size-4" />}
-                    tone="danger"
-                />
-                <Kpi
-                    label="Aprovação"
-                    value={stats.approval}
-                    suffix="%"
-                    icon={<CheckCircle2 className="size-4" />}
-                    tone="success"
-                />
-                <Kpi
-                    label="Disc. críticas"
-                    value={stats.critical}
-                    hint="≥ 30% com vermelha"
-                    icon={<BookX className="size-4" />}
-                    tone="warn"
-                />
-            </div>
-
-            <Card>
-                <CardHeader className="pb-3">
-                    <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                        Disciplinas — % de alunos com nota vermelha
-                    </CardTitle>
-                </CardHeader>
-                <CardContent>
-                    {stats.perSubject.length === 0 ? (
-                        <p className="text-sm text-muted-foreground">Sem disciplinas.</p>
-                    ) : (
-                        <ul className="space-y-1.5">
-                            {stats.perSubject.map((p) => (
-                                <li
-                                    key={p.subject}
-                                    className="flex items-center gap-3 text-sm"
-                                >
-                                    <span
-                                        className="w-32 sm:w-44 truncate font-medium"
-                                        title={formatSubject(p.subject)}
-                                    >
-                                        {formatSubject(p.subject)}
-                                    </span>
-                                    <div className="flex-1 h-2.5 bg-muted rounded-full overflow-hidden">
-                                        <div
-                                            className="h-full rounded-full transition-all duration-700 ease-out"
-                                            style={{
-                                                width: `${Math.max(p.pct, p.lowCount > 0 ? 4 : 0)}%`,
-                                                background: heatColor(p.pct),
-                                            }}
-                                        />
-                                    </div>
-                                    <span className="w-20 text-right tabular-nums text-muted-foreground text-xs">
-                                        {p.lowCount} ({Math.round(p.pct)}%)
-                                    </span>
-                                </li>
-                            ))}
-                        </ul>
-                    )}
-                </CardContent>
-            </Card>
-        </div>
-    );
-}
-
-function heatColor(pct: number): string {
-    if (pct >= 50) return "var(--danger)";
-    if (pct >= 30) return "var(--warning)";
-    if (pct >= 15) return "var(--accent)";
-    if (pct > 0) return "var(--success)";
-    return "var(--muted)";
-}
-
-function Kpi({
-    label,
-    value,
-    suffix,
-    hint,
-    icon,
-    tone,
+export function ClassDashboard({
+  students,
+  subjects,
+  classId,
 }: {
-    label: string;
-    value: number;
-    suffix?: string;
-    hint?: string;
-    icon?: React.ReactNode;
-    tone?: "primary" | "danger" | "success" | "warn";
+  students: StudentRecord[];
+  subjects: string[];
+  classId: string;
 }) {
-    const toneVar: Record<string, string> = {
-        primary: "var(--primary)",
-        danger: "var(--danger)",
-        success: "var(--success)",
-        warn: "var(--warning)",
-    };
-    const c = tone ? toneVar[tone] : "var(--primary)";
-    return (
-        <Card className="relative overflow-hidden">
-            <CardContent className="p-4">
-                <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                        <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                            {label}
-                        </div>
-                        <div className="text-3xl font-bold tabular-nums leading-tight">
-                            <NumberFlow value={value} />
-                            {suffix}
-                        </div>
-                        {hint && (
-                            <div className="text-[11px] text-muted-foreground mt-0.5">
-                                {hint}
-                            </div>
-                        )}
-                    </div>
-                    {icon && (
-                        <div
-                            className="shrink-0 grid size-9 place-items-center rounded-xl"
-                            style={{
-                                background: `color-mix(in srgb, ${c} 14%, transparent)`,
-                                color: c,
-                            }}
-                        >
-                            {icon}
-                        </div>
-                    )}
+  const [order, setOrder] = useState("low");
+  const data = classOverview(students, subjects);
+  const rows = [...data.rows].sort((a, b) =>
+    order === "name"
+      ? formatSubject(a.subject).localeCompare(
+          formatSubject(b.subject),
+          "pt-BR",
+        )
+      : order === "average"
+        ? (a.average ?? 11) - (b.average ?? 11)
+        : b.low - a.low || a.subject.localeCompare(b.subject, "pt-BR"),
+  );
+  const coverage = data.expected
+    ? Math.round((data.count / data.expected) * 100)
+    : 0;
+  return (
+    <section className="analytics-dashboard" aria-label="Visão geral da turma">
+      <header className="analytics-heading">
+        <div>
+          <p className="eyebrow">Retrato do bimestre atual</p>
+          <h2>Como está a turma?</h2>
+          <p>
+            Resultados, pontos de atenção e cobertura das notas em um só lugar.
+          </p>
+        </div>
+        <Button asChild>
+          <Link href={analyticsPresentationHref(classId, "overview")}>
+            <Play />
+            Apresentar visão geral
+          </Link>
+        </Button>
+        <Button asChild variant="outline">
+          <Link href={`/turmas/${encodeURIComponent(classId)}/evolucao`}>
+            <TrendingUp />
+            Evolução da turma
+            <ArrowUpRight />
+          </Link>
+        </Button>
+      </header>
+      <div className="analytics-stats">
+        <StatCard
+          icon={<Users />}
+          label="Alunos na turma"
+          value={students.length}
+          detail={`${data.withoutGrades} sem notas numéricas`}
+        />
+        <StatCard
+          icon={<ChartColumn />}
+          label="Média das notas"
+          value={gradeLabel(data.average)}
+          detail={`${data.count} notas numéricas · escala de 0 a 10`}
+        />
+        <StatCard
+          icon={<AlertTriangle />}
+          label="Com notas vermelhas"
+          value={data.withLow}
+          detail="Alunos com pelo menos uma nota de 0 a 4"
+          tone="stat-attention"
+        />
+        <StatCard
+          icon={<Database />}
+          label="Cobertura das notas"
+          value={data.expected ? `${coverage}%` : "Sem informação"}
+          detail={`${data.count} de ${data.expected} registros com nota numérica`}
+        />
+      </div>
+      <div className="analytics-columns">
+        <section className="analytics-card">
+          <header>
+            <ChartColumn aria-hidden="true" />
+            <h3>Distribuição das notas</h3>
+          </header>
+          <p>Percentual sobre as {data.count} notas numéricas cadastradas.</p>
+          {data.count ? (
+            <Distribution
+              label="Faixas das notas"
+              total={data.count}
+              items={[
+                {
+                  label: "0 a 4 · notas vermelhas",
+                  count: data.bands[0],
+                  tone: "tone-low",
+                },
+                {
+                  label: "Acima de 4 e abaixo de 7",
+                  count: data.bands[1],
+                  tone: "tone-mid",
+                },
+                { label: "7 a 10", count: data.bands[2], tone: "tone-high" },
+              ]}
+            />
+          ) : (
+            <p className="analytics-empty">
+              Sem notas numéricas para gerar o gráfico.
+            </p>
+          )}
+          <p className="analytics-footnote">
+            {data.expected - data.count} registros ausentes ou não numéricos
+            (como ET) ficam fora dos cálculos.
+          </p>
+        </section>
+        <section className="analytics-card">
+          <header>
+            <AlertTriangle aria-hidden="true" />
+            <h3>Onde concentrar a atenção</h3>
+          </header>
+          <p>As cinco disciplinas com mais notas vermelhas.</p>
+          <div className="attention-chart">
+            {[...data.rows]
+              .sort((a, b) => b.low - a.low)
+              .filter((row) => row.low > 0)
+              .slice(0, 5)
+              .map((row) => (
+                <div key={row.subject}>
+                  <span>{formatSubject(row.subject)}</span>
+                  <strong>
+                    {row.low} {row.low === 1 ? "aluno" : "alunos"}
+                  </strong>
+                  <div className="bar-track" aria-hidden="true">
+                    <i
+                      className="tone-low"
+                      style={{
+                        width: `${students.length ? (row.low / students.length) * 100 : 0}%`,
+                      }}
+                    />
+                  </div>
                 </div>
-                <div
-                    className="absolute inset-x-0 bottom-0 h-0.5 opacity-70"
-                    style={{ background: c }}
-                />
-            </CardContent>
-        </Card>
-    );
+              ))}
+          </div>
+          {!data.withLow && (
+            <p className="analytics-empty">
+              {data.count
+                ? "Nenhuma nota vermelha entre as notas cadastradas."
+                : "Sem informação para identificar pontos de atenção."}
+            </p>
+          )}
+          <p className="analytics-footnote">
+            Comprimento das barras proporcional ao total de alunos da turma.
+          </p>
+        </section>
+      </div>
+      <section className="analytics-card">
+        <div className="analytics-table-heading">
+          <header>
+            <ChartColumn aria-hidden="true" />
+            <h3>Disciplina por disciplina</h3>
+          </header>
+          <label className="form-field">
+            Ordenar por
+            <select value={order} onChange={(e) => setOrder(e.target.value)}>
+              <option value="low">Mais notas vermelhas</option>
+              <option value="average">Menor média</option>
+              <option value="name">Nome da disciplina</option>
+            </select>
+          </label>
+        </div>
+        <TableFrame label="Resultados por disciplina">
+          <table className="analytics-table">
+            <caption>
+              Médias usam apenas notas numéricas. O percentual de notas
+              vermelhas considera os alunos com nota na disciplina.
+            </caption>
+            <thead>
+              <tr>
+                <th scope="col">Disciplina</th>
+                <th scope="col">Média</th>
+                <th scope="col">Notas vermelhas</th>
+                <th scope="col">Com nota</th>
+                <th scope="col">Sem nota numérica</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row) => (
+                <tr key={row.subject}>
+                  <th scope="row">
+                    <span className="table-subject">
+                      <SubjectIcon name={row.subject} />
+                      {formatSubject(row.subject)}
+                    </span>
+                  </th>
+                  <td>{gradeLabel(row.average)}</td>
+                  <td>
+                    <span
+                      className={row.low ? "data-pill negative" : "data-pill"}
+                    >
+                      {row.lowPercent === null
+                        ? "Sem informação"
+                        : `${row.low} · ${Math.round(row.lowPercent)}%`}
+                    </span>
+                  </td>
+                  <td>
+                    {row.count}/{students.length}
+                  </td>
+                  <td>{row.missing}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </TableFrame>
+        {!rows.length && (
+          <p className="analytics-empty">Nenhuma disciplina cadastrada.</p>
+        )}
+      </section>
+    </section>
+  );
 }

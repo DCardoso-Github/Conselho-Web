@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "motion/react";
 import { toast } from "sonner";
@@ -16,6 +15,9 @@ import {
     Trash2,
     ShieldCheck,
 } from "lucide-react";
+import type { SchoolPeriod } from "@/lib/db";
+import { PeriodFields } from "@/components/period-fields";
+import { periodLabel } from "@/lib/evolution";
 import { importMapaoFile } from "@/lib/actions";
 import { FileDrop } from "@/components/file-drop";
 import { Button } from "@/components/ui/button";
@@ -35,11 +37,12 @@ interface FileResult {
 }
 
 export default function ImportarPage() {
-    const router = useRouter();
     const [step, setStep] = React.useState<Step>("select");
     const [files, setFiles] = React.useState<File[]>([]);
     const [busy, setBusy] = React.useState(false);
     const [results, setResults] = React.useState<FileResult[]>([]);
+    const [period, setPeriod] = React.useState<SchoolPeriod>({ year: new Date().getFullYear(), term: 1 });
+    const [replace, setReplace] = React.useState(false);
     const [progress, setProgress] = React.useState(0);
 
     const onPicked = (picked: File[]) => {
@@ -55,20 +58,18 @@ export default function ImportarPage() {
         setBusy(true);
         setProgress(0);
         const out: FileResult[] = [];
-        let lastClass: string | null = null;
         let i = 0;
         for (const f of files) {
             try {
-                const r = await importMapaoFile(f);
+                const r = await importMapaoFile(f, { period, replace });
                 out.push({
                     name: f.name,
                     ok: true,
-                    msg: `${r.classId} · ${r.studentCount} alunos${r.overwritten ? " (sobrescrita)" : ""}`,
+                    msg: `${r.classId} · ${periodLabel(period)} · ${r.studentCount} alunos · ${r.historical ? "histórico salvo" : "mapão atual"}${r.overwritten ? " (bimestre atualizado)" : ""}`,
                     classId: r.classId,
                     studentCount: r.studentCount,
                     overwritten: r.overwritten,
                 });
-                lastClass = r.classId;
             } catch (e) {
                 out.push({ name: f.name, ok: false, msg: (e as Error).message });
             }
@@ -88,12 +89,6 @@ export default function ImportarPage() {
             );
         }
         if (out.length - ok > 0) toast.error(`${out.length - ok} falharam.`);
-        if (lastClass && out.every((r) => r.ok) && files.length === 1) {
-            setTimeout(
-                () => router.push(`/turmas/${encodeURIComponent(lastClass!)}`),
-                700
-            );
-        }
     };
 
     const reset = () => {
@@ -104,8 +99,8 @@ export default function ImportarPage() {
     };
 
     return (
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
-            <div className="mb-8">
+        <div className="console-container import-screen max-w-5xl">
+            <div className="import-heading mb-8">
                 <Badge variant="soft" className="mb-2">
                     <Sparkles className="size-3" /> Importar
                 </Badge>
@@ -157,6 +152,9 @@ export default function ImportarPage() {
                             transition={{ duration: 0.25 }}
                             className="space-y-4"
                         >
+                            <PeriodFields value={period} onChange={(value) => { setPeriod(value); setReplace(false); }} disabled={busy} label="Período dos arquivos selecionados" />
+                            <p className="supporting-text">Importe arquivos do mesmo ano e bimestre por vez. Bimestres anteriores ficam no histórico; o mais recente aparece na turma. Para turmas já cadastradas sem período, identifique primeiro o mapão atual em Gerenciar turma → Mapões e bimestres.</p>
+                            <label className="check-row"><input type="checkbox" checked={replace} disabled={busy} onChange={(event) => setReplace(event.target.checked)} />Atualizar este bimestre se ele já estiver salvo. Os outros bimestres serão mantidos.</label>
                             <Card>
                                 <CardContent className="p-4">
                                     <div className="text-xs uppercase tracking-wider font-semibold text-muted-foreground mb-3">
@@ -213,7 +211,7 @@ export default function ImportarPage() {
                                 </Button>
                                 <Button
                                     onClick={startImport}
-                                    disabled={busy || files.length === 0}
+                                    disabled={busy || files.length === 0 || period.year < 2000 || period.year > 2100 || !Number.isInteger(period.year)}
                                     size="lg"
                                 >
                                     {busy ? (

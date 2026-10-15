@@ -1,348 +1,417 @@
 "use client";
-
-import * as React from "react";
+import { use, useState, useDeferredValue } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { motion } from "motion/react";
+import { useLiveQuery } from "dexie-react-hooks";
+import * as Tabs from "@radix-ui/react-tabs";
 import { toast } from "sonner";
 import {
-    Download,
-    FileText,
-    Image as ImageIcon,
-    Presentation,
-    Trash2,
-    Search,
-    AlertTriangle,
-    LayoutGrid,
-    MoreVertical,
-    Filter,
-    Users,
-    X,
-    Upload,
+  Play,
+  Settings2,
+  Search,
+  SlidersHorizontal,
+  Upload,
+  Image as ImageIcon,
+  FileText,
+  Download,
+  Trash2,
+  Users,
+  Star,
+  TrendingUp,
 } from "lucide-react";
-import { useClass, useStudents } from "@/lib/hooks";
-import { isLowGrade, deleteClass } from "@/lib/actions";
-import { exportClassToXlsx } from "@/lib/mapao/exporter";
+import { db } from "@/lib/db";
+import { deleteClass, isLowGrade } from "@/lib/actions";
+import { hasLowGrades, hasValue } from "@/lib/presentation";
 import { formatSubject } from "@/lib/mapao/subjects";
+import { exportClassToXlsx } from "@/lib/mapao/exporter";
 import { StudentGrid, type StudentSort } from "@/components/student-card";
+import { GradeHistoryDialog } from "@/components/grade-history-dialog";
+import { StudentEvolution } from "@/components/student-evolution";
+import { periodLabel } from "@/lib/evolution";
+import { StudentHighlights } from "@/components/student-highlights";
 import { ClassDashboard } from "@/components/class-dashboard";
 import { PhotoImporter } from "@/components/photo-importer";
 import { ProvaPaulistaImporter } from "@/components/prova-paulista-importer";
 import { FrequenciaTutorImporter } from "@/components/frequencia-tutor-importer";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Toggle } from "@/components/ui/toggle";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { ConfirmDialog } from "@/components/confirm-dialog";
-
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 export default function TurmaPage({
-    params,
+  params,
 }: {
-    params: Promise<{ classId: string }>;
+  params: Promise<{ classId: string }>;
 }) {
-    const { classId: rawId } = React.use(params);
-    const classId = decodeURIComponent(rawId);
-    const cls = useClass(classId);
-    const students = useStudents(classId);
-    const router = useRouter();
-
-    const [search, setSearch] = React.useState("");
-    const [debounced, setDebounced] = React.useState("");
-    const debounceTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
-
-    const [onlyLow, setOnlyLow] = React.useState(false);
-    const [redSubject, setRedSubject] = React.useState<string | null>(null);
-    const [sort, setSort] = React.useState<StudentSort>("order");
-    const [showDashboard, setShowDashboard] = React.useState(false);
-    const [photoOpen, setPhotoOpen] = React.useState(false);
-    const [provaPaulistaOpen, setProvaPaulistaOpen] = React.useState(false);
-    const [freqTutorOpen, setFreqTutorOpen] = React.useState(false);
-    const [confirmDeleteOpen, setConfirmDeleteOpen] = React.useState(false);
-    const [exportingPdf, setExportingPdf] = React.useState(false);
-
-    React.useEffect(() => {
-        if (debounceTimer.current) clearTimeout(debounceTimer.current);
-        debounceTimer.current = setTimeout(() => setDebounced(search), 200);
-        return () => {
-            if (debounceTimer.current) clearTimeout(debounceTimer.current);
-        };
-    }, [search]);
-
-    const subjectsWithRed = React.useMemo(() => {
-        if (!cls) return [];
-        return cls.subjects
-            .map((s) => ({
-                subject: s,
-                count: students.filter((st) => isLowGrade(st.grades[s])).length,
-            }))
-            .filter((x) => x.count > 0);
-    }, [cls, students]);
-
-    if (cls === undefined) {
-        return (
-            <div className="max-w-7xl mx-auto px-4 py-12 text-center text-muted-foreground">
-                Carregando…
-            </div>
-        );
-    }
-    if (cls === null) {
-        return (
-            <div className="max-w-3xl mx-auto px-4 py-12 text-center">
-                <p className="text-lg mb-4">Turma não encontrada.</p>
-                <Button asChild>
-                    <Link href="/">Voltar ao início</Link>
-                </Button>
-            </div>
-        );
-    }
-
-    const handleExport = async () => {
-        try {
-            await exportClassToXlsx(classId);
-            toast.success("Planilha exportada.");
-        } catch (e) {
-            toast.error((e as Error).message);
-        }
-    };
-
-    const handleExportPdf = async () => {
-        setExportingPdf(true);
-        try {
-            const { exportClassToPdf } = await import("@/lib/exportPdf");
-            await exportClassToPdf(classId);
-            toast.success("PDF exportado.");
-        } catch (e) {
-            toast.error((e as Error).message);
-        } finally {
-            setExportingPdf(false);
-        }
-    };
-
-    const handleDelete = async () => {
-        await deleteClass(classId);
-        toast.info(`Turma "${classId}" excluída.`);
-        router.push("/");
-    };
-
-    const filtersActive = onlyLow || redSubject || debounced || sort !== "order";
-
+  const { classId: raw } = use(params);
+  const classId = decodeURIComponent(raw);
+  const router = useRouter();
+  const query = useSearchParams();
+  const data = useLiveQuery(
+    async () => ({
+      cls: await db.classes.get(classId),
+      students: await db.students
+        .where("classId")
+        .equals(classId)
+        .sortBy("order"),
+    }),
+    [classId],
+  );
+  const [search, setSearch] = useState("");
+  const deferredSearch = useDeferredValue(search);
+  const [onlyLow, setOnlyLow] = useState(false);
+  const [redSubject, setRedSubject] = useState<string | null>(null);
+  const [sort, setSort] = useState<StudentSort>("order");
+  const [filters, setFilters] = useState(false);
+  const [manage, setManage] = useState(false);
+  const [history, setHistory] = useState(false);
+  const [start, setStart] = useState(false);
+  const [scope, setScope] = useState<"all" | "low">("all");
+  const [importer, setImporter] = useState<"photo" | "pp" | "frequency" | null>(
+    null,
+  );
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const clear = () => {
+    setSearch("");
+    setOnlyLow(false);
+    setRedSubject(null);
+    setSort("order");
+  };
+  if (!data) return <p className="empty-panel">Carregando turma…</p>;
+  if (!data.cls)
     return (
-        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 py-6 space-y-6">
-            {/* Header */}
-            <motion.header
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-                className="flex flex-wrap items-center gap-3"
-            >
-                <div className="min-w-0">
-                    <Badge variant="soft" className="mb-2">
-                        Turma
-                    </Badge>
-                    <h1 className="h-display text-3xl sm:text-4xl text-foreground tracking-tight leading-none">
-                        {cls.name}
-                    </h1>
-                    <p className="text-sm text-muted-foreground mt-1 inline-flex items-center gap-3">
-                        <span className="inline-flex items-center gap-1">
-                            <Users className="size-3.5" /> {students.length} aluno(s)
-                        </span>
-                        <span>·</span>
-                        <span>{cls.subjects.length} disciplina(s)</span>
-                    </p>
-                </div>
-                <div className="ml-auto flex flex-wrap items-center gap-2">
-                    <Toggle
-                        pressed={showDashboard}
-                        onPressedChange={setShowDashboard}
-                        aria-label="Painel"
-                        size="sm"
-                    >
-                        <LayoutGrid className="size-4" />
-                        <span className="hidden sm:inline">Painel</span>
-                    </Toggle>
-                    <Button
-                        variant="accent"
-                        onClick={() => setPhotoOpen(true)}
-                    >
-                        <ImageIcon /> <span className="hidden sm:inline">Fotos</span>
-                    </Button>
-                    <Button
-                        variant="outline"
-                        onClick={() => setProvaPaulistaOpen(true)}
-                    >
-                        <Upload className="size-4" /> <span className="hidden sm:inline">Prova Paulista</span>
-                    </Button>
-                    <Button
-                        variant="outline"
-                        onClick={() => setFreqTutorOpen(true)}
-                    >
-                        <Upload className="size-4" /> <span className="hidden sm:inline">Frequência/Tutor</span>
-                    </Button>
-                    <Button asChild>
-                        <Link href={`/turmas/${encodeURIComponent(classId)}/apresentar`}>
-                            <Presentation /> <span className="hidden sm:inline">Apresentar</span>
-                        </Link>
-                    </Button>
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" aria-label={`Mais opções para turma ${classId}`}>
-                                <MoreVertical className="size-4" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={handleExport}>
-                                <Download /> Exportar planilha
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={handleExportPdf} disabled={exportingPdf}>
-                                <FileText /> {exportingPdf ? "Gerando PDF…" : "Exportar PDF de notas"}
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem variant="destructive" onClick={() => setConfirmDeleteOpen(true)}>
-                                <Trash2 /> Excluir turma
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                </div>
-            </motion.header>
-
-            {showDashboard && (
-                <motion.section
-                    initial={{ opacity: 0, y: 6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.05, duration: 0.3 }}
-                >
-                    <ClassDashboard students={students} subjects={cls.subjects} />
-                </motion.section>
-            )}
-
-            <Card>
-                <CardContent className="p-3 flex flex-col sm:flex-row flex-wrap items-start sm:items-center gap-2">
-                    <div className="relative w-full sm:flex-1 sm:min-w-[220px]">
-                        <Search className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                        <Input
-                            className="pl-9 w-full"
-                            placeholder="Buscar aluno…"
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                        />
-                    </div>
-                    <Toggle
-                        pressed={onlyLow}
-                        onPressedChange={(v) => {
-                            setOnlyLow(v);
-                            if (v) setRedSubject(null);
-                        }}
-                        variant="danger"
-                        size="sm"
-                        aria-label="Só vermelhas"
-                    >
-                        <AlertTriangle className="size-4" />
-                        <span className="hidden sm:inline">
-                            {onlyLow ? "Vendo só vermelhas" : "Só vermelhas"}
-                        </span>
-                    </Toggle>
-                    <Select
-                        value={redSubject ?? "__all"}
-                        onValueChange={(v) => {
-                            const val = v === "__all" ? null : v;
-                            setRedSubject(val);
-                            if (val) setOnlyLow(false);
-                        }}
-                    >
-                        <SelectTrigger className="w-auto min-w-[180px] h-9">
-                            <SelectValue placeholder="Todas as disciplinas" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="__all">Todas as disciplinas</SelectItem>
-                            {subjectsWithRed.map(({ subject, count }) => (
-                                <SelectItem key={subject} value={subject}>
-                                    {formatSubject(subject)} ({count})
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                    <Select
-                        value={sort}
-                        onValueChange={(v) => setSort(v as StudentSort)}
-                    >
-                        <SelectTrigger className="w-auto h-9">
-                            <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="order">Ordem original</SelectItem>
-                            <SelectItem value="name">Nome (A→Z)</SelectItem>
-                            <SelectItem value="redCount">Mais vermelhas</SelectItem>
-                        </SelectContent>
-                    </Select>
-                    {filtersActive && (
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                                setOnlyLow(false);
-                                setRedSubject(null);
-                                setSearch("");
-                                setSort("order");
-                            }}
-                        >
-                            <X className="size-3.5" /> Limpar
-                        </Button>
-                    )}
-                </CardContent>
-            </Card>
-
-            <StudentGrid
-                classId={classId}
-                search={debounced}
-                onlyLow={onlyLow}
-                redSubject={redSubject}
-                sort={sort}
-                onClearFilters={() => {
-                    setOnlyLow(false);
-                    setRedSubject(null);
-                    setSearch("");
-                    setSort("order");
-                }}
-            />
-
-            <PhotoImporter
-                classId={classId}
-                open={photoOpen}
-                onOpenChange={setPhotoOpen}
-            />
-            <ProvaPaulistaImporter
-                classId={classId}
-                open={provaPaulistaOpen}
-                onOpenChange={setProvaPaulistaOpen}
-            />
-            <FrequenciaTutorImporter
-                classId={classId}
-                open={freqTutorOpen}
-                onOpenChange={setFreqTutorOpen}
-            />
-            <ConfirmDialog
-                open={confirmDeleteOpen}
-                onOpenChange={setConfirmDeleteOpen}
-                title={`Excluir turma "${classId}"?`}
-                description="Todos os alunos, notas, fotos e anotações serão removidos permanentemente."
-                confirmLabel="Excluir"
-                onConfirm={handleDelete}
-            />
-        </div>
+      <div className="empty-panel">
+        <h1>Turma não encontrada</h1>
+        <Button onClick={() => router.push("/")}>Voltar ao início</Button>
+      </div>
     );
+  const { cls, students } = data;
+  const low = students.filter(hasLowGrades).length;
+  const filterCount =
+    Number(onlyLow || !!redSubject) + Number(sort !== "order");
+  const runExport = async (pdf: boolean) => {
+    setExporting(true);
+    try {
+      if (pdf)
+        await (await import("@/lib/exportPdf")).exportClassToPdf(classId);
+      else await exportClassToXlsx(classId);
+      toast.success(pdf ? "PDF exportado." : "Planilha exportada.");
+    } catch (error) {
+      toast.error((error as Error).message);
+    } finally {
+      setExporting(false);
+    }
+  };
+  const openImporter = (type: "photo" | "pp" | "frequency") => {
+    setManage(false);
+    setImporter(type);
+  };
+  return (
+    <div className="console-container">
+      <header className="page-heading">
+        <div>
+          <p className="eyebrow">Sua turma</p>
+          <h1>{cls.name}</h1>
+          <p>
+            {students.length} alunos · {cls.subjects.length} disciplinas
+            {cls.currentPeriod && ` · ${periodLabel(cls.currentPeriod)}`}
+          </p>
+        </div>
+        <div className="heading-actions">
+          <Button asChild variant="outline"><Link href={`/turmas/${encodeURIComponent(classId)}/evolucao`}><TrendingUp />Evolução da turma</Link></Button>
+          <Button variant="outline" onClick={() => setManage(true)}>
+            <Settings2 /> Gerenciar turma
+          </Button>
+          <Button
+            size="lg"
+            disabled={!students.length}
+            onClick={() => {
+              setScope("all");
+              setStart(true);
+            }}
+          >
+            <Play /> Iniciar conselho
+          </Button>
+        </div>
+      </header>
+      <Tabs.Root defaultValue={query.get("view") === "overview" ? "overview" : "students"}>
+        <Tabs.List className="section-tabs" aria-label="Visualização da turma">
+          <Tabs.Trigger value="students">Alunos</Tabs.Trigger>
+          <Tabs.Trigger value="highlights">
+            <Star aria-hidden="true" /> Alunos destaque
+          </Tabs.Trigger>
+          <Tabs.Trigger value="evolution">
+            <TrendingUp aria-hidden="true" />
+            Alunos evolução
+          </Tabs.Trigger>
+          <Tabs.Trigger value="overview">Visão geral</Tabs.Trigger>
+        </Tabs.List>
+        <Tabs.Content value="students">
+          <div className="search-toolbar">
+            <div className="search-field">
+              <Search />
+              <Input
+                aria-label="Buscar aluno"
+                placeholder="Buscar aluno pelo nome…"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+              />
+            </div>
+            <Button variant="outline" onClick={() => setFilters(true)}>
+              <SlidersHorizontal /> Filtros
+              {filterCount ? ` (${filterCount})` : ""}
+            </Button>
+          </div>
+          {(onlyLow || redSubject || sort !== "order") && (
+            <div className="active-filters" role="status">
+              <span>
+                {redSubject
+                  ? `Notas vermelhas em ${formatSubject(redSubject)}`
+                  : onlyLow
+                    ? "Só alunos com notas vermelhas"
+                    : ""}
+                {sort !== "order"
+                  ? ` · ${sort === "name" ? "Nome A–Z" : "Mais notas vermelhas"}`
+                  : ""}
+              </span>
+              <Button variant="ghost" onClick={clear}>
+                Limpar filtros
+              </Button>
+            </div>
+          )}
+          <StudentGrid
+            classId={classId}
+            search={deferredSearch}
+            onlyLow={onlyLow}
+            redSubject={redSubject}
+            sort={sort}
+            onClearFilters={clear}
+          />
+        </Tabs.Content>
+        <Tabs.Content value="highlights">
+          <StudentHighlights
+            students={students}
+            subjects={cls.subjects}
+            classId={classId}
+          />
+        </Tabs.Content>
+        <Tabs.Content value="evolution">
+          <StudentEvolution
+            cls={cls}
+            students={students}
+            onImport={() => setHistory(true)}
+          />
+        </Tabs.Content>
+        <Tabs.Content value="overview">
+          <ClassDashboard students={students} subjects={cls.subjects} classId={classId} />
+        </Tabs.Content>
+      </Tabs.Root>
+      <Dialog open={filters} onOpenChange={setFilters}>
+        <DialogContent className="filter-dialog">
+          <DialogHeader>
+            <DialogTitle>Filtrar alunos</DialogTitle>
+            <DialogDescription>
+              Os filtros consideram todos os alunos da turma.
+            </DialogDescription>
+          </DialogHeader>
+          <label className="check-row">
+            <input
+              type="checkbox"
+              checked={onlyLow}
+              onChange={(event) => {
+                setOnlyLow(event.target.checked);
+                setRedSubject(null);
+              }}
+            />{" "}
+            Apenas com notas vermelhas
+          </label>
+          <label className="form-field">
+            Nota vermelha em
+            <select
+              value={redSubject ?? ""}
+              onChange={(event) => {
+                setRedSubject(event.target.value || null);
+                setOnlyLow(false);
+              }}
+            >
+              <option value="">Todas as disciplinas</option>
+              {cls.subjects
+                .filter((subject) =>
+                  students.some(
+                    (student) =>
+                      hasValue(student.grades[subject]) &&
+                      isLowGrade(student.grades[subject]),
+                  ),
+                )
+                .map((subject) => (
+                  <option key={subject} value={subject}>
+                    {formatSubject(subject)}
+                  </option>
+                ))}
+            </select>
+          </label>
+          <label className="form-field">
+            Ordenação
+            <select
+              value={sort}
+              onChange={(event) => setSort(event.target.value as StudentSort)}
+            >
+              <option value="order">Ordem original</option>
+              <option value="name">Nome (A–Z)</option>
+              <option value="redCount">Mais notas vermelhas</option>
+            </select>
+          </label>
+          <Button onClick={() => setFilters(false)}>Ver alunos</Button>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={start} onOpenChange={setStart}>
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Quem vamos apresentar?</DialogTitle>
+            <DialogDescription>
+              Escolha os alunos para o conselho da turma {cls.name}.
+            </DialogDescription>
+          </DialogHeader>
+          <fieldset className="scope-choices">
+            <legend className="sr-only">Alunos da apresentação</legend>
+            <label
+              className={
+                scope === "all" ? "scope-choice selected" : "scope-choice"
+              }
+            >
+              <input
+                type="radio"
+                name="scope"
+                value="all"
+                checked={scope === "all"}
+                onChange={() => setScope("all")}
+              />
+              <Users />
+              <span>
+                Todos os alunos<strong>{students.length}</strong>
+              </span>
+            </label>
+            <label
+              className={
+                scope === "low" ? "scope-choice selected" : "scope-choice"
+              }
+            >
+              <input
+                type="radio"
+                name="scope"
+                value="low"
+                checked={scope === "low"}
+                disabled={!low}
+                onChange={() => setScope("low")}
+              />
+              <span>
+                Com notas vermelhas<strong>{low}</strong>
+              </span>
+            </label>
+          </fieldset>
+          <Button
+            size="lg"
+            onClick={() =>
+              router.push(
+                `/turmas/${encodeURIComponent(classId)}/apresentar?scope=${scope}`,
+              )
+            }
+          >
+            <Play /> Começar apresentação
+          </Button>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={manage} onOpenChange={setManage}>
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Gerenciar turma {cls.name}</DialogTitle>
+            <DialogDescription>
+              Importada em{" "}
+              {new Date(cls.importedAt).toLocaleDateString("pt-BR")}. Atualize
+              os dados ou exporte os resultados.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="management-grid">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setManage(false);
+                setHistory(true);
+              }}
+            >
+              <Upload />
+              Mapões e bimestres
+            </Button>
+            <Button variant="outline" onClick={() => openImporter("photo")}>
+              <ImageIcon aria-hidden="true" /> Fotos dos alunos
+            </Button>
+            <Button variant="outline" onClick={() => openImporter("pp")}>
+              <Upload /> Prova Paulista
+            </Button>
+            <Button variant="outline" onClick={() => openImporter("frequency")}>
+              <Upload /> Frequência/Tutor
+            </Button>
+            <Button
+              variant="outline"
+              disabled={exporting}
+              onClick={() => runExport(false)}
+            >
+              <Download /> Exportar planilha
+            </Button>
+            <Button
+              variant="outline"
+              disabled={exporting}
+              onClick={() => runExport(true)}
+            >
+              <FileText /> {exporting ? "Gerando arquivo…" : "Exportar PDF"}
+            </Button>
+          </div>
+          <Button
+            variant="ghost"
+            className="text-destructive justify-start"
+            onClick={() => {
+              setManage(false);
+              setConfirmDelete(true);
+            }}
+          >
+            <Trash2 /> Excluir turma
+          </Button>
+        </DialogContent>
+      </Dialog>
+      <GradeHistoryDialog cls={cls} open={history} onOpenChange={setHistory} />
+      <PhotoImporter
+        classId={classId}
+        open={importer === "photo"}
+        onOpenChange={(open) => !open && setImporter(null)}
+      />
+      <ProvaPaulistaImporter
+        classId={classId}
+        open={importer === "pp"}
+        onOpenChange={(open) => !open && setImporter(null)}
+      />
+      <FrequenciaTutorImporter
+        classId={classId}
+        open={importer === "frequency"}
+        onOpenChange={(open) => !open && setImporter(null)}
+      />
+      <ConfirmDialog
+        open={confirmDelete}
+        onOpenChange={setConfirmDelete}
+        title={`Excluir turma "${cls.name}"?`}
+        description="Todos os alunos, notas, fotos, anotações e bimestres salvos serão removidos permanentemente."
+        confirmLabel="Excluir turma"
+        onConfirm={async () => {
+          await deleteClass(classId);
+          toast.success("Turma excluída.");
+          router.push("/");
+        }}
+      />
+    </div>
+  );
 }

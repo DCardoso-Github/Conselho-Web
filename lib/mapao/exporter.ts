@@ -26,6 +26,21 @@ export async function exportClassToXlsx(classId: string): Promise<void> {
     XLSX.writeFile(wb, `${cls.id}.xlsx`);
 }
 
+/** Exporta um bimestre sem alterar o mapão atual. */
+export async function exportGradePeriod(id: string): Promise<void> {
+    const period = await db.gradePeriods.get(id);
+    if (!period) throw new Error("Bimestre não encontrado.");
+    const cls: ClassRecord = { id: period.classId, name: period.classId, subjects: period.subjects, importedAt: period.importedAt };
+    const students = period.students.map((student) => ({ ...student, classId: period.classId }));
+    const { rows, merges, colWidths } = buildSheetMatrix(cls, students);
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    ws["!merges"] = merges;
+    ws["!cols"] = colWidths.map((width) => ({ wch: width }));
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, `${period.term}º bimestre`);
+    XLSX.writeFile(wb, `${period.classId}_${period.year}_${period.term}bim.xlsx`);
+}
+
 function buildSheetMatrix(cls: ClassRecord, students: StudentRecord[]) {
     const subjects = cls.subjects;
     // Estrutura do header (linha 0 = grupo, linha 1 = sub):

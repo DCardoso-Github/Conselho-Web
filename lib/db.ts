@@ -5,6 +5,16 @@ export interface ClassRecord {
     name: string;
     importedAt: number; // epoch ms
     subjects: string[]; // disciplinas presentes nesta turma
+    currentPeriod?: SchoolPeriod;
+}
+
+export interface SchoolPeriod { year: number; term: number }
+export interface GradePeriodRecord extends SchoolPeriod {
+    id: string;
+    classId: string;
+    importedAt: number;
+    subjects: string[];
+    students: Pick<StudentRecord, "name" | "situation" | "total" | "grades" | "absences" | "order">[];
 }
 
 export interface StudentTotal {
@@ -52,13 +62,17 @@ export class ConselhoDB extends Dexie {
     classes!: Table<ClassRecord, string>;
     students!: Table<StudentRecord, number>;
     meta!: Table<MetaRecord, string>;
+    gradePeriods!: Table<GradePeriodRecord, string>;
 
-    constructor() {
-        super("conselho-db");
+    constructor(name = "conselho-db") {
+        super(name);
         this.version(1).stores({
             classes: "id, name, importedAt",
             students: "++id, classId, name, [classId+name], [classId+order]",
             meta: "key",
+        });
+        this.version(2).stores({
+            gradePeriods: "id, classId, [classId+year+term]",
         });
     }
 }
