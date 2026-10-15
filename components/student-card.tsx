@@ -1,28 +1,30 @@
 "use client";
 import Link from "next/link";
-import { AlertTriangle, ArrowUpRight, SearchX, Star } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
+import { AlertTriangle, ArrowUpRight, SearchX, Star, CheckSquare, Trash2 } from "lucide-react";
 import type { StudentHighlight } from "@/lib/highlights";
 import type { StudentRecord } from "@/lib/db";
 import { useStudents } from "@/lib/hooks";
-import { isLowGrade } from "@/lib/actions";
+import { deleteStudents, isLowGrade } from "@/lib/actions";
 import { hasValue, hasLowGrades } from "@/lib/presentation";
 import { StudentProfile } from "./student-profile";
 import { Button } from "./ui/button";
+import { ConfirmDialog } from "./confirm-dialog";
 export interface StudentCardProps {
   classId: string;
   student: StudentRecord;
   index?: number;
   highlight?: StudentHighlight;
+  selection?: { checked: boolean; onChange: () => void };
 }
-export function StudentCard({ classId, student, highlight }: StudentCardProps) {
+export function StudentCard({ classId, student, highlight, selection }: StudentCardProps) {
   const low = Object.values(student.grades).filter(
     (grade) => hasValue(grade) && isLowGrade(grade),
   ).length;
-  return (
-    <Link
-      className={`student-tile ${highlight ? "student-highlight" : ""}`}
-      href={`/turmas/${encodeURIComponent(classId)}/alunos/${student.id}`}
-    >
+  const content = (
+    <>
+      {selection && <span className="student-selection-check"><input type="checkbox" aria-label={`Selecionar ${student.name}`} checked={selection.checked} onChange={selection.onChange} /><span>{selection.checked ? "Selecionado" : "Selecionar"}</span></span>}
       <StudentProfile compact student={student} />
       <div className="student-tile-content">
         {highlight && (
@@ -51,11 +53,13 @@ export function StudentCard({ classId, student, highlight }: StudentCardProps) {
           {low === 1 ? "" : "s"}
         </p>
         <span className="tile-action">
-          Abrir aluno <ArrowUpRight />
+          {selection ? (selection.checked ? "Selecionado para exclusão" : "Selecionar aluno") : <>Abrir aluno <ArrowUpRight /></>}
         </span>
       </div>
-    </Link>
+    </>
   );
+  const className = `student-tile ${highlight ? "student-highlight" : ""} ${selection?.checked ? "student-tile-selected" : ""}`;
+  return selection ? <label className={className}>{content}</label> : <Link className={className} href={`/turmas/${encodeURIComponent(classId)}/alunos/${student.id}`}>{content}</Link>;
 }
 export type StudentSort = "order" | "name" | "redCount";
 export interface StudentGridProps {
@@ -108,6 +112,12 @@ function StudentResults({
   classId,
   onClearFilters,
 }: StudentGridProps & { students: StudentRecord[] }) {
+  const [selecting, setSelecting] = useState(false);
+  const [selected, setSelected] = useState<Set<number>>(new Set());
+  const [pending, setPending] = useState<StudentRecord[]>([]);
+  const chosen = students.filter(student => student.id !== undefined && selected.has(student.id));
+  const selectable = students.filter(student => student.id !== undefined);
+  const clearSelection = () => { setSelected(new Set()); setSelecting(false); };
   if (!students.length)
     return (
       <div className="empty-panel">
@@ -123,14 +133,43 @@ function StudentResults({
     );
   return (
     <>
+      <div className="bulk-student-toolbar">
+        {selecting ? <>
+          <span role="status">{chosen.length} de {students.length} alunos selecionados</span>
+          <Button variant="outline" onClick={() => setSelected(chosen.length === selectable.length ? new Set() : new Set(selectable.map(student => student.id!)))}>
+            <CheckSquare /> {chosen.length === selectable.length ? "Desmarcar todos" : "Selecionar todos os resultados"}
+          </Button>
+          <Button variant="destructive" disabled={!chosen.length} onClick={() => setPending([...chosen])}><Trash2 /> Excluir selecionados ({chosen.length})</Button>
+          <Button variant="ghost" onClick={clearSelection}>Cancelar seleção</Button>
+          <p className="supporting-text">Alterar a busca, os filtros ou a ordenação limpa a seleção.</p>
+        </> : <Button variant="outline" onClick={() => setSelecting(true)}><CheckSquare /> Selecionar alunos</Button>}
+      </div>
       <p className="results-count" aria-live="polite">
         {students.length} alunos · todos nesta página
       </p>
       <div className="selection-grid student-selection-grid">
         {students.map((student) => (
-          <StudentCard key={student.id} classId={classId} student={student} />
+          <StudentCard key={student.id} classId={classId} student={student} selection={selecting && student.id !== undefined ? {
+            checked: selected.has(student.id),
+            onChange: () => setSelected(previous => { const next = new Set(previous); if (next.has(student.id!)) next.delete(student.id!); else next.add(student.id!); return next; }),
+          } : undefined} />
         ))}
       </div>
+      <ConfirmDialog
+        open={pending.length > 0}
+        onOpenChange={open => { if (!open) setPending([]); }}
+        title={`Excluir ${pending.length} aluno${pending.length === 1 ? "" : "s"}?`}
+        description={<>
+          <p>Os alunos abaixo serão removidos da turma {classId}, incluindo suas notas atuais, fotos, frequência, Prova Paulista e anotações. Os registros dos bimestres anteriores serão mantidos. Esta ação não pode ser desfeita.</p>
+          <ul className="bulk-delete-names" aria-label="Alunos selecionados para exclusão" tabIndex={0}>{pending.map(student => <li key={student.id}>{student.name}</li>)}</ul>
+        </>}
+        confirmLabel={`Excluir ${pending.length} aluno${pending.length === 1 ? "" : "s"}`}
+        onConfirm={async () => {
+          await deleteStudents(classId, pending.map(student => student.id!));
+          toast.success(`${pending.length} aluno${pending.length === 1 ? " excluído" : "s excluídos"}.`);
+          clearSelection();
+        }}
+      />
     </>
   );
 }

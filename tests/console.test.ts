@@ -286,7 +286,7 @@ test("search ignores accents and matches all terms without a pre-filter limit", 
   assert.equal(matchesSearch("JOAO 8A", "JOAO 8B"), false);
 });
 import { identifyCurrentPeriod, persistMapao } from "../lib/grade-history";
-import { deleteClass, deleteStudent } from "../lib/actions";
+import { deleteClass, deleteStudent, deleteStudents } from "../lib/actions";
 import { exportGradePeriod } from "../lib/mapao/exporter";
 import { evolutionMapao } from "./fixtures";
 
@@ -428,6 +428,30 @@ test("deleting students and classes is scoped and updates the active period atom
   assert.equal(await db.gradePeriods.where("classId").equals(cls.id).count(), 0);
   assert.ok(await db.students.get(9103));
   await db.students.delete(9103);
+});
+
+test("bulk deletion validates every selected student before deleting and rolls back on failure", async (t) => {
+  const cls = { id: "LOTE", name: "LOTE", importedAt: 0, subjects: ["MATEMATICA"], currentPeriod: { year: 2026, term: 2 } };
+  await db.classes.put(cls);
+  const members = [9201, 9202, 9203].map(id => ({ ...student(id, 7), classId: cls.id }));
+  await db.students.bulkPut([...members, { ...student(9204, 8), classId: "OUTRA" }]);
+  const old = { ...periodRecord(1, members), id: periodId(cls.id, { year: 2026, term: 1 }), classId: cls.id };
+  await db.gradePeriods.put(old);
+  await assert.rejects(deleteStudents(cls.id, []), /Selecione/);
+  await assert.rejects(deleteStudents(cls.id, [9201, 9204]), /nesta turma/);
+  await assert.rejects(deleteStudents(cls.id, [9201, 99999]), /nesta turma/);
+  assert.equal(await db.students.where("classId").equals(cls.id).count(), 3);
+  const put = t.mock.method(db.gradePeriods, "put", async () => { throw new Error("storage failure"); });
+  await assert.rejects(deleteStudents(cls.id, [9201, 9202]), /storage failure/);
+  assert.equal(await db.students.where("classId").equals(cls.id).count(), 3);
+  put.mock.restore();
+  await deleteStudents(cls.id, [9201, 9202, 9201]);
+  assert.deepEqual((await db.students.where("classId").equals(cls.id).toArray()).map(s => s.id), [9203]);
+  assert.deepEqual((await db.gradePeriods.get(periodId(cls.id, cls.currentPeriod)))?.students.map(s => s.name), [members[2].name]);
+  assert.equal((await db.gradePeriods.get(old.id))?.students.length, 3);
+  assert.ok(await db.students.get(9204));
+  await deleteClass(cls.id);
+  await db.students.delete(9204);
 });
 
 test("photo imports crop around the face, fall back safely and preserve student data", async (t) => {

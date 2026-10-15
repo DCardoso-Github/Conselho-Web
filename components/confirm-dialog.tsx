@@ -56,7 +56,7 @@ export function ConfirmDialog({
                 <DialogHeader>
                     <DialogTitle>{title}</DialogTitle>
                     {description && (
-                        <DialogDescription>{description}</DialogDescription>
+                        <DialogDescription asChild><div>{description}</div></DialogDescription>
                     )}
                 </DialogHeader>
                 {error && <p role="alert" className="text-destructive">{error}</p>}

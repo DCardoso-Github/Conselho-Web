@@ -29,12 +29,19 @@ export async function setStudentPhoto(id: number, photo: Blob): Promise<void> {
 
 /** Remove o aluno da turma atual, preservando os retratos dos bimestres anteriores. */
 export async function deleteStudent(classId: string, studentId: number): Promise<void> {
+    return deleteStudents(classId, [studentId]);
+}
+
+/** Exclui toda a seleção em uma transação, sem exclusões parciais. */
+export async function deleteStudents(classId: string, studentIds: number[]): Promise<void> {
+    const ids = [...new Set(studentIds)];
+    if (!ids.length) throw new Error("Selecione pelo menos um aluno.");
     await db.transaction("rw", db.classes, db.students, db.gradePeriods, async () => {
-        const student = await db.students.get(studentId);
-        if (!student || student.classId !== classId) {
+        const students = await db.students.bulkGet(ids);
+        if (students.some(student => !student || student.classId !== classId)) {
             throw new Error("Aluno não encontrado nesta turma.");
         }
-        await db.students.delete(studentId);
+        await db.students.bulkDelete(ids);
         await syncCurrentPeriod(classId);
     });
 }
