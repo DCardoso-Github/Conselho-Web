@@ -27,7 +27,7 @@ export function analyticsPanels(
     const end = Math.min(start + size, subjectCount);
     panels.push({
       kind: "subjects",
-      title: view === "overview" ? "Disciplinas" : `Disciplinas · ${start + 1}–${end} de ${subjectCount}`,
+      title: "Disciplinas",
       start,
       end,
     });

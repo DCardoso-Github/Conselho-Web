@@ -158,10 +158,6 @@ function Academic({
       {!prova && (
         <div className="grade-toolbar">
           <p role="status">
-            {onlyLow
-              ? `${entries.length} de ${allEntries.length} disciplinas`
-              : `${allEntries.length} disciplinas`}{" "}
-            ·{" "}
             <strong>
               {lowEntries.length}{" "}
               {lowEntries.length === 1 ? "nota vermelha" : "notas vermelhas"}
@@ -184,7 +180,6 @@ function Academic({
               ? "Disciplinas com notas vermelhas"
               : "Todas as disciplinas"}
         </h2>
-        <span>{entries.length} disciplinas</span>
       </div>
       {entries.length ? (
         <div
