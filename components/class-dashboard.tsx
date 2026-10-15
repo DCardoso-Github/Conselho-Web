@@ -6,8 +6,6 @@ import {
   AlertTriangle,
   ChartColumn,
   Database,
-  TrendingUp,
-  ArrowUpRight,
   Play,
 } from "lucide-react";
 import type { StudentRecord } from "@/lib/db";
@@ -61,13 +59,6 @@ export function ClassDashboard({
           <Link href={analyticsPresentationHref(classId, "overview")}>
             <Play />
             Apresentar visão geral
-          </Link>
-        </Button>
-        <Button asChild variant="outline">
-          <Link href={`/turmas/${encodeURIComponent(classId)}/evolucao`}>
-            <TrendingUp />
-            Evolução da turma
-            <ArrowUpRight />
           </Link>
         </Button>
       </header>
