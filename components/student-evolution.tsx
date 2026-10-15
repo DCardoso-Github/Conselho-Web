@@ -2,7 +2,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useLiveQuery } from "dexie-react-hooks";
-import { TrendingUp, Upload, Play } from "lucide-react";
+import { TrendingUp, Upload, Play, ArrowUpRight } from "lucide-react";
 import {
   db,
   type ClassRecord,
@@ -20,6 +20,7 @@ import {
 } from "@/lib/evolution";
 import { formatSubject } from "@/lib/mapao/subjects";
 import { studentAverage } from "@/lib/highlights";
+import { remainingPresentationStudents } from "@/lib/presentation";
 import { StudentProfile } from "./student-profile";
 import { StudentActions } from "./student-actions";
 import { SubjectIcon } from "./subject-icon";
@@ -76,8 +77,7 @@ function EvolutionSelection({
     before.term < after.term;
   const comparisons = comparePeriods(students, before, after);
   const leaders = evolutionLeaders(comparisons);
-  const leaderIds = new Set(leaders.map(row => row.student.id));
-  const rest = students.filter(student => !leaderIds.has(student.id)).sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
+  const rest = remainingPresentationStudents(students, leaders.map(row => row.student), cls.subjects, comparisons);
   const comparisonById = new Map(comparisons.map(row => [row.student.id, row]));
   const heading = (
     <div className="highlights-heading">
@@ -219,7 +219,7 @@ function EvolutionCard({ classId, student, row, leader = false }: {
         <strong>{average === null ? "Sem informação" : formatGrade(average)}</strong>
         <small>Sem comparação neste intervalo</small>
       </div>}
-      <Link className="tile-action" href={`/turmas/${encodeURIComponent(classId)}/alunos/${student.id}`}>Abrir aluno</Link>
+      <Link className="tile-action" href={`/turmas/${encodeURIComponent(classId)}/alunos/${student.id}`}>Abrir aluno <ArrowUpRight aria-hidden="true" /></Link>
     </div>
   </article></StudentActions>;
 }

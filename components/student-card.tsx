@@ -19,11 +19,12 @@ export interface StudentCardProps {
   student: StudentRecord;
   index?: number;
   highlight?: StudentHighlight;
+  subjects?: string[];
   selection?: { checked: boolean; onChange: () => void };
   onSelect?: () => void;
 }
-export function StudentCard({ classId, student, highlight, selection, onSelect }: StudentCardProps) {
-  const average = highlight?.average ?? studentAverage(student);
+export function StudentCard({ classId, student, highlight, subjects, selection, onSelect }: StudentCardProps) {
+  const average = highlight?.average ?? studentAverage(student, subjects);
   const low = Object.values(student.grades).filter(
     (grade) => hasValue(grade) && isLowGrade(grade),
   ).length;
@@ -38,7 +39,7 @@ export function StudentCard({ classId, student, highlight, selection, onSelect }
           </span>
         )}
         <h2>{student.name}</h2>
-          <div className={highlight ? "highlight-average" : "card-average"}>
+          <div className="highlight-average">
             <span>Média das notas</span>
             <strong>
               {average === null ? "Sem informação" : formatGrade(average)}

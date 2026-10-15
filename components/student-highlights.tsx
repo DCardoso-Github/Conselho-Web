@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Play, Star } from "lucide-react";
 import type { StudentRecord } from "@/lib/db";
 import { studentHighlights } from "@/lib/highlights";
+import { remainingPresentationStudents } from "@/lib/presentation";
 import { StudentCard } from "./student-card";
 import { Button } from "./ui/button";
 
@@ -18,8 +19,7 @@ export function StudentHighlights({
 }) {
   const highlights = studentHighlights(students, subjects);
   const [showRest, setShowRest] = useState(false);
-  const highlightIds = new Set(highlights.map(item => item.student.id));
-  const rest = students.filter(student => !highlightIds.has(student.id)).sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
+  const rest = remainingPresentationStudents(students, highlights.map(item => item.student), subjects);
   return (
     <section aria-label="Alunos destaque da turma">
       <div className="highlights-heading">
@@ -69,7 +69,7 @@ export function StudentHighlights({
           {showRest ? "Ocultar restante da turma" : `Mostrar restante da turma (${rest.length})`}
         </Button>
         {showRest && <div id="highlight-rest" className="selection-grid student-selection-grid">
-          {rest.map(student => <StudentCard key={student.id} classId={classId} student={student} />)}
+          {rest.map(student => <StudentCard key={student.id} classId={classId} student={student} subjects={subjects} />)}
         </div>}
       </>}
     </section>
