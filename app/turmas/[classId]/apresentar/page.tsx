@@ -76,6 +76,7 @@ function Presentation({
       students.findIndex((student) => String(student.id) === from),
     ),
   );
+  const [onlyLow, setOnlyLow] = useState(false);
   const [exit, setExit] = useState(false);
   const [fullscreenMessage, setFullscreenMessage] = useState("");
   const safeIndex = Math.min(index, Math.max(0, students.length - 1));
@@ -148,6 +149,8 @@ function Presentation({
         </p>
       )}
       <StudentPanels
+        onlyLow={onlyLow}
+        onOnlyLowChange={setOnlyLow}
         key={student.id}
         student={student}
         subjects={cls.subjects}

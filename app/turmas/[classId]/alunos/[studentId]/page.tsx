@@ -27,6 +27,7 @@ export default function AlunoPage({
   const { classId: raw, studentId } = use(params);
   const classId = decodeURIComponent(raw);
   const router = useRouter();
+  const [onlyLow, setOnlyLow] = useState(false);
   const [editing, setEditing] = useState(false);
   const [uploading, setUploading] = useState(false);
   const closeEditor = useCallback(() => setEditing(false), []);
@@ -120,6 +121,8 @@ export default function AlunoPage({
         </div>
       </header>
       <StudentPanels
+        onlyLow={onlyLow}
+        onOnlyLowChange={setOnlyLow}
         key={student.id}
         student={student}
         subjects={data.cls.subjects}

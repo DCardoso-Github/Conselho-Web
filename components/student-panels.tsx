@@ -12,12 +12,14 @@ import {
   HeartHandshake,
   Sparkles,
   MessageSquare,
+  Filter,
   type LucideIcon,
 } from "lucide-react";
 import type { StudentRecord } from "@/lib/db";
 import { isLowGrade } from "@/lib/actions";
 import { displayValue, hasValue, percentage } from "@/lib/presentation";
 import { formatSubject } from "@/lib/mapao/subjects";
+import { Button } from "./ui/button";
 import { SubjectIcon } from "./subject-icon";
 
 const PP_NAMES: Record<string, string> = {
@@ -35,10 +37,14 @@ export function StudentPanels({
   student,
   subjects,
   profile,
+  onlyLow,
+  onOnlyLowChange,
 }: {
   student: StudentRecord;
   subjects: string[];
   profile: ReactNode;
+  onlyLow: boolean;
+  onOnlyLowChange: (value: boolean) => void;
 }) {
   return (
     <Tabs.Root
@@ -61,7 +67,12 @@ export function StudentPanels({
       </Tabs.List>
       <div className="presentation-identity">{profile}</div>
       <Tabs.Content value="grades" className="panel-content academic-panel">
-        <Academic student={student} subjects={subjects} />
+        <Academic
+          student={student}
+          subjects={subjects}
+          onlyLow={onlyLow}
+          onOnlyLowChange={onOnlyLowChange}
+        />
       </Tabs.Content>
       <Tabs.Content value="pp" className="panel-content academic-panel">
         <Academic student={student} subjects={subjects} prova />
@@ -97,29 +108,66 @@ function Academic({
   student,
   subjects,
   prova = false,
+  onlyLow = false,
+  onOnlyLowChange,
 }: {
   student: StudentRecord;
   subjects: string[];
   prova?: boolean;
+  onlyLow?: boolean;
+  onOnlyLowChange?: (value: boolean) => void;
 }) {
-  const entries = prova
+  const allEntries = prova
     ? Object.entries(student.provaPaulista?.grades ?? {})
     : subjects.map((subject) => [subject, student.grades[subject]] as const);
+  const lowEntries = allEntries.filter(
+    ([, value]) => hasValue(value) && isLowGrade(value),
+  );
+  const entries = !prova && onlyLow ? lowEntries : allEntries;
   return (
     <>
+      {!prova && (
+        <div className="grade-toolbar">
+          <p role="status">
+            {onlyLow
+              ? `${entries.length} de ${allEntries.length} disciplinas`
+              : `${allEntries.length} disciplinas`}{" "}
+            ·{" "}
+            <strong>
+              {lowEntries.length}{" "}
+              {lowEntries.length === 1 ? "nota vermelha" : "notas vermelhas"}
+            </strong>
+          </p>
+          <Button
+            variant={onlyLow ? "default" : "outline"}
+            aria-pressed={onlyLow}
+            onClick={() => onOnlyLowChange?.(!onlyLow)}
+          >
+            <Filter aria-hidden="true" /> Somente notas vermelhas
+          </Button>
+        </div>
+      )}
       <div className="academic-caption sr-only">
-        <h2>{prova ? "Resultados por disciplina" : "Todas as disciplinas"}</h2>
+        <h2>
+          {prova
+            ? "Resultados por disciplina"
+            : onlyLow
+              ? "Disciplinas com notas vermelhas"
+              : "Todas as disciplinas"}
+        </h2>
         <span>{entries.length} disciplinas</span>
       </div>
       {entries.length ? (
         <div
-          className={`grade-grid all-grades ${entries.length > 8 ? "grades-dense" : ""}`}
+          className={`grade-grid all-grades ${entries.length > 8 ? "grades-dense" : ""} ${entries.length > 15 ? "grades-many" : ""} ${onlyLow && !prova ? "grades-filtered" : ""}`}
           tabIndex={0}
           role="region"
           aria-label={
             prova
               ? "Todas as disciplinas da Prova Paulista"
-              : "Todas as notas do bimestre"
+              : onlyLow
+                ? "Somente notas vermelhas do bimestre"
+                : "Todas as notas do bimestre"
           }
         >
           {entries.map(([subject, value]) => {
@@ -159,7 +207,9 @@ function Academic({
           <p>
             {prova
               ? "Sem resultados da Prova Paulista. Importe a planilha em Gerenciar turma."
-              : "Sem disciplinas cadastradas."}
+              : onlyLow
+                ? "Nenhuma nota vermelha para este aluno. Desative o filtro para ver todas as disciplinas."
+                : "Sem disciplinas cadastradas."}
           </p>
         </div>
       )}

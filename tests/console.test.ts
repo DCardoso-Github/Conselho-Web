@@ -14,6 +14,7 @@ import {
   percentage,
   displayValue,
   hasLowGrades,
+  lowGradeCount,
 } from "../lib/presentation";
 import { exportClassToXlsx } from "../lib/mapao/exporter";
 import { parseMapao } from "../lib/mapao/parser";
@@ -61,6 +62,19 @@ test("missing values are neutral while zero remains real data", () => {
     assert.equal(percentage(value), "Sem informação");
     assert.equal(hasLowGrades(student(1, value)), false);
   }
+  const mixed = {
+    ...student(1, 0),
+    grades: {
+      ZERO: 0,
+      LOW: 4,
+      PASS: 5,
+      EMPTY: null,
+      TEXT: "ET",
+      ABSENT: "S/N",
+    },
+  };
+  assert.equal(lowGradeCount(mixed), 2);
+  assert.equal(lowGradeCount(mixed, ["PASS", "EMPTY", "TEXT", "ABSENT"]), 0);
   assert.equal(displayValue(0), "0");
   assert.equal(percentage(0), "0%");
   assert.equal(hasLowGrades(student(1, 0)), true);

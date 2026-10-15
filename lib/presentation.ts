@@ -8,10 +8,16 @@ export const hasValue = (value: unknown) =>
   !["", "-", "S/N"].includes(String(value).trim().toUpperCase());
 export const displayValue = (value: unknown) =>
   hasValue(value) ? String(value) : "Sem informação";
+export const lowGradeCount = (
+  student: StudentRecord,
+  subjects = Object.keys(student.grades),
+) =>
+  subjects.filter(
+    (subject) =>
+      hasValue(student.grades[subject]) && isLowGrade(student.grades[subject]),
+  ).length;
 export const hasLowGrades = (student: StudentRecord) =>
-  Object.values(student.grades).some(
-    (grade) => hasValue(grade) && isLowGrade(grade),
-  );
+  lowGradeCount(student) > 0;
 
 export function percentage(value: unknown) {
   if (!hasValue(value)) return "Sem informação";
