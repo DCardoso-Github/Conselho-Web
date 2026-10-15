@@ -1,11 +1,11 @@
 "use client";
-import { Suspense, use, useEffect, useState } from "react";
+import { Suspense, use, useCallback, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useLiveQuery } from "dexie-react-hooks";
-import { ChevronLeft, ChevronRight, Maximize, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Maximize, Users, X } from "lucide-react";
 import { db, type ClassRecord, type StudentRecord } from "@/lib/db";
-import { presentationStudents, shortcutBlocked } from "@/lib/presentation";
+import { presentationStudents, remainingPresentationStudents, shortcutBlocked } from "@/lib/presentation";
 import {
   comparePeriods,
   evolutionLeaders,
@@ -72,22 +72,27 @@ function PresentationLoader({ classId }: { classId: string }) {
   );
   const evolution =
     query.get("scope") === "evolution"
-      ? evolutionLeaders(comparePeriods(data.students, before, after))
+      ? comparePeriods(data.students, before, after)
       : undefined;
   const list = evolution
-    ? evolution.map((row) => row.student)
+    ? evolutionLeaders(evolution).map((row) => row.student)
     : presentationStudents(
         data.students,
         query.get("scope"),
         query.get("from"),
         data.cls.subjects,
       );
+  const groupLabel = query.get("scope") === "top"
+    ? "Alunos destaque"
+    : query.get("scope") === "evolution" ? "Alunos evolução" : undefined;
   return (
     <Presentation
       key={`${classId}:${query.toString()}`}
       evolution={evolution}
+      groupLabel={groupLabel}
+      remaining={groupLabel ? remainingPresentationStudents(data.students, list) : []}
       comparisonLabels={
-        before && after ? [periodLabel(before), periodLabel(after)] : undefined
+        evolution && before && after ? [periodLabel(before), periodLabel(after)] : undefined
       }
       cls={data.cls}
       students={list}
@@ -97,11 +102,15 @@ function PresentationLoader({ classId }: { classId: string }) {
 }
 function Presentation({
   cls,
-  students,
+  students: selected,
   from,
   evolution,
   comparisonLabels,
+  remaining,
+  groupLabel,
 }: {
+  remaining: StudentRecord[];
+  groupLabel?: string;
   evolution?: StudentEvolution[];
   comparisonLabels?: [string, string];
   cls: ClassRecord;
@@ -109,6 +118,8 @@ function Presentation({
   from: string | null;
 }) {
   const router = useRouter();
+  const [showRemaining, setShowRemaining] = useState(false);
+  const students = showRemaining ? remaining : selected;
   const [index, setIndex] = useState(() =>
     Math.max(
       0,
@@ -119,13 +130,23 @@ function Presentation({
   const [exit, setExit] = useState(false);
   const [fullscreenMessage, setFullscreenMessage] = useState("");
   const safeIndex = Math.min(index, Math.max(0, students.length - 1));
+  const canContinue = !showRemaining && remaining.length > 0;
+  const changeGroup = useCallback((rest: boolean) => {
+    setShowRemaining(rest);
+    setIndex(0);
+    setOnlyLow(false);
+  }, []);
+  const nextStudent = useCallback(() => {
+    if (safeIndex >= students.length - 1 && canContinue) changeGroup(true);
+    else setIndex(Math.min(safeIndex + 1, Math.max(0, students.length - 1)));
+  }, [safeIndex, students.length, canContinue, changeGroup]);
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (shortcutBlocked(event.target)) return;
       if (event.key === "Escape") setExit(true);
       if (event.key === "ArrowRight" || event.key === " ") {
         event.preventDefault();
-        setIndex((i) => Math.min(i + 1, students.length - 1));
+        nextStudent();
       }
       if (event.key === "ArrowLeft") {
         event.preventDefault();
@@ -134,7 +155,7 @@ function Presentation({
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [students.length]);
+  }, [nextStudent]);
   const leave = () => {
     if (document.fullscreenElement)
       void document.exitFullscreen().catch(() => {});
@@ -156,6 +177,7 @@ function Presentation({
     return (
       <div className="empty-panel">
         <h1>Nenhum aluno nesta seleção</h1>
+        {canContinue && <Button onClick={() => changeGroup(true)}>Apresentar restante da turma ({remaining.length})</Button>}
         <Button onClick={leave}>Voltar à turma</Button>
       </div>
     );
@@ -163,8 +185,19 @@ function Presentation({
   return (
     <section className="presentation-screen">
       <header className="presentation-header">
+        {remaining.length > 0 && (
+          <Button
+            variant="outline"
+            className="presentation-group-toggle"
+            onClick={() => changeGroup(!showRemaining)}
+            aria-label={showRemaining ? undefined : `Apresentar restante da turma (${remaining.length})`}
+          >
+            <Users aria-hidden="true" />
+            {showRemaining ? (groupLabel === "Alunos destaque" ? "Voltar aos destaques" : "Voltar aos alunos evolução") : `Restante da turma (${remaining.length})`}
+          </Button>
+        )}
         <div className="presentation-context">
-          <span className="eyebrow">Conselho em apresentação</span>
+          <span className="eyebrow">{showRemaining ? "Restante da turma" : groupLabel ?? "Conselho em apresentação"}</span>
           <strong>{cls.name}</strong>
         </div>
         <div className="presentation-actions">
@@ -213,10 +246,10 @@ function Presentation({
           </span>
           <Button
             size="lg"
-            disabled={safeIndex >= students.length - 1}
-            onClick={() => setIndex(safeIndex + 1)}
+            disabled={safeIndex >= students.length - 1 && !canContinue}
+            onClick={nextStudent}
           >
-            Próximo <ChevronRight />
+            {safeIndex >= students.length - 1 && canContinue ? "Restante da turma" : "Próximo"} <ChevronRight />
           </Button>
         </div>
       </footer>

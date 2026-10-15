@@ -15,6 +15,7 @@ import {
 } from "../lib/actions";
 import {
   presentationStudents,
+  remainingPresentationStudents,
   percentage,
   displayValue,
   hasLowGrades,
@@ -259,6 +260,34 @@ test("highlights select at most six by numeric average without mutating students
     students.length,
   );
 });
+test("presentation remainder includes every other student once, including missing grades and nonpositive evolution", () => {
+  const students = Array.from({ length: 9 }, (_, i) => ({
+    ...student(i + 1, i === 8 ? null : 10 - i),
+    name: `ALUNO ${9 - i}`,
+  }));
+  const originalOrder = students.map(s => s.id);
+  const top = presentationStudents(students, "top", null);
+  const rest = remainingPresentationStudents(students, top);
+  assert.equal(top.length, 6);
+  assert.deepEqual(rest.map(s => s.id), [9, 8, 7]);
+  assert.equal(new Set([...top, ...rest].map(s => s.id)).size, students.length);
+  assert.deepEqual(students.map(s => s.id), originalOrder);
+  assert.deepEqual(remainingPresentationStudents(students, students), []);
+  assert.equal(remainingPresentationStudents(students, []).length, 9);
+  assert.deepEqual(remainingPresentationStudents([], []), []);
+
+  const comparisons = students.slice(0, 8).map((s, i) => ({
+    student: s, before: 3, after: 9 - i, gain: 6 - i,
+    subjects: [{ subject: "MATEMATICA", before: 3, after: 9 - i, gain: 6 - i }],
+  }));
+  const leaders = evolutionLeaders(comparisons).map(row => row.student);
+  const evolutionRest = remainingPresentationStudents(students, leaders);
+  assert.deepEqual(evolutionRest.map(s => s.id), [9, 8, 7]);
+  assert.equal(comparisons.find(row => row.student.id === 7)?.gain, 0);
+  assert.equal(comparisons.find(row => row.student.id === 8)?.gain, -1);
+  assert.equal(comparisons.find(row => row.student.id === 9), undefined);
+});
+
 test("highlight ties use fewer low grades then alphabetical names", () => {
   const a = {
     ...student(1, 4),

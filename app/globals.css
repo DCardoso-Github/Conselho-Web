@@ -943,6 +943,7 @@ button:not(:disabled), select { cursor: pointer; }
 .presentation-header .presentation-context .eyebrow { font-size:16px; }
 .presentation-header .presentation-context strong { font-size:26px; }
 .presentation-header:has(.presentation-context) .presentation-actions { grid-column:3;justify-self:end; }
+.presentation-group-toggle { grid-column:1;grid-row:1;justify-self:start;max-width:100%;white-space:normal;text-align:center; }
 .presentation-header button,.presentation-footer button { min-height:48px;height:48px;padding-block:8px; }
 .presentation-footer { padding-top:8px;gap:12px; }
 .presentation-footer .keyboard-hint { font-size:14px; }
@@ -984,6 +985,7 @@ button:not(:disabled), select { cursor: pointer; }
 }
 @media(max-width:1000px) {
   .presentation-header:has(.presentation-context) { grid-template-columns:1fr;gap:8px; }
+  .presentation-group-toggle { grid-column:1;grid-row:auto;justify-self:center; }
   .presentation-header .presentation-context { grid-column:1; }
   .presentation-header:has(.presentation-context) .presentation-actions { grid-column:1;justify-self:center; }
 }

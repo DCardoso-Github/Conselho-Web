@@ -55,11 +55,11 @@ export function StudentPanels({
 }) {
   return (
     <Tabs.Root
-      defaultValue={evolution ? "evolution" : "grades"}
+      defaultValue={comparisonLabels ? "evolution" : "grades"}
       className="student-panels presentation-layout"
     >
       <Tabs.List className="panel-tabs" aria-label="Informações do aluno">
-        {evolution && (
+        {comparisonLabels && (
           <Tabs.Trigger value="evolution">
             <TrendingUp aria-hidden="true" />
             <span>Evolução</span>
@@ -67,7 +67,7 @@ export function StudentPanels({
         )}
         <Tabs.Trigger value="grades">
           <BookOpen aria-hidden="true" />
-          <span>{evolution ? "Notas atuais" : "Notas do bimestre"}</span>
+          <span>{comparisonLabels ? "Notas atuais" : "Notas do bimestre"}</span>
         </Tabs.Trigger>
         <Tabs.Trigger value="pp">
           <ClipboardCheck aria-hidden="true" />
@@ -79,16 +79,20 @@ export function StudentPanels({
         </Tabs.Trigger>
       </Tabs.List>
       <div className="presentation-identity">{profile}</div>
-      {evolution && comparisonLabels && (
+      {comparisonLabels && (
         <Tabs.Content
           value="evolution"
           className="panel-content comparison-panel"
         >
-          <EvolutionDetail
+          {evolution ? <EvolutionDetail
             row={evolution}
             beforeLabel={comparisonLabels[0]}
             afterLabel={comparisonLabels[1]}
-          />
+          /> : <div className="empty-panel">
+            <p className="comparison-period-label">{comparisonLabels[0]} → {comparisonLabels[1]}</p>
+            <h2>Sem comparação neste intervalo</h2>
+            <p>As notas atuais estão disponíveis no painel Notas atuais.</p>
+          </div>}
         </Tabs.Content>
       )}
       <Tabs.Content value="grades" className="panel-content academic-panel">

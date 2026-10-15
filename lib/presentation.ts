@@ -20,6 +20,16 @@ export const lowGradeCount = (
 export const hasLowGrades = (student: StudentRecord) =>
   lowGradeCount(student) > 0;
 
+export function remainingPresentationStudents(
+  students: StudentRecord[],
+  selected: StudentRecord[],
+) {
+  const selectedIds = new Set(selected.map((student) => student.id));
+  return students
+    .filter((student) => !selectedIds.has(student.id))
+    .sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
+}
+
 export function percentage(value: unknown) {
   if (!hasValue(value)) return "Sem informação";
   const raw = String(value).trim();
