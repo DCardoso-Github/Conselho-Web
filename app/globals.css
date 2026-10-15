@@ -1468,6 +1468,11 @@ label.student-tile { cursor:pointer; }
 .student-selection-grid .highlight-average strong { overflow-wrap:anywhere; }
 .profile-average { display:flex; justify-content:center; align-items:baseline; flex-wrap:wrap; gap:6px 10px; color:var(--muted-foreground); font-size:16px; margin-top:10px; }
 .profile-average strong { color:var(--primary); font-size:24px; font-variant-numeric:tabular-nums; }
+.student-tutor { display:flex; flex-wrap:wrap; align-items:baseline; justify-content:center; gap:4px 8px; min-width:0; color:var(--muted-foreground); text-align:center; font-size:16px; line-height:1.35; }
+.student-tutor>span { display:inline-flex; align-items:center; gap:5px; }
+.student-tutor svg { width:18px; height:18px; flex-shrink:0; }
+.student-tutor strong { min-width:0; max-width:100%; color:var(--foreground); font-weight:600; overflow-wrap:anywhere; }
+.profile .student-tutor { margin-top:8px; font-size:18px; }
 .comparison-toggle { display:flex; margin:24px auto; }
 .import-file-review { display:flex; align-items:flex-start; gap:12px; padding:24px 0; }
 .import-file-review>svg { margin-top:4px; }

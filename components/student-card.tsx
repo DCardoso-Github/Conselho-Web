@@ -11,6 +11,7 @@ import { useStudents } from "@/lib/hooks";
 import { deleteStudents, isLowGrade } from "@/lib/actions";
 import { hasValue, hasLowGrades } from "@/lib/presentation";
 import { StudentProfile } from "./student-profile";
+import { StudentTutor } from "./student-tutor";
 import { Button } from "./ui/button";
 import { ConfirmDialog } from "./confirm-dialog";
 import { StudentActions } from "./student-actions";
@@ -39,6 +40,7 @@ export function StudentCard({ classId, student, highlight, subjects, selection, 
           </span>
         )}
         <h2>{student.name}</h2>
+        <StudentTutor tutor={student.tutor} />
           <div className="highlight-average">
             <span>Média das notas</span>
             <strong>

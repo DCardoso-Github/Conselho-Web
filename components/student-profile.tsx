@@ -5,6 +5,7 @@ import { lowGradeCount } from "@/lib/presentation";
 import type { StudentRecord } from "@/lib/db";
 import { studentAverage } from "@/lib/highlights";
 import { formatGrade } from "@/lib/evolution";
+import { StudentTutor } from "./student-tutor";
 export function StudentProfile({
   student,
   compact = false,
@@ -42,6 +43,7 @@ export function StudentProfile({
         <div>
           <p className="eyebrow">Aluno · {student.classId}</p>
           <h1>{student.name}</h1>
+          <StudentTutor tutor={student.tutor} />
           <p className="profile-average">Média das notas <strong>{average === null ? "Sem informação" : formatGrade(average)}</strong></p>
           <p
             className={`profile-grade-count ${lowCount ? "has-low-grades" : ""}`}

@@ -22,6 +22,7 @@ import { formatSubject } from "@/lib/mapao/subjects";
 import { studentAverage } from "@/lib/highlights";
 import { remainingPresentationStudents } from "@/lib/presentation";
 import { StudentProfile } from "./student-profile";
+import { StudentTutor } from "./student-tutor";
 import { StudentActions } from "./student-actions";
 import { ProvaEvolutionSummary } from "./prova-evolution";
 import { compareProvaPaulista, type ProvaEvolution } from "@/lib/prova-evolution";
@@ -214,6 +215,7 @@ function EvolutionCard({ classId, student, row, prova, leader = false }: {
     <div className="student-tile-content">
       {leader && <span className="highlight-label"><TrendingUp aria-hidden="true" /> Aluno evolução</span>}
       <h3>{student.name}</h3>
+      <StudentTutor tutor={student.tutor} />
       {row ? <div className="highlight-average">
         <span>Média final</span>
         <strong>{formatGrade(row.after)}</strong>
