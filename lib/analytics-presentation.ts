@@ -4,12 +4,14 @@ export type AnalyticsPanel = {
   title: string;
   start?: number;
   end?: number;
+  subject?: string;
 };
 
 /** Small batches keep every discipline reachable without dense projection screens. */
 export function analyticsPanels(
   view: AnalyticsView,
   subjectCount: number,
+  provaSubjects: { subject: string; label: string }[] = [],
 ): AnalyticsPanel[] {
   const panels: AnalyticsPanel[] =
     view === "overview"
@@ -24,6 +26,17 @@ export function analyticsPanels(
           { kind: "pp-acertos", title: "Prova Paulista · Acertos" },
           { kind: "pp-participacao", title: "Prova Paulista · Participação" },
         ];
+  if (view === "evolution") {
+    if (provaSubjects.length) {
+      panels.push(...provaSubjects.map(({ subject, label }) => ({
+        kind: "pp-subject",
+        title: `Prova Paulista · ${label}`,
+        subject,
+      })));
+    } else {
+      panels.push({ kind: "pp-subject", title: "Prova Paulista · Disciplinas" });
+    }
+  }
   const size = view === "overview" ? 3 : 2;
   for (let start = 0; start < subjectCount; start += size) {
     const end = Math.min(start + size, subjectCount);

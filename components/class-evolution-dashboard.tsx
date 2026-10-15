@@ -317,6 +317,24 @@ export function ClassEvolutionDashboard({
                 <ClassProvaChart data={prova.participacao} label="Participação" before={before!} after={after!} />
               </section>
             </div>
+            <div className="analytics-heading">
+              <h3 className="pp-subject-heading">Acertos por disciplina</h3>
+            </div>
+            {prova.subjects.length ? (
+              <div className="analytics-columns">
+                {prova.subjects.map((subject) => (
+                  <section className="analytics-card" key={subject.subject}>
+                    <header>
+                      <span aria-hidden="true"><SubjectIcon name={subject.label} /></span>
+                      <h4>{subject.label}</h4>
+                    </header>
+                    <ClassProvaChart data={subject} label={`Acertos em ${subject.label}`} before={before!} after={after!} />
+                  </section>
+                ))}
+              </div>
+            ) : (
+              <p className="empty-panel">Sem informação por disciplina. Importe a Prova Paulista com os acertos por disciplina dos bimestres selecionados.</p>
+            )}
           </section>
           <section className="analytics-card">
             <header>

@@ -1,6 +1,6 @@
 import type { GradePeriodRecord, StudentRecord } from "./db";
 import { numericGrade, type StudentEvolution } from "./evolution";
-import { compareProvaPaulista, type PercentageChange } from "./prova-evolution";
+import { compareProvaPaulista, PP_NAMES, type PercentageChange } from "./prova-evolution";
 
 export const mean = (values: number[]) =>
   values.length
@@ -17,8 +17,8 @@ export function classProvaEvolution(
     ? students.filter((student) => student.classId === before.classId)
         .map((student) => compareProvaPaulista(student, before, after))
     : [];
-  const aggregate = (metric: "acertos" | "participacao") => {
-    const pairs = comparisons.map((row) => row?.[metric])
+  const aggregate = (values: (PercentageChange | null | undefined)[]) => {
+    const pairs = values
       .filter((value): value is PercentageChange => value != null);
     return {
       count: pairs.length,
@@ -27,7 +27,18 @@ export function classProvaEvolution(
       gain: mean(pairs.map((pair) => pair.gain)),
     };
   };
-  return { acertos: aggregate("acertos"), participacao: aggregate("participacao") };
+  const subjects = [...new Set(comparisons.flatMap((row) => row?.subjects.map((item) => item.subject) ?? []))]
+    .map((subject) => ({
+      subject,
+      label: PP_NAMES[subject] ?? subject,
+      ...aggregate(comparisons.map((row) => row?.subjects.find((item) => item.subject === subject)?.change)),
+    }))
+    .sort((a, b) => a.label.localeCompare(b.label, "pt-BR"));
+  return {
+    acertos: aggregate(comparisons.map((row) => row?.acertos)),
+    participacao: aggregate(comparisons.map((row) => row?.participacao)),
+    subjects,
+  };
 }
 
 /** Numeric grades only: missing values and concepts are never imputed as zero. */

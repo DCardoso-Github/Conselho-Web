@@ -63,6 +63,7 @@ export function AnalyticsPresentation({
   const panels = analyticsPanels(
     view,
     view === "overview" ? subjects.length : evolution.subjects.length,
+    prova.subjects,
   );
   const safeIndex = Math.min(index, panels.length - 1);
   const panel = panels[safeIndex];
@@ -306,6 +307,21 @@ export function AnalyticsPresentation({
           />
         </div>
       );
+    } else if (panel.kind === "pp-subject") {
+      const subject = prova.subjects.find((row) => row.subject === panel.subject);
+      content = subject ? (
+        <div className="projection-mean">
+          <ClassProvaChart
+            data={subject}
+            label={`Acertos em ${subject.label}`}
+            before={before!}
+            after={after!}
+          />
+        </div>
+      ) : (
+        <Empty>Sem informação por disciplina. Importe a Prova Paulista com os acertos por disciplina dos bimestres selecionados.</Empty>
+      );
+      note = "Acertos na disciplina · Variação em pontos percentuais (p.p.).";
     } else if (panel.kind === "pp-acertos" || panel.kind === "pp-participacao") {
       const acertos = panel.kind === "pp-acertos";
       content = (
@@ -394,7 +410,7 @@ export function AnalyticsPresentation({
         </h1>
       </div>
       <section
-        key={`${panel.kind}:${panel.start ?? 0}`}
+        key={`${panel.kind}:${panel.subject ?? panel.start ?? 0}`}
         className="projection-stage"
         aria-label={panel.title}
         tabIndex={0}

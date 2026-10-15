@@ -339,7 +339,7 @@ test("presentation batches include every discipline exactly once with stable nav
       assert.ok(batches.every((panel) => panel.end! - panel.start! <= (view === "overview" ? 3 : 2)));
       assert.equal(panels[0].kind, view === "overview" ? "summary" : "mean");
       assert.ok(panels.length >= (view === "overview" ? 2 : 3));
-      assert.deepEqual(panels.filter(panel => panel.kind.startsWith("pp-")).map(panel => panel.kind), view === "evolution" ? ["pp-acertos", "pp-participacao"] : []);
+      assert.deepEqual(panels.filter(panel => panel.kind.startsWith("pp-")).map(panel => panel.kind), view === "evolution" ? ["pp-acertos", "pp-participacao", "pp-subject"] : []);
     }
   }
 });
@@ -737,6 +737,46 @@ test("Prova Paulista history survives mapao replacement and student edits", asyn
   assert.deepEqual(saved.provaPaulistaHistory, previousHistory);
   assert.equal(saved.notes, "Observação preservada");
   assert.equal(saved.provaPaulista?.acertos, "70%");
+});
+
+test("PP subject panels cover each subject once, preserve ordering and stay out of overview", () => {
+  const subjects = [{ subject: "PORT", label: "Língua Portuguesa" }, { subject: "MAT", label: "Matemática" }];
+  const panels = analyticsPanels("evolution", 18, subjects);
+  assert.deepEqual(panels.filter(p => p.kind === "pp-subject").map(p => p.subject), ["PORT", "MAT"]);
+  assert.deepEqual(panels.slice(5, 7).map(p => p.title), ["Prova Paulista · Língua Portuguesa", "Prova Paulista · Matemática"]);
+  assert.equal(panels[7].kind, "subjects");
+  assert.ok(!analyticsPanels("overview", 18, subjects).some(p => p.kind.startsWith("pp-")));
+  assert.equal(analyticsPanels("evolution", 0)[5].title, "Prova Paulista · Disciplinas");
+});
+
+test("class PP subjects compare matched students independently and preserve partial or missing subjects", () => {
+  const before = periodRecord(1, []), after = periodRecord(3, []);
+  const grades: [Record<string, string | number | null>, Record<string, string | number | null>][] = [
+    [{ MAT: 0, PORT: "80%", FIN: "50%", CIE: "ET" }, { MAT: "40%", PORT: "60%", TEC: "90%", CIE: "70%" }],
+    [{ MAT: "60%", PORT: null, CIE: null }, { MAT: 0.8, PORT: "100%", CIE: "80%" }],
+    [{ MAT: null, PORT: "40%" }, { MAT: "100%", PORT: "20%" }],
+  ];
+  const rows = grades.map(([a, b], i) => ({ ...student(i + 1, "ET"), provaPaulistaHistory: {
+    [before.id]: { acertos: null, participacao: null, grades: a },
+    [after.id]: { acertos: null, participacao: null, grades: b },
+  } }));
+  const result = classProvaEvolution(rows, before, after);
+  assert.equal(result.acertos.before, null);
+  assert.deepEqual(result.subjects.map(s => s.subject), ["CIE", "FIN", "PORT", "MAT", "TEC"]);
+  assert.deepEqual(result.subjects.find(s => s.subject === "MAT"), { subject: "MAT", label: "Matemática", count: 2, before: 30, after: 60, gain: 30 });
+  assert.deepEqual(result.subjects.find(s => s.subject === "PORT"), { subject: "PORT", label: "Língua Portuguesa", count: 2, before: 60, after: 40, gain: -20 });
+  for (const key of ["CIE", "FIN", "TEC"]) {
+    const row = result.subjects.find(s => s.subject === key)!;
+    assert.equal(row.count, 0);
+    assert.equal(row.before, null);
+    assert.equal(row.after, null);
+    assert.equal(row.gain, null);
+  }
+  assert.deepEqual(classProvaEvolution([...rows, { ...rows[0], classId: "OUTRA" }], before, after), result);
+  assert.deepEqual(classProvaEvolution(rows, after, before).subjects, []);
+  assert.deepEqual(classProvaEvolution(rows, before, { ...after, year: 2027 }).subjects, []);
+  assert.deepEqual(classProvaEvolution(rows, before, { ...after, classId: "OUTRA" }).subjects, []);
+  assert.deepEqual(classProvaEvolution([], before, after).subjects, []);
 });
 
 test("class PP charts use matched cohorts per metric independently of grades and retain zero", () => {

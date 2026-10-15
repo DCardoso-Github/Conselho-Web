@@ -1389,6 +1389,10 @@ button:not(:disabled), select { cursor: pointer; }
 .class-prova-section { display:grid; gap:24px; }
 .class-prova-section .analytics-heading { flex-direction:column; gap:8px; }
 .class-prova-section h2 { font-size:clamp(26px,3vw,36px); font-weight:700; text-align:center; }
+.class-prova-section .pp-subject-heading { font-size:28px; font-weight:700; text-align:center; }
+.class-prova-section .analytics-card h4 { font-size:24px; font-weight:650; line-height:1.3; text-wrap:balance; }
+.class-prova-section .analytics-card header>span { flex-shrink:0; }
+.class-prova-section .analytics-card header>span svg { width:24px; height:24px; }
 .class-prova-chart { --pp-value-width:88px; --pp-bar-gap:12px; }
 .class-prova-chart .paired-bars>div,.projection-stage .class-prova-chart .paired-bars>div { grid-template-columns:minmax(0,1fr) var(--pp-value-width); gap:var(--pp-bar-gap); }
 .class-prova-chart .paired-bars b { white-space:nowrap; }
