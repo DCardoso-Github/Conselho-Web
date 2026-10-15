@@ -17,7 +17,7 @@ import {
 const MODEL_URL =
     "https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/1/blaze_face_short_range.tflite";
 const WASM_BASE =
-    "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.18/wasm";
+    "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.35/wasm";
 
 let detectorPromise: Promise<FaceDetector> | null = null;
 
@@ -28,12 +28,15 @@ export async function loadFaceDetector(): Promise<FaceDetector> {
         return await FaceDetector.createFromOptions(fileset, {
             baseOptions: {
                 modelAssetPath: MODEL_URL,
-                delegate: "GPU",
+                delegate: "CPU",
             },
             runningMode: "IMAGE",
             minDetectionConfidence: 0.5,
         });
-    })();
+    })().catch((error) => {
+        detectorPromise = null;
+        throw error;
+    });
     return detectorPromise;
 }
 
@@ -161,7 +164,7 @@ function canvasToJpeg(
     canvas: HTMLCanvasElement | OffscreenCanvas,
     quality: number,
 ): Promise<Blob> {
-    if (canvas instanceof OffscreenCanvas) {
+    if (typeof OffscreenCanvas !== "undefined" && canvas instanceof OffscreenCanvas) {
         return canvas.convertToBlob({ type: "image/jpeg", quality });
     }
     return new Promise<Blob>((resolve, reject) => {

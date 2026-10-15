@@ -2,36 +2,25 @@ import JSZip from "jszip";
 import { setStudentPhoto } from "./actions";
 import { db } from "./db";
 import { normalizeName } from "./mapao/normalize";
+import { coverFitToJpeg, cropHeadShoulders, detectFace, loadFaceDetector } from "./face";
 
-const MAX_PHOTO_EDGE = 1200;
+const TARGET_SIZE = 600;
 const JPEG_QUALITY = 0.9;
 
-/** Redimensiona a foto inteira, preservando proporção e enquadramento. */
+/** Recorta cabeça e ombros; sem rosto detectado, usa recorte central. */
 export async function processPhoto(file: Blob): Promise<Blob> {
   const bitmap = await createImageBitmap(file);
   try {
-    const scale = Math.min(
-      1,
-      MAX_PHOTO_EDGE / Math.max(bitmap.width, bitmap.height),
-    );
-    const canvas = document.createElement("canvas");
-    canvas.width = Math.max(1, Math.round(bitmap.width * scale));
-    canvas.height = Math.max(1, Math.round(bitmap.height * scale));
-    const context = canvas.getContext("2d");
-    if (!context) throw new Error("Não foi possível processar a foto.");
-    context.fillStyle = "#ffffff";
-    context.fillRect(0, 0, canvas.width, canvas.height);
-    context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-    return await new Promise<Blob>((resolve, reject) => {
-      canvas.toBlob(
-        (blob) =>
-          blob
-            ? resolve(blob)
-            : reject(new Error("Não foi possível salvar a foto.")),
-        "image/jpeg",
-        JPEG_QUALITY,
-      );
-    });
+    try {
+      const detector = await loadFaceDetector();
+      const face = detectFace(detector, bitmap);
+      if (face) {
+        return await cropHeadShoulders(bitmap, face, TARGET_SIZE, JPEG_QUALITY);
+      }
+    } catch {
+      // A importação continua mesmo sem acesso ao modelo de detecção.
+    }
+    return await coverFitToJpeg(bitmap, TARGET_SIZE, JPEG_QUALITY);
   } finally {
     bitmap.close?.();
   }

@@ -1,6 +1,10 @@
 import "fake-indexeddb/auto";
 import { test, after } from "node:test";
 import assert from "node:assert/strict";
+import { FaceDetector, FilesetResolver } from "@mediapipe/tasks-vision";
+import { disposeFaceDetector } from "../lib/face";
+import { processPhoto, importPhotosFromFiles, importPhotosFromZip } from "../lib/photos";
+import JSZip from "jszip";
 import { readFile, unlink } from "node:fs/promises";
 import { db, type StudentRecord } from "../lib/db";
 import {
@@ -392,6 +396,69 @@ test("period imports preserve current data, synchronize edits and require explic
   await deleteClass("7B");
   assert.equal(await db.gradePeriods.where("classId").equals("7B").count(), 0);
   assert.equal(await db.students.where("classId").equals("7B").count(), 0);
+});
+
+test("photo imports crop around the face, fall back safely and preserve student data", async (t) => {
+  const originals = new Map(["createImageBitmap", "OffscreenCanvas", "document"].map(key => [key, Object.getOwnPropertyDescriptor(globalThis, key)]));
+  const draws: unknown[][] = [];
+  let closed = 0;
+  let hasFace = true;
+  let unavailable = false;
+  const bitmap = { width: 1600, height: 2400, close: () => { closed++; } };
+  const jpeg = new Blob(["cropped jpeg"], { type: "image/jpeg" });
+  Object.defineProperty(globalThis, "createImageBitmap", { configurable: true, value: async () => bitmap });
+  Object.defineProperty(globalThis, "OffscreenCanvas", { configurable: true, value: undefined });
+  Object.defineProperty(globalThis, "document", { configurable: true, value: {
+    createElement: () => ({ width: 0, height: 0,
+      getContext: () => ({ fillStyle: "", fillRect() {}, drawImage: (...args: unknown[]) => draws.push(args) }),
+      toBlob(callback: (blob: Blob) => void, type: string) { assert.equal(type, "image/jpeg"); assert.equal(this.width, 600); assert.equal(this.height, 600); callback(jpeg); },
+    }),
+  } });
+  t.after(() => {
+    disposeFaceDetector();
+    for (const [key, descriptor] of originals) {
+      if (descriptor) Object.defineProperty(globalThis, key, descriptor);
+      else Reflect.deleteProperty(globalThis, key);
+    }
+  });
+  t.mock.method(FilesetResolver, "forVisionTasks", async () => {
+    if (unavailable) throw new Error("offline");
+    return {};
+  });
+  t.mock.method(FaceDetector, "createFromOptions", async () => ({
+    detect: () => ({ detections: hasFace ? [{ boundingBox: { originX: 1000, originY: 300, width: 200, height: 200 } }] : [] }),
+    close() {},
+  }));
+  const input = new File(["source"], "ALUNO FOTO.jpg", { type: "image/jpeg" });
+  assert.equal(await processPhoto(input), jpeg);
+  // The detected face is off-center: the crop must follow it, not the whole photo.
+  assert.deepEqual(draws.at(-1)?.slice(1), [730, 160, 740, 740, 0, 0, 600, 600]);
+  hasFace = false;
+  await processPhoto(input);
+  assert.deepEqual(draws.at(-1)?.slice(1), [0, -150, 600, 900]);
+  disposeFaceDetector();
+  unavailable = true;
+  await processPhoto(input);
+  assert.deepEqual(draws.at(-1)?.slice(1), [0, -150, 600, 900]);
+  unavailable = false;
+  hasFace = true;
+  await processPhoto(input);
+  assert.equal(draws.at(-1)?.length, 9, "detector retries after a failed initialization");
+  assert.equal(closed, 4, "all image bitmaps are released");
+
+  const id = await db.students.add({ ...student(9001, 8), classId: "FOTO", name: "ALUNO FOTO" });
+  const before = await db.students.get(id);
+  assert.equal((await importPhotosFromFiles("FOTO", [input])).matched, 1);
+  const zip = new JSZip();
+  zip.file("fotos/1. ALUNO FOTO.jpg", "source");
+  const archive = await zip.generateAsync({ type: "uint8array" });
+  assert.equal((await importPhotosFromZip("FOTO", archive as unknown as Blob)).matched, 1);
+  const saved = await db.students.get(id);
+  assert.equal(saved?.photo?.type, "image/jpeg");
+  assert.deepEqual(saved?.grades, before?.grades);
+  assert.equal(saved?.name, before?.name);
+  assert.equal(draws.at(-1)?.length, 9, "ZIP imports also use the face crop");
+  await db.students.delete(id);
 });
 
 test("new imports label periods and reject empty or duplicate mapoes atomically", async () => {
