@@ -1435,12 +1435,14 @@ label.student-tile { cursor:pointer; }
 .bulk-delete-names { max-height:min(28vh,220px); overflow-y:auto; padding:12px 20px; margin:16px 0 0; border:1px solid var(--border); border-radius:12px; text-align:left; list-style:disc inside; }
 .bulk-delete-names li { padding:6px 0; overflow-wrap:anywhere; }
 .console-container.class-screen { max-width:1840px; padding-inline:clamp(16px,2vw,32px); }
-.student-selection-grid .student-tile { display:grid; grid-template-columns:minmax(120px,36%) minmax(0,1fr); gap:18px; padding:20px; align-items:center; border-color:color-mix(in srgb,var(--primary) 45%,var(--border)); }
+.student-selection-grid .student-tile { display:grid; grid-template-columns:minmax(140px,42%) minmax(0,1fr); gap:18px; padding:16px; align-items:center; border-color:color-mix(in srgb,var(--primary) 45%,var(--border)); }
 .student-selection-grid .profile-compact { width:100%; }
-.student-selection-grid .profile-compact .profile-photo { width:100%; height:auto; aspect-ratio:3/4; max-height:320px; border-radius:20px; }
+.student-selection-grid .profile-compact .profile-photo { width:100%; height:auto; aspect-ratio:3/4; max-height:360px; border-radius:20px; }
 .student-selection-grid .profile-photo img { object-fit:contain; }
 .student-selection-grid .student-selection-check { grid-column:1 / -1; }
-.student-selection-grid .student-tile-content { gap:10px; }
+.student-selection-grid .student-tile-content { gap:12px; align-self:center; justify-content:center; text-align:center; }
+.student-selection-grid .student-tile .tile-action { margin-top:4px; padding-top:12px; min-height:44px; }
+.student-selection-grid .highlight-average strong { overflow-wrap:anywhere; }
 .profile-average { display:flex; justify-content:center; align-items:baseline; flex-wrap:wrap; gap:6px 10px; color:var(--muted-foreground); font-size:16px; margin-top:10px; }
 .profile-average strong { color:var(--primary); font-size:24px; font-variant-numeric:tabular-nums; }
 .comparison-toggle { display:flex; margin:24px auto; }
@@ -1502,8 +1504,7 @@ label.student-tile { cursor:pointer; }
   .editor-footer>button { flex:1; padding-inline:10px; font-size:16px; }
 }
 @media(max-width:400px) {
-  .student-selection-grid .student-tile { grid-template-columns:minmax(90px,33%) minmax(0,1fr); gap:12px; padding:14px; }
-  .student-selection-grid .student-card-shell>.student-tile { padding-top:54px; }
+  .student-selection-grid .student-tile { grid-template-columns:minmax(100px,38%) minmax(0,1fr); gap:12px; padding:12px; }
   .student-selection-grid .student-tile h2,.student-selection-grid .student-tile h3 { font-size:19px; }
   .student-selection-grid .highlight-average strong { font-size:30px; }
   .import-file-review { gap:8px; }
