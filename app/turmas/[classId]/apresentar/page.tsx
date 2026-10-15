@@ -147,14 +147,12 @@ function Presentation({
           {fullscreenMessage}
         </p>
       )}
-      <div className="student-stage">
-        <StudentProfile key={`photo-${student.id}`} student={student} />
-        <StudentPanels
-          key={student.id}
-          student={student}
-          subjects={cls.subjects}
-        />
-      </div>
+      <StudentPanels
+        key={student.id}
+        student={student}
+        subjects={cls.subjects}
+        profile={<StudentProfile student={student} />}
+      />
       <footer className="presentation-footer">
         <span className="keyboard-hint">← → para trocar de aluno</span>
         <div className="student-navigation">

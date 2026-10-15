@@ -119,37 +119,37 @@ export default function AlunoPage({
           </Button>
         </div>
       </header>
-      <div className="student-stage">
-        <div className="profile-column">
-          <StudentProfile key={student.id} student={student} />
-          <Button variant="outline" asChild disabled={uploading}>
-            <label className="photo-upload">
-              <ImagePlus />{" "}
-              {uploading
-                ? "Processando foto…"
-                : student.photo
-                  ? "Trocar foto"
-                  : "Adicionar foto"}
-              <input
-                aria-label="Foto do aluno"
-                type="file"
-                accept="image/*"
-                disabled={uploading}
-                onChange={(event) => {
-                  const file = event.target.files?.[0];
-                  if (file) void addPhoto(file);
-                  event.target.value = "";
-                }}
-              />
-            </label>
-          </Button>
-        </div>
-        <StudentPanels
-          key={student.id}
-          student={student}
-          subjects={data.cls.subjects}
-        />
-      </div>
+      <StudentPanels
+        key={student.id}
+        student={student}
+        subjects={data.cls.subjects}
+        profile={
+          <div className="profile-column">
+            <StudentProfile key={student.id} student={student} />
+            <Button variant="outline" asChild disabled={uploading}>
+              <label className="photo-upload">
+                <ImagePlus />{" "}
+                {uploading
+                  ? "Processando foto…"
+                  : student.photo
+                    ? "Trocar foto"
+                    : "Adicionar foto"}
+                <input
+                  aria-label="Foto do aluno"
+                  type="file"
+                  accept="image/*"
+                  disabled={uploading}
+                  onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    if (file) void addPhoto(file);
+                    event.target.value = "";
+                  }}
+                />
+              </label>
+            </Button>
+          </div>
+        }
+      />
       <footer className="presentation-footer">
         <span className="keyboard-hint">← → para trocar de aluno</span>
         <div className="student-navigation">

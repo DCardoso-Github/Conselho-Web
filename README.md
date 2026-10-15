@@ -10,8 +10,9 @@ Consulte a documentação da versão instalada em `node_modules/next/dist/docs` 
 
 - Início: seis turmas por página. Lista da turma: todos os alunos na mesma página, com busca, filtros e ordenação.
 - Iniciar conselho: escolha explícita entre todos os alunos e alunos com notas vermelhas.
-- Ficha e apresentação: identidade do aluno em aproximadamente 25% da largura e informações acadêmicas em 75%, com adaptação para celular.
-- Todas as disciplinas juntas, com ícones e títulos centralizados. Frequência anual, participação e acertos da Prova Paulista acompanham as notas.
+- Ficha e apresentação: foto ampliada e identidade do aluno em aproximadamente 28% da largura e informações acadêmicas em 72%, com adaptação para celular.
+- Abas ocupam toda a faixa superior; foto ampliada e disciplinas ficam no centro. Frequência anual, participação e acertos da Prova Paulista ocupam toda a faixa inferior e permanecem visíveis em qualquer aba.
+- Todas as disciplinas juntas, com ícones e títulos centralizados.
 - Abas para notas do bimestre, resultados por disciplina da Prova Paulista e acompanhamento. Trocar o aluno retorna às notas do bimestre.
 - Grade adaptável: até quinze disciplinas simultâneas em 1280×720; em telas menores ou conjuntos maiores, rolagem acessível mantém todos os resultados disponíveis sem paginação.
 - Ferramentas de importação, fotos, exportação e exclusão em Gerenciar turma.

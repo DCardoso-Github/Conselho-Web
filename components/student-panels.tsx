@@ -1,4 +1,5 @@
 "use client";
+import type { ReactNode } from "react";
 import * as Tabs from "@radix-ui/react-tabs";
 import {
   BookOpen,
@@ -33,12 +34,17 @@ const PP_NAMES: Record<string, string> = {
 export function StudentPanels({
   student,
   subjects,
+  profile,
 }: {
   student: StudentRecord;
   subjects: string[];
+  profile: ReactNode;
 }) {
   return (
-    <Tabs.Root defaultValue="grades" className="student-panels">
+    <Tabs.Root
+      defaultValue="grades"
+      className="student-panels presentation-layout"
+    >
       <Tabs.List className="panel-tabs" aria-label="Informações do aluno">
         <Tabs.Trigger value="grades">
           <BookOpen aria-hidden="true" />
@@ -53,6 +59,7 @@ export function StudentPanels({
           <span>Acompanhamento</span>
         </Tabs.Trigger>
       </Tabs.List>
+      <div className="presentation-identity">{profile}</div>
       <Tabs.Content value="grades" className="panel-content academic-panel">
         <Academic student={student} subjects={subjects} />
       </Tabs.Content>
@@ -62,6 +69,26 @@ export function StudentPanels({
       <Tabs.Content value="support" className="panel-content">
         <Support student={student} />
       </Tabs.Content>
+      <div
+        className="academic-metrics"
+        aria-label="Frequência e Prova Paulista"
+      >
+        <Metric
+          icon={CalendarCheck}
+          label="Frequência anual"
+          value={percentage(student.frequenciaAnual)}
+        />
+        <Metric
+          icon={ClipboardCheck}
+          label="Participação · Prova Paulista"
+          value={percentage(student.provaPaulista?.participacao)}
+        />
+        <Metric
+          icon={Target}
+          label="Acertos · Prova Paulista"
+          value={percentage(student.provaPaulista?.acertos)}
+        />
+      </div>
     </Tabs.Root>
   );
 }
@@ -136,26 +163,6 @@ function Academic({
           </p>
         </div>
       )}
-      <div
-        className="academic-metrics"
-        aria-label="Frequência e Prova Paulista"
-      >
-        <Metric
-          icon={CalendarCheck}
-          label="Frequência anual"
-          value={percentage(student.frequenciaAnual)}
-        />
-        <Metric
-          icon={ClipboardCheck}
-          label="Participação · Prova Paulista"
-          value={percentage(student.provaPaulista?.participacao)}
-        />
-        <Metric
-          icon={Target}
-          label="Acertos · Prova Paulista"
-          value={percentage(student.provaPaulista?.acertos)}
-        />
-      </div>
     </>
   );
 }
