@@ -13,8 +13,11 @@ import {
   Sparkles,
   MessageSquare,
   Filter,
+  TrendingUp,
   type LucideIcon,
 } from "lucide-react";
+import type { StudentEvolution } from "@/lib/evolution";
+import { EvolutionDetail } from "./student-evolution";
 import type { StudentRecord } from "@/lib/db";
 import { isLowGrade } from "@/lib/actions";
 import { displayValue, hasValue, percentage } from "@/lib/presentation";
@@ -39,7 +42,11 @@ export function StudentPanels({
   profile,
   onlyLow,
   onOnlyLowChange,
+  evolution,
+  comparisonLabels,
 }: {
+  evolution?: StudentEvolution;
+  comparisonLabels?: [string, string];
   student: StudentRecord;
   subjects: string[];
   profile: ReactNode;
@@ -48,13 +55,19 @@ export function StudentPanels({
 }) {
   return (
     <Tabs.Root
-      defaultValue="grades"
+      defaultValue={evolution ? "evolution" : "grades"}
       className="student-panels presentation-layout"
     >
       <Tabs.List className="panel-tabs" aria-label="Informações do aluno">
+        {evolution && (
+          <Tabs.Trigger value="evolution">
+            <TrendingUp aria-hidden="true" />
+            <span>Evolução</span>
+          </Tabs.Trigger>
+        )}
         <Tabs.Trigger value="grades">
           <BookOpen aria-hidden="true" />
-          <span>Notas do bimestre</span>
+          <span>{evolution ? "Notas atuais" : "Notas do bimestre"}</span>
         </Tabs.Trigger>
         <Tabs.Trigger value="pp">
           <ClipboardCheck aria-hidden="true" />
@@ -66,6 +79,18 @@ export function StudentPanels({
         </Tabs.Trigger>
       </Tabs.List>
       <div className="presentation-identity">{profile}</div>
+      {evolution && comparisonLabels && (
+        <Tabs.Content
+          value="evolution"
+          className="panel-content comparison-panel"
+        >
+          <EvolutionDetail
+            row={evolution}
+            beforeLabel={comparisonLabels[0]}
+            afterLabel={comparisonLabels[1]}
+          />
+        </Tabs.Content>
+      )}
       <Tabs.Content value="grades" className="panel-content academic-panel">
         <Academic
           student={student}

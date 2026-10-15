@@ -73,3 +73,16 @@ export function frequencia() {
     [names[2], 0, ""],
   ]);
 }
+
+export function evolutionMapao(term: number) {
+  // Cinco melhoras positivas, uma queda, estabilidade, zero real e notas ausentes.
+  const before = [1, 2, 3, 4, 5, 9, 6, 0, null];
+  const after = [7, 7, 7, 7, 7, 6, 6, 0, null];
+  return workbook([
+    ["ALUNO", "SITUACAO", ...subjects.flatMap((subject) => [subject, subject])],
+    ["", "", ...subjects.flatMap(() => ["M", "F"])],
+    ...names.map((name, index) => [name, "ATIVO", ...subjects.flatMap((_, column) => [
+      column === 7 && index === 4 ? "ET" : term === 1 ? before[index] : after[index], 2,
+    ])]),
+  ]);
+}

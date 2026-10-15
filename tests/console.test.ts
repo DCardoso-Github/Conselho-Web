@@ -209,3 +209,130 @@ test("highlight ties use fewer low grades then alphabetical names", () => {
     [3, 2, 1],
   );
 });
+
+import Dexie from "dexie";
+import { ConselhoDB, type GradePeriodRecord } from "../lib/db";
+import { comparePeriods, evolutionLeaders, periodId } from "../lib/evolution";
+import { identifyCurrentPeriod, persistMapao } from "../lib/grade-history";
+import { deleteClass } from "../lib/actions";
+import { exportGradePeriod } from "../lib/mapao/exporter";
+import { evolutionMapao } from "./fixtures";
+
+function periodRecord(term: number, rows: StudentRecord[], year = 2026): GradePeriodRecord {
+  return { id: periodId("TESTE", { year, term }), classId: "TESTE", year, term, importedAt: 0, subjects: ["MATEMATICA", "PORTUGUES"], students: rows };
+}
+
+test("evolution compares only shared numeric subjects, retaining zero and excluding ambiguous names", () => {
+  const current = [student(1, 10), student(2, 7), student(3, 7), student(4, 8)];
+  const before = periodRecord(1, [
+    { ...current[0], name: "ÁLUNO  1", grades: { MATEMATICA: 0, PORTUGUES: null } },
+    { ...current[1], grades: { MATEMATICA: "4,5", PORTUGUES: 6 } },
+    { ...current[2], grades: { MATEMATICA: "ET" } },
+    current[3], { ...current[3] },
+  ]);
+  const after = periodRecord(3, [
+    { ...current[0], grades: { MATEMATICA: 5, PORTUGUES: 10, NEW: 10 } },
+    { ...current[1], grades: { MATEMATICA: 7, PORTUGUES: 5, NEW: 10 } },
+    current[2], current[3],
+  ]);
+  after.subjects.push("NEW");
+  const rows = comparePeriods(current, before, after);
+  assert.equal(rows.length, 2);
+  assert.equal(rows[0].gain, 5);
+  assert.equal(rows[0].subjects.length, 1);
+  assert.equal(rows[1].gain, 0.75);
+  assert.equal(rows[1].before, 5.25);
+  assert.equal(rows[1].after, 6);
+  assert.deepEqual(comparePeriods(current, after, before), []);
+  assert.deepEqual(comparePeriods(current, before, { ...after, year: 2027 }), []);
+  assert.deepEqual(comparePeriods(current, before, { ...after, classId: "OUTRA" }), []);
+  assert.deepEqual(comparePeriods(current, before, before), []);
+  assert.deepEqual(comparePeriods(current, undefined, after), []);
+});
+
+test("evolution leaders select five positive gains and break ties by coverage then name", () => {
+  const students = Array.from({ length: 9 }, (_, index) => student(index + 1, 5));
+  const previous = periodRecord(1, students.map((s) => ({ ...s, grades: { MATEMATICA: 2, PORTUGUES: s.id === 2 ? null : 2 } })));
+  const next = periodRecord(2, students.map((s) => ({ ...s, grades: { MATEMATICA: s.id! < 7 ? 5 : 1, PORTUGUES: s.id! < 7 ? 5 : 1 } })));
+  const rows = comparePeriods(students, previous, next);
+  assert.deepEqual(evolutionLeaders(rows).map((row) => row.student.id), [1, 3, 4, 5, 6]);
+  assert.equal(rows.length, 9);
+  assert.equal(evolutionLeaders(rows.filter((row) => row.student.id === 1)).length, 1);
+  assert.equal(evolutionLeaders(rows.map((row) => ({ ...row, gain: 0 }))).length, 0);
+});
+
+test("v1 database upgrade preserves students, photos and notes without guessing a period", async () => {
+  const old = new Dexie("migration-test");
+  old.version(1).stores({ classes: "id, name, importedAt", students: "++id, classId, name, [classId+name], [classId+order]", meta: "key" });
+  await old.table("classes").put({ id: "TESTE", name: "TESTE", importedAt: 1, subjects: ["MATEMATICA"] });
+  await old.table("students").put({ ...student(55, 0), notes: "Preservar", photo: new Blob(["foto"]) });
+  old.close();
+  const upgraded = new ConselhoDB("migration-test");
+  await upgraded.open();
+  assert.equal(upgraded.verno, 2);
+  assert.equal((await upgraded.students.get(55))?.notes, "Preservar");
+  assert.equal(await (await upgraded.students.get(55))?.photo?.text(), "foto");
+  assert.equal((await upgraded.classes.get("TESTE"))?.currentPeriod, undefined);
+  assert.equal(await upgraded.gradePeriods.count(), 0);
+  await upgraded.delete();
+});
+
+test("period imports preserve current data, synchronize edits and require explicit replacement", async () => {
+  await importMapaoFile(file(evolutionMapao(3), "7B.xlsx"));
+  const first = (await db.students.where("classId").equals("7B").sortBy("order"))[0];
+  await updateStudent(first.id!, { photo: new Blob(["foto"]), notes: "preservar", tutor: "TUTOR", provaPaulista: { grades: {}, participacao: 90, acertos: 80 } });
+  await assert.rejects(importMapaoFile(file(evolutionMapao(1), "7B.xlsx"), { period: { year: 2026, term: 1 } }), /identifique/);
+  assert.equal(await db.gradePeriods.where("classId").equals("7B").count(), 0);
+  await identifyCurrentPeriod("7B", { year: 2026, term: 3 });
+  const result = await importMapaoFile(file(evolutionMapao(1), "7B.xlsx"), { period: { year: 2026, term: 1 }, expectedClassId: "7B" });
+  assert.equal(result.historical, true);
+  let current = (await db.students.get(first.id!))!;
+  assert.equal(current.grades.MATEMATICA, 7);
+  assert.equal(current.notes, "preservar");
+  assert.equal(await current.photo?.text(), "foto");
+  const oldId = periodId("7B", { year: 2026, term: 1 });
+  const activeId = periodId("7B", { year: 2026, term: 3 });
+  let periods = await db.gradePeriods.where("classId").equals("7B").toArray();
+  const students = await db.students.where("classId").equals("7B").sortBy("order");
+  const comparisons = comparePeriods(students, periods.find((p) => p.id === oldId), periods.find((p) => p.id === activeId));
+  assert.deepEqual(evolutionLeaders(comparisons).map((row) => row.gain), [6, 5, 4, 3, 2]);
+  assert.equal(comparisons.length, 8);
+  await assert.rejects(importMapaoFile(file(evolutionMapao(1), "7B.xlsx"), { period: { year: 2026, term: 1 } }), /já está salvo/);
+  await assert.rejects(importMapaoFile(file(evolutionMapao(1), "7B.xlsx"), { period: { year: 2027, term: 1 } }), /mesmo ano/);
+  await assert.rejects(importMapaoFile(file(evolutionMapao(1), "7B.xlsx"), { period: { year: 2026, term: 0 } }), /bimestre de 1 a 4/);
+  await assert.rejects(importMapaoFile(file(evolutionMapao(1), "8A.xlsx"), { period: { year: 2026, term: 1 }, expectedClassId: "7B" }), /arquivo é da turma/);
+  await updateStudent(first.id!, { grades: { ...current.grades, MATEMATICA: 9 } });
+  assert.equal((await db.gradePeriods.get(activeId))!.students[0].grades.MATEMATICA, 9);
+  assert.equal((await db.gradePeriods.get(oldId))!.students[0].grades.MATEMATICA, 1);
+  await importMapaoFile(file(evolutionMapao(1), "7B.xlsx"), { period: { year: 2026, term: 2 } });
+  await importMapaoFile(file(evolutionMapao(3), "7B.xlsx"), { period: { year: 2026, term: 4 } });
+  current = (await db.students.get(first.id!))!;
+  assert.equal(current.notes, "preservar");
+  assert.equal(current.provaPaulista?.acertos, 80);
+  assert.equal(current.tutor, "TUTOR");
+  assert.equal((await db.gradePeriods.get(activeId))!.students[0].grades.MATEMATICA, 9);
+  assert.deepEqual((await db.classes.get("7B"))?.currentPeriod, { year: 2026, term: 4 });
+  await importMapaoFile(file(evolutionMapao(3), "7B.xlsx"), { period: { year: 2026, term: 2 }, replace: true });
+  periods = await db.gradePeriods.where("classId").equals("7B").toArray();
+  assert.equal(periods.length, 4);
+  assert.equal((await db.gradePeriods.get(oldId))!.students[0].grades.MATEMATICA, 1);
+  await exportGradePeriod(oldId);
+  const exported = await readFile("7B_2026_1bim.xlsx");
+  const parsed = parseMapao("7B_2026_1bim.xlsx", exported.buffer.slice(exported.byteOffset, exported.byteOffset + exported.byteLength));
+  assert.equal(parsed.students[0].grades.MATEMATICA, 1);
+  await unlink("7B_2026_1bim.xlsx");
+  await deleteClass("7B");
+  assert.equal(await db.gradePeriods.where("classId").equals("7B").count(), 0);
+  assert.equal(await db.students.where("classId").equals("7B").count(), 0);
+});
+
+test("new imports label periods and reject empty or duplicate mapoes atomically", async () => {
+  await importMapaoFile(file(evolutionMapao(1), "8B.xlsx"), { period: { year: 2026, term: 1 } });
+  const old = await db.classes.get("8B");
+  const buffer = evolutionMapao(3);
+  const parsed = parseMapao("8B.xlsx", buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength));
+  await assert.rejects(persistMapao({ ...parsed, students: [] }, { period: { year: 2026, term: 2 } }), /Nenhum aluno/);
+  await assert.rejects(persistMapao({ ...parsed, students: [...parsed.students, parsed.students[0]] }, { period: { year: 2026, term: 2 } }), /nomes de alunos repetidos/);
+  assert.deepEqual(await db.classes.get("8B"), old);
+  assert.equal(await db.gradePeriods.where("classId").equals("8B").count(), 1);
+});

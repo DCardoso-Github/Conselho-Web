@@ -15,6 +15,9 @@ import {
     Trash2,
     ShieldCheck,
 } from "lucide-react";
+import type { SchoolPeriod } from "@/lib/db";
+import { PeriodFields } from "@/components/period-fields";
+import { periodLabel } from "@/lib/evolution";
 import { importMapaoFile } from "@/lib/actions";
 import { FileDrop } from "@/components/file-drop";
 import { Button } from "@/components/ui/button";
@@ -38,6 +41,8 @@ export default function ImportarPage() {
     const [files, setFiles] = React.useState<File[]>([]);
     const [busy, setBusy] = React.useState(false);
     const [results, setResults] = React.useState<FileResult[]>([]);
+    const [period, setPeriod] = React.useState<SchoolPeriod>({ year: new Date().getFullYear(), term: 1 });
+    const [replace, setReplace] = React.useState(false);
     const [progress, setProgress] = React.useState(0);
 
     const onPicked = (picked: File[]) => {
@@ -56,11 +61,11 @@ export default function ImportarPage() {
         let i = 0;
         for (const f of files) {
             try {
-                const r = await importMapaoFile(f);
+                const r = await importMapaoFile(f, { period, replace });
                 out.push({
                     name: f.name,
                     ok: true,
-                    msg: `${r.classId} · ${r.studentCount} alunos${r.overwritten ? " (sobrescrita)" : ""}`,
+                    msg: `${r.classId} · ${periodLabel(period)} · ${r.studentCount} alunos · ${r.historical ? "histórico salvo" : "mapão atual"}${r.overwritten ? " (bimestre atualizado)" : ""}`,
                     classId: r.classId,
                     studentCount: r.studentCount,
                     overwritten: r.overwritten,
@@ -147,6 +152,9 @@ export default function ImportarPage() {
                             transition={{ duration: 0.25 }}
                             className="space-y-4"
                         >
+                            <PeriodFields value={period} onChange={(value) => { setPeriod(value); setReplace(false); }} disabled={busy} label="Período dos arquivos selecionados" />
+                            <p className="supporting-text">Importe arquivos do mesmo ano e bimestre por vez. Bimestres anteriores ficam no histórico; o mais recente aparece na turma. Para turmas já cadastradas sem período, identifique primeiro o mapão atual em Gerenciar turma → Mapões e bimestres.</p>
+                            <label className="check-row"><input type="checkbox" checked={replace} disabled={busy} onChange={(event) => setReplace(event.target.checked)} />Atualizar este bimestre se ele já estiver salvo. Os outros bimestres serão mantidos.</label>
                             <Card>
                                 <CardContent className="p-4">
                                     <div className="text-xs uppercase tracking-wider font-semibold text-muted-foreground mb-3">
@@ -203,7 +211,7 @@ export default function ImportarPage() {
                                 </Button>
                                 <Button
                                     onClick={startImport}
-                                    disabled={busy || files.length === 0}
+                                    disabled={busy || files.length === 0 || period.year < 2000 || period.year > 2100 || !Number.isInteger(period.year)}
                                     size="lg"
                                 >
                                     {busy ? (

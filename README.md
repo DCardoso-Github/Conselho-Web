@@ -21,16 +21,27 @@ Consulte a documentação da versão instalada em `node_modules/next/dist/docs` 
 - Tema escuro inicial; a preferência salva e o tema claro continuam disponíveis no Menu.
 - Edição explícita, com confirmação de descarte e proteção ao sair da página.
 
-As rotas permanecem iguais. A apresentação aceita `scope=all|low|top` e `from=<id>`.
+As rotas permanecem iguais. A apresentação aceita `scope=all|low|top|evolution` e `from=<id>`.
 Sem `scope`, mantém o recorte anterior: alunos com notas vermelhas, ou a turma toda quando não houver nenhum.
-Se `from` apontar para um aluno fora do recorte, a sequência passa a incluir toda a turma.
+Nos recortes all/low/top, se `from` apontar para um aluno fora do recorte, a sequência passa a incluir toda a turma.
 
-Os registros continuam no IndexedDB local, sem mudança de esquema. Reimportar um mapão atualiza as notas e preserva fotos, anotações, ficha, frequência e Prova Paulista já associadas.
+Os registros continuam no IndexedDB local. A versão 2 acrescenta a tabela gradePeriods sem apagar ou transformar os registros anteriores. Reimportar um mapão preserva IDs, fotos, anotações, ficha, frequência e Prova Paulista dos alunos correspondentes.
 Domínios de prévia e produção têm armazenamentos independentes.
+
+## Bimestres e evolução
+
+- Na importação inicial, informe ano e bimestre. Importe arquivos do mesmo período por vez.
+- Para turmas existentes sem período, abra **Gerenciar turma → Mapões e bimestres** e identifique primeiro o ano/bimestre das notas atuais, sem precisar reimportá-las.
+- Importe outros mapões da mesma turma e ano nesse painel. O bimestre mais recente permanece ativo; anteriores entram apenas no histórico. Atualizar um bimestre existente exige marcar explicitamente a substituição. Cada bimestre pode ser exportado como XLSX separadamente.
+- **Alunos evolução** compara dois bimestres escolhidos, sempre do inicial para um posterior. A média usa somente disciplinas comuns com notas numéricas válidas de 0 a 10 nos dois períodos. Notas ausentes, conceitos (ET etc.) e disciplinas novas/removidas não são imputados como zero.
+- A associação usa o nome normalizado (acentos, caixa e espaços), sem aproximação. Participam os alunos da turma atual encontrados nos dois períodos; nomes ambíguos e alunos sem pares de notas são excluídos da comparação. Importações com nomes duplicados são rejeitadas.
+- São exibidos até cinco ganhos positivos na média, do maior para o menor; desempate por maior quantidade de disciplinas comparadas, nome e ordem original. A cobertura pode variar por aluno e é indicada nos cartões. A comparação da turma inteira inclui quedas, estabilidade e ausência de comparação.
+- **Apresentar evolução** usa `scope=evolution&year=2026&baseline=1&target=3` e abre a comparação selecionada, retornando a esse painel ao trocar de aluno. As outras abas continuam mostrando os dados atuais.
+- Edições nas notas atuais atualizam apenas o bimestre ativo. Importar um bimestre anterior nunca substitui a turma atual; excluir a turma também exclui seus bimestres. Anos diferentes na mesma turma são rejeitados para evitar associações entre turmas anuais distintas.
 
 ## Validação
 
-`npm run test` testa recortes da apresentação, valores ausentes versus zero e o fluxo real de importação → edição → exportação → reimportação usando IndexedDB em memória.
+`npm run test` cobre seleção, valores ausentes versus zero, importação/edição/exportação/reimportação, migração do banco v1→v2, preservação do histórico, substituição explícita, nomes duplicados, comparação de disciplinas comuns e cinco maiores evoluções, usando IndexedDB em memória.
 `npm run lint` e `npm run build` verificam o código e a compilação de produção.
 
 `npm run fixtures` gera planilhas e uma imagem sintéticas em `artifacts/fixtures` (ignorado pelo Git).
@@ -49,3 +60,5 @@ Validação manual realizada com dados fictícios:
 - Comparação visual com o commit original usando os mesmos alunos fictícios.
 
 Redução de movimento é respeitada por CSS e por MotionConfig. A preferência do sistema não foi modificada durante os testes.
+
+Para testar evolução, importe `7B_2026_3bim.xlsx` como terceiro bimestre e depois `7B_2026_1bim.xlsx` como primeiro. Os dados fictícios têm cinco ganhos positivos (6, 5, 4, 3 e 2 pontos), uma queda, estabilidade, zero e ausência de notas.

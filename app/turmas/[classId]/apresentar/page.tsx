@@ -6,6 +6,13 @@ import { useLiveQuery } from "dexie-react-hooks";
 import { ChevronLeft, ChevronRight, Maximize, X } from "lucide-react";
 import { db, type ClassRecord, type StudentRecord } from "@/lib/db";
 import { presentationStudents, shortcutBlocked } from "@/lib/presentation";
+import {
+  comparePeriods,
+  evolutionLeaders,
+  periodId,
+  periodLabel,
+  type StudentEvolution,
+} from "@/lib/evolution";
 import { StudentProfile } from "@/components/student-profile";
 import { StudentPanels } from "@/components/student-panels";
 import { Button } from "@/components/ui/button";
@@ -29,6 +36,7 @@ function PresentationLoader({ classId }: { classId: string }) {
   const data = useLiveQuery(
     async () => ({
       cls: await db.classes.get(classId),
+      periods: await db.gradePeriods.where("classId").equals(classId).toArray(),
       students: await db.students
         .where("classId")
         .equals(classId)
@@ -46,15 +54,41 @@ function PresentationLoader({ classId }: { classId: string }) {
         </Button>
       </div>
     );
-  const list = presentationStudents(
-    data.students,
-    query.get("scope"),
-    query.get("from"),
-    data.cls.subjects,
+  const before = data.periods.find(
+    (period) =>
+      period.id ===
+      periodId(classId, {
+        year: Number(query.get("year")),
+        term: Number(query.get("baseline")),
+      }),
   );
+  const after = data.periods.find(
+    (period) =>
+      period.id ===
+      periodId(classId, {
+        year: Number(query.get("year")),
+        term: Number(query.get("target")),
+      }),
+  );
+  const evolution =
+    query.get("scope") === "evolution"
+      ? evolutionLeaders(comparePeriods(data.students, before, after))
+      : undefined;
+  const list = evolution
+    ? evolution.map((row) => row.student)
+    : presentationStudents(
+        data.students,
+        query.get("scope"),
+        query.get("from"),
+        data.cls.subjects,
+      );
   return (
     <Presentation
       key={`${classId}:${query.toString()}`}
+      evolution={evolution}
+      comparisonLabels={
+        before && after ? [periodLabel(before), periodLabel(after)] : undefined
+      }
       cls={data.cls}
       students={list}
       from={query.get("from")}
@@ -65,7 +99,11 @@ function Presentation({
   cls,
   students,
   from,
+  evolution,
+  comparisonLabels,
 }: {
+  evolution?: StudentEvolution[];
+  comparisonLabels?: [string, string];
   cls: ClassRecord;
   students: StudentRecord[];
   from: string | null;
@@ -150,6 +188,8 @@ function Presentation({
         </p>
       )}
       <StudentPanels
+        evolution={evolution?.find((row) => row.student.id === student.id)}
+        comparisonLabels={comparisonLabels}
         onlyLow={onlyLow}
         onOnlyLowChange={setOnlyLow}
         key={student.id}

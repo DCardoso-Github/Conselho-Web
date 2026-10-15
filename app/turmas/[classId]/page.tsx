@@ -16,6 +16,7 @@ import {
   Trash2,
   Users,
   Star,
+  TrendingUp,
 } from "lucide-react";
 import { db } from "@/lib/db";
 import { deleteClass, isLowGrade } from "@/lib/actions";
@@ -23,6 +24,9 @@ import { hasLowGrades, hasValue } from "@/lib/presentation";
 import { formatSubject } from "@/lib/mapao/subjects";
 import { exportClassToXlsx } from "@/lib/mapao/exporter";
 import { StudentGrid, type StudentSort } from "@/components/student-card";
+import { GradeHistoryDialog } from "@/components/grade-history-dialog";
+import { StudentEvolution } from "@/components/student-evolution";
+import { periodLabel } from "@/lib/evolution";
 import { StudentHighlights } from "@/components/student-highlights";
 import { ClassDashboard } from "@/components/class-dashboard";
 import { PhotoImporter } from "@/components/photo-importer";
@@ -63,6 +67,7 @@ export default function TurmaPage({
   const [sort, setSort] = useState<StudentSort>("order");
   const [filters, setFilters] = useState(false);
   const [manage, setManage] = useState(false);
+  const [history, setHistory] = useState(false);
   const [start, setStart] = useState(false);
   const [scope, setScope] = useState<"all" | "low">("all");
   const [importer, setImporter] = useState<"photo" | "pp" | "frequency" | null>(
@@ -113,6 +118,7 @@ export default function TurmaPage({
           <h1>{cls.name}</h1>
           <p>
             {students.length} alunos · {cls.subjects.length} disciplinas
+            {cls.currentPeriod && ` · ${periodLabel(cls.currentPeriod)}`}
           </p>
         </div>
         <div className="heading-actions">
@@ -136,6 +142,10 @@ export default function TurmaPage({
           <Tabs.Trigger value="students">Alunos</Tabs.Trigger>
           <Tabs.Trigger value="highlights">
             <Star aria-hidden="true" /> Alunos destaque
+          </Tabs.Trigger>
+          <Tabs.Trigger value="evolution">
+            <TrendingUp aria-hidden="true" />
+            Alunos evolução
           </Tabs.Trigger>
           <Tabs.Trigger value="overview">Visão geral</Tabs.Trigger>
         </Tabs.List>
@@ -186,6 +196,13 @@ export default function TurmaPage({
             students={students}
             subjects={cls.subjects}
             classId={classId}
+          />
+        </Tabs.Content>
+        <Tabs.Content value="evolution">
+          <StudentEvolution
+            cls={cls}
+            students={students}
+            onImport={() => setHistory(true)}
           />
         </Tabs.Content>
         <Tabs.Content value="overview">
@@ -318,6 +335,16 @@ export default function TurmaPage({
             </DialogDescription>
           </DialogHeader>
           <div className="management-grid">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setManage(false);
+                setHistory(true);
+              }}
+            >
+              <Upload />
+              Mapões e bimestres
+            </Button>
             <Button variant="outline" onClick={() => openImporter("photo")}>
               <ImageIcon aria-hidden="true" /> Fotos dos alunos
             </Button>
@@ -354,6 +381,7 @@ export default function TurmaPage({
           </Button>
         </DialogContent>
       </Dialog>
+      <GradeHistoryDialog cls={cls} open={history} onOpenChange={setHistory} />
       <PhotoImporter
         classId={classId}
         open={importer === "photo"}
@@ -373,7 +401,7 @@ export default function TurmaPage({
         open={confirmDelete}
         onOpenChange={setConfirmDelete}
         title={`Excluir turma "${cls.name}"?`}
-        description="Todos os alunos, notas, fotos e anotações serão removidos permanentemente."
+        description="Todos os alunos, notas, fotos, anotações e bimestres salvos serão removidos permanentemente."
         confirmLabel="Excluir turma"
         onConfirm={async () => {
           await deleteClass(classId);
