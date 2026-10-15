@@ -57,7 +57,7 @@ const DialogContent = React.forwardRef<
 DialogContent.displayName = DialogPrimitive.Content.displayName;
 
 function DialogHeader({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-    return <div className={cn("flex flex-col gap-2 text-left pr-10", className)} {...props} />;
+    return <div className={cn("flex flex-col items-center gap-2 text-center px-8", className)} {...props} />;
 }
 
 function DialogFooter({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {

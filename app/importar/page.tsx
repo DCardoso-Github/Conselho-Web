@@ -100,7 +100,7 @@ export default function ImportarPage() {
 
     return (
         <div className="console-container import-screen max-w-5xl">
-            <div className="mb-8">
+            <div className="import-heading mb-8">
                 <Badge variant="soft" className="mb-2">
                     <Sparkles className="size-3" /> Importar
                 </Badge>

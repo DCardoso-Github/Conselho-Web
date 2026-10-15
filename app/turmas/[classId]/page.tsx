@@ -210,7 +210,7 @@ export default function TurmaPage({
         </Tabs.Content>
       </Tabs.Root>
       <Dialog open={filters} onOpenChange={setFilters}>
-        <DialogContent>
+        <DialogContent className="filter-dialog">
           <DialogHeader>
             <DialogTitle>Filtrar alunos</DialogTitle>
             <DialogDescription>

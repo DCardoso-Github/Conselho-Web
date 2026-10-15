@@ -79,8 +79,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <Upload /> Importar mapão
             </Link>
           </Button>
-          <h2 className="text-lg font-semibold mt-4">Aparência</h2>
-          <div className="flex flex-wrap gap-2">
+          <h2 className="text-lg font-semibold mt-4 text-center">Aparência</h2>
+          <div className="flex flex-wrap justify-center gap-2">
             {[
               { value: "dark", name: "Escuro", icon: Moon },
               { value: "light", name: "Claro", icon: Sun },
@@ -96,7 +96,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </Button>
             ))}
           </div>
-          <p className="supporting-text">Seus dados ficam neste navegador.</p>
+          <p className="supporting-text text-center">Seus dados ficam neste navegador.</p>
         </DialogContent>
       </Dialog>
     </div>

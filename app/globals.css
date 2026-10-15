@@ -1080,3 +1080,87 @@ button:not(:disabled), select { cursor: pointer; }
 @media(max-width:767px) {
   .presentation-layout > .comparison-panel[data-state=active] { overflow:visible; }
 }
+
+/* Typography and alignment: shared centers, balanced headings, readable prose. */
+.console-app { line-height:1.5; }
+.page-heading, .highlights-heading { flex-direction:column; justify-content:center; text-align:center; gap:18px; }
+.page-heading h1, .welcome-screen h1, .h-hero, .h-display {
+  font-weight:700; letter-spacing:-.03em; line-height:1.15; text-wrap:balance;
+}
+.page-heading p, .import-heading p { max-width:72ch; margin-inline:auto; text-wrap:pretty; }
+.eyebrow { font-weight:600; letter-spacing:.075em; line-height:1.4; }
+.heading-actions, .section-tabs, .active-filters { justify-content:center; }
+.section-tabs>button, .panel-tabs>button { text-align:center; font-weight:600; line-height:1.3; }
+.section-tabs svg, .heading-actions svg, .presentation-actions svg { flex-shrink:0; }
+.highlights-heading h2 { justify-content:center; letter-spacing:-.025em; line-height:1.25; text-wrap:balance; }
+.highlight-criteria { margin-inline:auto; text-align:center; text-wrap:pretty; }
+.search-toolbar { width:100%; max-width:840px; margin:24px auto 12px; justify-content:center; }
+.search-field { min-width:0; max-width:none; }
+.search-field>svg { top:50%; transform:translateY(-50%); pointer-events:none; }
+.search-field input { padding-inline:52px; text-align:center; font-size:18px; }
+.search-toolbar>button { flex-shrink:0; }
+.results-count { text-align:center; font-size:17px; line-height:1.5; }
+.active-filters { text-align:center; }
+.filter-dialog .check-row { justify-content:center; text-align:center; }
+.class-tile .tile-top { position:relative; justify-content:center; padding-inline:32px; }
+.class-tile .tile-top>svg { position:absolute; right:0; }
+.class-tile h2 { font-weight:700; letter-spacing:-.025em; }
+.student-tile h2, .evolution-tile h3 { font-weight:650; letter-spacing:-.015em; line-height:1.3; text-wrap:balance; }
+.student-tile p { line-height:1.4; }
+.subject-summary h3 { justify-content:center; text-align:center; text-wrap:balance; }
+.subject-summary article>p { text-align:center; }
+.presentation-identity .profile h1 { font-weight:700; letter-spacing:-.02em; line-height:1.18; text-wrap:balance; }
+.profile .eyebrow { justify-content:center; text-align:center; }
+.grade-toolbar { justify-content:center; text-align:center; }
+.grade-toolbar p, .grade-toolbar button { line-height:1.4; }
+.subject-heading { margin-inline:auto; }
+.all-grades .subject-heading h3 { min-width:0; font-weight:600; letter-spacing:-.015em; text-wrap:balance; }
+.presentation-layout .all-grades.grades-dense h3 { line-height:1.2; }
+.grade-value { font-weight:700; letter-spacing:-.035em; }
+.grade-status, .profile-grade-count { text-align:center; justify-content:center; }
+.academic-metrics h3 { font-weight:500; line-height:1.35; text-wrap:balance; }
+.metric-value, .overview-metrics strong, .highlight-average strong, .comparison-summary strong { font-variant-numeric:tabular-nums; letter-spacing:-.025em; }
+.detail-screen>.presentation-header { justify-content:center; flex-wrap:wrap; }
+.presentation-actions { justify-content:center; }
+.presentation-footer { position:relative; justify-content:center; }
+.presentation-footer .keyboard-hint { position:absolute; left:0; }
+.presentation-footer .student-navigation { justify-content:center; }
+.management-grid button { justify-content:center; text-align:center; line-height:1.4; }
+.form-field { text-align:center; font-weight:500; }
+.form-field input, .form-field textarea { font-weight:400; }
+.form-field select { text-align:center; text-align-last:center; padding-inline:28px; font-weight:400; }
+.period-fields legend { text-align:center; width:100%; }
+.period-fields input { text-align:center; }
+.comparison-controls { max-width:840px; margin-inline:auto; justify-content:center; }
+.comparison-controls label { min-width:min(220px,100%); }
+.import-heading { text-align:center; }
+.import-heading p.flex, .import-screen ol { justify-content:center; }
+.import-heading p.flex { align-items:center; }
+.import-heading svg { flex-shrink:0; }
+.import-heading .h-hero { margin-block:8px 16px; }
+[cmdk-input-wrapper] { position:relative; padding-inline:0; }
+[cmdk-input-wrapper]>svg { position:absolute; left:18px; top:50%; transform:translateY(-50%); pointer-events:none; }
+[cmdk-input] { height:56px; padding-inline:50px; font-size:18px; text-align:center; }
+[cmdk-group-heading] { text-align:center; }
+[role=dialog] h2 { text-wrap:balance; letter-spacing:-.02em; }
+@media(max-width:1100px) {
+  .presentation-footer .keyboard-hint { display:none; }
+}
+@media(max-width:767px) {
+  .console-nav { justify-content:center; }
+  .console-nav nav { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:4px; }
+  .console-nav nav>* { min-width:0; padding-inline:8px; gap:6px; }
+  .heading-actions { justify-content:center; }
+  .heading-actions>* { flex:0 1 auto; }
+  .page-heading, .highlights-heading { gap:16px; }
+  .panel-tabs>button, .panel-tabs>button:last-child { font-size:14px; letter-spacing:0; line-height:1.3; }
+  .presentation-layout>.academic-metrics .metric-tile { flex-direction:column; gap:8px; text-align:center; }
+  .academic-metrics h3 { max-width:100%; text-align:center; justify-content:center; }
+  .academic-metrics .missing-value { max-width:100%; }
+  .presentation-footer .student-navigation { justify-content:center; }
+}
+@media(max-width:480px) {
+  .search-toolbar { flex-direction:column; align-items:stretch; gap:10px; }
+  .search-field { width:100%; flex:auto; }
+  .search-toolbar>button { align-self:center; min-width:160px; }
+}
