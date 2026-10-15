@@ -1386,6 +1386,25 @@ button:not(:disabled), select { cursor: pointer; }
 .projection-subject .paired-bars b { font-size:32px; }
 .projection-subject .paired-bars .bar-track { height:26px; }
 .projection-empty { text-align:center; font-size:28px; color:var(--muted-foreground); margin:auto; max-width:36ch; }
+.class-prova-section { display:grid; gap:24px; }
+.class-prova-section .analytics-heading { flex-direction:column; gap:8px; }
+.class-prova-section h2 { font-size:clamp(26px,3vw,36px); font-weight:700; text-align:center; }
+.class-prova-chart { --pp-value-width:88px; --pp-bar-gap:12px; }
+.class-prova-chart .paired-bars>div,.projection-stage .class-prova-chart .paired-bars>div { grid-template-columns:minmax(0,1fr) var(--pp-value-width); gap:var(--pp-bar-gap); }
+.class-prova-chart .paired-bars b { white-space:nowrap; }
+.class-prova-chart .chart-scale,.projection-stage .class-prova-chart .chart-scale { padding-right:calc(var(--pp-value-width) + var(--pp-bar-gap)); }
+.class-prova-chart .analytics-footnote,.class-prova-chart .analytics-empty { text-align:center; }
+.pp-class-gain { display:flex; align-items:baseline; justify-content:center; flex-wrap:wrap; gap:8px 16px; margin-block:24px 12px; font-size:18px; }
+.pp-class-gain strong { font-size:30px; font-weight:750; }
+.projection-stage .class-prova-chart { --pp-value-width:190px; --pp-bar-gap:24px; }
+.projection-stage .class-prova-chart .analytics-footnote { font-size:20px; margin-top:16px; }
+.projection-stage .class-prova-chart .analytics-empty { font-size:26px; }
+.projection-stage .pp-class-gain { font-size:24px; margin-top:28px; }
+.projection-stage .pp-class-gain strong { font-size:42px; }
+@media(max-width:767px) {
+  .projection-stage .class-prova-chart { --pp-value-width:120px; --pp-bar-gap:14px; }
+  .projection-stage .pp-class-gain strong { font-size:32px; }
+}
 @media(prefers-reduced-motion:no-preference) { .projection-stage { animation:console-arrive 180ms ease-out; } }
 @media(max-width:1200px) {
   .projection-header { grid-template-columns:1fr auto; }

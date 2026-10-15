@@ -1,10 +1,34 @@
-import type { StudentRecord } from "./db";
+import type { GradePeriodRecord, StudentRecord } from "./db";
 import { numericGrade, type StudentEvolution } from "./evolution";
+import { compareProvaPaulista, type PercentageChange } from "./prova-evolution";
 
 export const mean = (values: number[]) =>
   values.length
     ? values.reduce((sum, value) => sum + value, 0) / values.length
     : null;
+
+/** Equal student weights and the same cohort on both sides of each metric. */
+export function classProvaEvolution(
+  students: StudentRecord[],
+  before?: GradePeriodRecord,
+  after?: GradePeriodRecord,
+) {
+  const comparisons = before && after && before.classId === after.classId
+    ? students.filter((student) => student.classId === before.classId)
+        .map((student) => compareProvaPaulista(student, before, after))
+    : [];
+  const aggregate = (metric: "acertos" | "participacao") => {
+    const pairs = comparisons.map((row) => row?.[metric])
+      .filter((value): value is PercentageChange => value != null);
+    return {
+      count: pairs.length,
+      before: mean(pairs.map((pair) => pair.before)),
+      after: mean(pairs.map((pair) => pair.after)),
+      gain: mean(pairs.map((pair) => pair.gain)),
+    };
+  };
+  return { acertos: aggregate("acertos"), participacao: aggregate("participacao") };
+}
 
 /** Numeric grades only: missing values and concepts are never imputed as zero. */
 export function classOverview(students: StudentRecord[], subjects: string[]) {

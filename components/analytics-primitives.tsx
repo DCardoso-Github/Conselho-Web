@@ -64,28 +64,31 @@ export function PairedBars({
   before,
   after,
   label,
+  percentage = false,
 }: {
   before: number;
   after: number;
   label: string;
+  percentage?: boolean;
 }) {
+  const suffix = percentage ? "%" : "";
   return (
     <div
       className="paired-bars"
       role="img"
-      aria-label={`${label}: média inicial ${formatGrade(before)}, média final ${formatGrade(after)}. Escala de zero a dez.`}
+      aria-label={`${label}: média inicial ${formatGrade(before)}${suffix}, média final ${formatGrade(after)}${suffix}. Escala de zero a ${percentage ? "cem por cento" : "dez"}.`}
     >
       <div>
         <span className="bar-track">
-          <i className="bar-before" style={{ width: `${before * 10}%` }} />
+          <i className="bar-before" style={{ width: `${before * (percentage ? 1 : 10)}%` }} />
         </span>
-        <b>{formatGrade(before)}</b>
+        <b>{formatGrade(before)}{suffix}</b>
       </div>
       <div>
         <span className="bar-track">
-          <i className="bar-after" style={{ width: `${after * 10}%` }} />
+          <i className="bar-after" style={{ width: `${after * (percentage ? 1 : 10)}%` }} />
         </span>
-        <b>{formatGrade(after)}</b>
+        <b>{formatGrade(after)}{suffix}</b>
       </div>
     </div>
   );

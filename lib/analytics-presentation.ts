@@ -21,6 +21,8 @@ export function analyticsPanels(
           { kind: "mean", title: "Comparação das médias" },
           { kind: "movement", title: "Movimento da turma" },
           { kind: "low", title: "Notas vermelhas entre bimestres" },
+          { kind: "pp-acertos", title: "Prova Paulista · Acertos" },
+          { kind: "pp-participacao", title: "Prova Paulista · Participação" },
         ];
   const size = view === "overview" ? 3 : 2;
   for (let start = 0; start < subjectCount; start += size) {

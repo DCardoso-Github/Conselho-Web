@@ -326,7 +326,7 @@ test("highlight ties use fewer low grades then alphabetical names", () => {
 import Dexie from "dexie";
 import { ConselhoDB, type GradePeriodRecord } from "../lib/db";
 import { comparePeriods, evolutionLeaders, periodId } from "../lib/evolution";
-import { classOverview, classEvolution, matchesSearch } from "../lib/class-analytics";
+import { classOverview, classEvolution, classProvaEvolution, matchesSearch } from "../lib/class-analytics";
 import { analyticsPanels, analyticsPresentationHref } from "../lib/analytics-presentation";
 
 test("presentation batches include every discipline exactly once with stable navigation", () => {
@@ -339,6 +339,7 @@ test("presentation batches include every discipline exactly once with stable nav
       assert.ok(batches.every((panel) => panel.end! - panel.start! <= (view === "overview" ? 3 : 2)));
       assert.equal(panels[0].kind, view === "overview" ? "summary" : "mean");
       assert.ok(panels.length >= (view === "overview" ? 2 : 3));
+      assert.deepEqual(panels.filter(panel => panel.kind.startsWith("pp-")).map(panel => panel.kind), view === "evolution" ? ["pp-acertos", "pp-participacao"] : []);
     }
   }
 });
@@ -736,4 +737,28 @@ test("Prova Paulista history survives mapao replacement and student edits", asyn
   assert.deepEqual(saved.provaPaulistaHistory, previousHistory);
   assert.equal(saved.notes, "Observação preservada");
   assert.equal(saved.provaPaulista?.acertos, "70%");
+});
+
+test("class PP charts use matched cohorts per metric independently of grades and retain zero", () => {
+  const before = periodRecord(1, []), after = periodRecord(3, []);
+  const rows = [
+    { acertos: [0, 0.4], participacao: ["100%", "80%"] },
+    { acertos: ["60%", "80%"], participacao: [null, "100%"] },
+    { acertos: [null, "100%"], participacao: ["50%", "70%"] },
+  ].map((values, i) => ({ ...student(i + 1, "ET"), provaPaulistaHistory: {
+    [before.id]: { acertos: values.acertos[0], participacao: values.participacao[0], grades: {} },
+    [after.id]: { acertos: values.acertos[1], participacao: values.participacao[1], grades: {} },
+  } }));
+  assert.equal(comparePeriods(rows, before, after).length, 0);
+  const data = classProvaEvolution(rows, before, after);
+  assert.deepEqual(data.acertos, { count: 2, before: 30, after: 60, gain: 30 });
+  assert.deepEqual(data.participacao, { count: 2, before: 75, after: 75, gain: 0 });
+  assert.deepEqual(classProvaEvolution([...rows, { ...rows[0], classId: "OUTRA" }], before, after), data);
+  const empty = { count: 0, before: null, after: null, gain: null };
+  assert.deepEqual(classProvaEvolution(rows, after, before).acertos, empty);
+  assert.deepEqual(classProvaEvolution(rows, before, { ...after, year: 2027 }).acertos, empty);
+  assert.deepEqual(classProvaEvolution(rows, before, { ...after, classId: "OUTRA" }).acertos, empty);
+  assert.deepEqual(classProvaEvolution(rows, undefined, after).acertos, empty);
+  assert.deepEqual(classProvaEvolution([student(1, 8)], before, after).participacao, empty);
+  assert.deepEqual(classProvaEvolution(rows, before, periodRecord(2, [])).acertos, empty);
 });

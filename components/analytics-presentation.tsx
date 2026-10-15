@@ -18,7 +18,8 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import type { ClassRecord, GradePeriodRecord, StudentRecord } from "@/lib/db";
-import { classOverview, classEvolution } from "@/lib/class-analytics";
+import { classOverview, classEvolution, classProvaEvolution } from "@/lib/class-analytics";
+import { ClassProvaChart } from "./class-prova-chart";
 import {
   analyticsPanels,
   type AnalyticsView,
@@ -55,6 +56,7 @@ export function AnalyticsPresentation({
   const overview = classOverview(students, cls.subjects);
   const comparisons = comparePeriods(students, before, after);
   const evolution = classEvolution(comparisons);
+  const prova = classProvaEvolution(students, before, after);
   const subjects = [...overview.rows].sort(
     (a, b) => b.low - a.low || a.subject.localeCompare(b.subject, "pt-BR"),
   );
@@ -304,6 +306,19 @@ export function AnalyticsPresentation({
           />
         </div>
       );
+    } else if (panel.kind === "pp-acertos" || panel.kind === "pp-participacao") {
+      const acertos = panel.kind === "pp-acertos";
+      content = (
+        <div className="projection-mean">
+          <ClassProvaChart
+            data={acertos ? prova.acertos : prova.participacao}
+            label={acertos ? "Acertos" : "Participação"}
+            before={before!}
+            after={after!}
+          />
+        </div>
+      );
+      note = "Variação em pontos percentuais (p.p.). Dados ausentes ficam fora da comparação.";
     } else {
       content = (
         <div className="projection-subjects two">

@@ -10,9 +10,12 @@ import {
   Search,
   ArrowRight,
   Play,
+  Target,
+  ClipboardCheck,
 } from "lucide-react";
 import type { GradePeriodRecord, StudentRecord } from "@/lib/db";
-import { classEvolution, matchesSearch } from "@/lib/class-analytics";
+import { classEvolution, classProvaEvolution, matchesSearch } from "@/lib/class-analytics";
+import { ClassProvaChart } from "./class-prova-chart";
 import { analyticsPresentationHref } from "@/lib/analytics-presentation";
 import {
   comparePeriods,
@@ -68,6 +71,7 @@ export function ClassEvolutionDashboard({
     before && after && before.year === after.year && before.term < after.term;
   const rows = comparePeriods(students, before, after);
   const data = classEvolution(rows);
+  const prova = classProvaEvolution(students, before, after);
   const byId = new Map(rows.map((row) => [row.student.id, row]));
   const filtered = students
     .map((student) => ({ student, row: byId.get(student.id) }))
@@ -298,6 +302,22 @@ export function ClassEvolutionDashboard({
               </section>
             </>
           )}
+          <section className="class-prova-section" aria-labelledby="class-prova-heading">
+            <div className="analytics-heading">
+              <h2 id="class-prova-heading">Evolução da Prova Paulista</h2>
+              <p>Acertos e participação entre os bimestres selecionados.</p>
+            </div>
+            <div className="analytics-columns">
+              <section className="analytics-card">
+                <header><Target aria-hidden="true" /><h3>Acertos</h3></header>
+                <ClassProvaChart data={prova.acertos} label="Acertos" before={before!} after={after!} />
+              </section>
+              <section className="analytics-card">
+                <header><ClipboardCheck aria-hidden="true" /><h3>Participação</h3></header>
+                <ClassProvaChart data={prova.participacao} label="Participação" before={before!} after={after!} />
+              </section>
+            </div>
+          </section>
           <section className="analytics-card">
             <header>
               <Users aria-hidden="true" />
