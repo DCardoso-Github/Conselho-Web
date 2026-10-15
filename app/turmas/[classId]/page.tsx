@@ -29,6 +29,7 @@ import { GradeHistoryDialog } from "@/components/grade-history-dialog";
 import { StudentEvolution } from "@/components/student-evolution";
 import { periodLabel } from "@/lib/evolution";
 import { StudentHighlights } from "@/components/student-highlights";
+import { StudentActionsProvider } from "@/components/student-actions";
 import { ClassDashboard } from "@/components/class-dashboard";
 import { PhotoImporter } from "@/components/photo-importer";
 import { ProvaPaulistaImporter } from "@/components/prova-paulista-importer";
@@ -63,6 +64,8 @@ export default function TurmaPage({
     [classId],
   );
   const [search, setSearch] = useState("");
+  const [view, setView] = useState(query.get("view") === "overview" ? "overview" : "students");
+  const [selectionRequest, setSelectionRequest] = useState<{ id: number; serial: number } | null>(null);
   const deferredSearch = useDeferredValue(search);
   const [onlyLow, setOnlyLow] = useState(false);
   const [redSubject, setRedSubject] = useState<string | null>(null);
@@ -78,6 +81,7 @@ export default function TurmaPage({
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [exporting, setExporting] = useState(false);
   const clear = () => {
+    setSelectionRequest(null);
     setSearch("");
     setOnlyLow(false);
     setRedSubject(null);
@@ -140,7 +144,16 @@ export default function TurmaPage({
           </Button>
         </div>
       </header>
-      <Tabs.Root defaultValue={query.get("view") === "overview" ? "overview" : "students"}>
+      <StudentActionsProvider subjects={cls.subjects} onSelect={student => {
+        if (student.id === undefined) return;
+        clear();
+        setSelectionRequest({ id: student.id, serial: Date.now() });
+        setView("students");
+        requestAnimationFrame(() => {
+          document.querySelector<HTMLInputElement>(`[data-student-id="${student.id}"] input[type="checkbox"]`)?.focus();
+        });
+      }}>
+      <Tabs.Root value={view} onValueChange={setView}>
         <Tabs.List className="section-tabs" aria-label="Visualização da turma">
           <Tabs.Trigger value="students">Alunos</Tabs.Trigger>
           <Tabs.Trigger value="highlights">
@@ -160,7 +173,7 @@ export default function TurmaPage({
                 aria-label="Buscar aluno"
                 placeholder="Buscar aluno pelo nome…"
                 value={search}
-                onChange={(event) => setSearch(event.target.value)}
+                onChange={(event) => { setSelectionRequest(null); setSearch(event.target.value); }}
               />
             </div>
             <Button variant="outline" onClick={() => setFilters(true)}>
@@ -186,6 +199,8 @@ export default function TurmaPage({
             </div>
           )}
           <StudentGrid
+            selectionRequest={selectionRequest}
+            onClearSelection={() => setSelectionRequest(null)}
             classId={classId}
             search={deferredSearch}
             onlyLow={onlyLow}
@@ -212,6 +227,7 @@ export default function TurmaPage({
           <ClassDashboard students={students} subjects={cls.subjects} classId={classId} />
         </Tabs.Content>
       </Tabs.Root>
+      </StudentActionsProvider>
       <Dialog open={filters} onOpenChange={setFilters}>
         <DialogContent className="filter-dialog">
           <DialogHeader>
@@ -225,6 +241,7 @@ export default function TurmaPage({
               type="checkbox"
               checked={onlyLow}
               onChange={(event) => {
+                setSelectionRequest(null);
                 setOnlyLow(event.target.checked);
                 setRedSubject(null);
               }}
@@ -236,6 +253,7 @@ export default function TurmaPage({
             <select
               value={redSubject ?? ""}
               onChange={(event) => {
+                setSelectionRequest(null);
                 setRedSubject(event.target.value || null);
                 setOnlyLow(false);
               }}
@@ -260,7 +278,7 @@ export default function TurmaPage({
             Ordenação
             <select
               value={sort}
-              onChange={(event) => setSort(event.target.value as StudentSort)}
+              onChange={(event) => { setSelectionRequest(null); setSort(event.target.value as StudentSort); }}
             >
               <option value="order">Ordem original</option>
               <option value="name">Nome (A–Z)</option>

@@ -13,14 +13,16 @@ import { hasValue, hasLowGrades } from "@/lib/presentation";
 import { StudentProfile } from "./student-profile";
 import { Button } from "./ui/button";
 import { ConfirmDialog } from "./confirm-dialog";
+import { StudentActions } from "./student-actions";
 export interface StudentCardProps {
   classId: string;
   student: StudentRecord;
   index?: number;
   highlight?: StudentHighlight;
   selection?: { checked: boolean; onChange: () => void };
+  onSelect?: () => void;
 }
-export function StudentCard({ classId, student, highlight, selection }: StudentCardProps) {
+export function StudentCard({ classId, student, highlight, selection, onSelect }: StudentCardProps) {
   const average = highlight?.average ?? studentAverage(student);
   const low = Object.values(student.grades).filter(
     (grade) => hasValue(grade) && isLowGrade(grade),
@@ -57,7 +59,9 @@ export function StudentCard({ classId, student, highlight, selection }: StudentC
     </>
   );
   const className = `student-tile ${highlight ? "student-highlight" : ""} ${selection?.checked ? "student-tile-selected" : ""}`;
-  return selection ? <label className={className}>{content}</label> : <Link className={className} href={`/turmas/${encodeURIComponent(classId)}/alunos/${student.id}`}>{content}</Link>;
+  return <StudentActions student={student} selected={selection?.checked} onSelect={selection?.onChange ?? onSelect}>
+    {selection ? <label className={className}>{content}</label> : <Link className={className} href={`/turmas/${encodeURIComponent(classId)}/alunos/${student.id}`}>{content}</Link>}
+  </StudentActions>;
 }
 export type StudentSort = "order" | "name" | "redCount";
 export interface StudentGridProps {
@@ -67,6 +71,8 @@ export interface StudentGridProps {
   redSubject: string | null;
   sort: StudentSort;
   onClearFilters?: () => void;
+  selectionRequest?: { id: number; serial: number } | null;
+  onClearSelection?: () => void;
 }
 export function StudentGrid(props: StudentGridProps) {
   const students = useStudents(props.classId);
@@ -99,6 +105,7 @@ export function StudentGrid(props: StudentGridProps) {
         props.onlyLow,
         props.redSubject,
         props.sort,
+        props.selectionRequest?.serial,
       ])}
       students={filtered}
       {...props}
@@ -109,13 +116,15 @@ function StudentResults({
   students,
   classId,
   onClearFilters,
+  selectionRequest,
+  onClearSelection,
 }: StudentGridProps & { students: StudentRecord[] }) {
-  const [selecting, setSelecting] = useState(false);
-  const [selected, setSelected] = useState<Set<number>>(new Set());
+  const [selecting, setSelecting] = useState(!!selectionRequest);
+  const [selected, setSelected] = useState<Set<number>>(() => new Set(selectionRequest ? [selectionRequest.id] : []));
   const [pending, setPending] = useState<StudentRecord[]>([]);
   const chosen = students.filter(student => student.id !== undefined && selected.has(student.id));
   const selectable = students.filter(student => student.id !== undefined);
-  const clearSelection = () => { setSelected(new Set()); setSelecting(false); };
+  const clearSelection = () => { setSelected(new Set()); setSelecting(false); onClearSelection?.(); };
   if (!students.length)
     return (
       <div className="empty-panel">
@@ -147,7 +156,11 @@ function StudentResults({
       </p>
       <div className="selection-grid student-selection-grid">
         {students.map((student) => (
-          <StudentCard key={student.id} classId={classId} student={student} selection={selecting && student.id !== undefined ? {
+          <StudentCard key={student.id} classId={classId} student={student} onSelect={() => {
+            if (student.id === undefined) return;
+            setSelecting(true);
+            setSelected(previous => new Set([...previous, student.id!]));
+          }} selection={selecting && student.id !== undefined ? {
             checked: selected.has(student.id),
             onChange: () => setSelected(previous => { const next = new Set(previous); if (next.has(student.id!)) next.delete(student.id!); else next.add(student.id!); return next; }),
           } : undefined} />

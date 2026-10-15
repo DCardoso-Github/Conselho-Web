@@ -21,6 +21,7 @@ import {
 import { formatSubject } from "@/lib/mapao/subjects";
 import { studentAverage } from "@/lib/highlights";
 import { StudentProfile } from "./student-profile";
+import { StudentActions } from "./student-actions";
 import { SubjectIcon } from "./subject-icon";
 import { Button } from "./ui/button";
 
@@ -204,7 +205,7 @@ function EvolutionCard({ classId, student, row, leader = false }: {
   leader?: boolean;
 }) {
   const average = studentAverage(student);
-  return <article className={`student-tile evolution-tile ${leader ? "student-highlight" : ""}`}>
+  return <StudentActions student={student}><article className={`student-tile evolution-tile ${leader ? "student-highlight" : ""}`}>
     <StudentProfile compact student={student} />
     <div className="student-tile-content">
       {leader && <span className="highlight-label"><TrendingUp aria-hidden="true" /> Aluno evolução</span>}
@@ -222,7 +223,7 @@ function EvolutionCard({ classId, student, row, leader = false }: {
       </div>}
       <Link className="tile-action" href={`/turmas/${encodeURIComponent(classId)}/alunos/${student.id}`}>Abrir aluno</Link>
     </div>
-  </article>;
+  </article></StudentActions>;
 }
 
 export function EvolutionDetail({

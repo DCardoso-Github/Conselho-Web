@@ -24,6 +24,37 @@ import { studentHighlights } from "../lib/highlights";
 import { studentAverage } from "../lib/highlights";
 import { detectMapaoPeriod } from "../lib/mapao/period";
 import { workbook } from "./fixtures";
+import { studentDraft, validateStudentDraft } from "../lib/student-edit";
+
+test("student editor retains support information and validates changed grades across tabs", async () => {
+  const original = { ...student(701, "ET"), tutor: "Tutor original", educacaoEspecial: "Apoio registrado", notes: "Anotação existente", outrasInformacoes: "Conselho", tutoriaMatematica: true };
+  const draft = studentDraft(original);
+  assert.equal(draft.notes, original.notes);
+  assert.equal(draft.educacaoEspecial, original.educacaoEspecial);
+  assert.equal(draft.tutoriaMatematica, true);
+  assert.equal(validateStudentDraft(draft, original), null);
+  draft.grades.MATEMATICA = "12";
+  assert.match(validateStudentDraft(draft, original)!, /nota de Matemática/);
+  draft.grades.MATEMATICA = "7,5";
+  draft.absences.MATEMATICA = "-1";
+  assert.match(validateStudentDraft(draft, original)!, /faltas de Matemática/);
+  draft.absences.MATEMATICA = "2.5";
+  assert.match(validateStudentDraft(draft, original)!, /inteiro/);
+  draft.absences.MATEMATICA = 0;
+  draft.tutor = "Tutor atualizado";
+  draft.educacaoEspecial = "Apoios e adaptações atualizados";
+  draft.tutoriaPortugues = true;
+  assert.equal(validateStudentDraft(draft, original), null);
+  await db.students.put(original);
+  await updateStudent(original.id!, draft);
+  const saved = await db.students.get(original.id!);
+  assert.equal(saved!.tutor, draft.tutor);
+  assert.equal(saved!.educacaoEspecial, draft.educacaoEspecial);
+  assert.equal(saved!.notes, original.notes);
+  assert.equal(saved!.name, original.name);
+  assert.equal(saved!.tutoriaPortugues, true);
+  await db.students.delete(original.id!);
+});
 
 test("period suggestions recognize explicit labels and never mistake students or class numbers for terms", () => {
   const buffer = (rows: unknown[][] = []) => new Uint8Array(workbook(rows)).buffer;
