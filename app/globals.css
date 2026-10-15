@@ -1459,6 +1459,9 @@ label.student-tile { cursor:pointer; }
 .student-action-item { display:flex; align-items:center; gap:12px; min-height:48px; padding:10px 12px; border-radius:12px; cursor:pointer; font-size:17px; outline:none; }
 .student-action-item svg { width:20px; height:20px; flex-shrink:0; }
 .student-action-item[data-highlighted] { color:var(--primary); background:color-mix(in srgb,var(--primary) 12%,transparent); }
+.student-action-item[data-destructive] { color:var(--danger); border-top:1px solid var(--border); margin-top:6px; }
+.student-action-item[data-destructive][data-highlighted] { background:color-mix(in srgb,var(--danger) 10%,transparent); }
+.student-action-item[data-disabled] { opacity:.5;cursor:not-allowed; }
 .editor-dialog { max-width:980px; height:min(860px,92dvh); display:flex; flex-direction:column; overflow:hidden; padding:24px; }
 .student-editor-form,.student-editor-tabs { display:flex; flex-direction:column; flex:1; min-height:0; }
 .editor-tabs { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:6px; border:1px solid var(--border); border-radius:18px; padding:5px; background:var(--muted); margin-bottom:16px; flex-shrink:0; }
