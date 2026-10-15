@@ -214,6 +214,32 @@ import Dexie from "dexie";
 import { ConselhoDB, type GradePeriodRecord } from "../lib/db";
 import { comparePeriods, evolutionLeaders, periodId } from "../lib/evolution";
 import { classOverview, classEvolution, matchesSearch } from "../lib/class-analytics";
+import { analyticsPanels, analyticsPresentationHref } from "../lib/analytics-presentation";
+
+test("presentation batches include every discipline exactly once with stable navigation", () => {
+  for (const view of ["overview", "evolution"] as const) {
+    for (const count of [0, 1, 8, 18, 27]) {
+      const panels = analyticsPanels(view, count);
+      const batches = panels.filter((panel) => panel.kind === "subjects");
+      const indices = batches.flatMap((panel) => Array.from({ length: panel.end! - panel.start! }, (_, index) => panel.start! + index));
+      assert.deepEqual(indices, Array.from({ length: count }, (_, index) => index));
+      assert.ok(batches.every((panel) => panel.end! - panel.start! <= (view === "overview" ? 3 : 2)));
+      assert.equal(panels[0].kind, view === "overview" ? "summary" : "mean");
+      assert.ok(panels.length >= (view === "overview" ? 3 : 4));
+    }
+  }
+});
+
+test("presentation links preserve the exact chosen period identifiers", () => {
+  const before = JSON.stringify(["7 B", 2026, 1]);
+  const after = JSON.stringify(["7 B", 2026, 3]);
+  const url = new URL(analyticsPresentationHref("7 B", "evolution", before, after), "https://example.test");
+  assert.equal(url.pathname, "/turmas/7%20B/apresentar-paineis");
+  assert.equal(url.searchParams.get("before"), before);
+  assert.equal(url.searchParams.get("after"), after);
+  assert.equal(url.searchParams.get("view"), "evolution");
+  assert.equal(new URL(analyticsPresentationHref("6A", "overview"), url).searchParams.has("before"), false);
+});
 
 test("overview keeps missing and nonnumeric values out of means and coverage", () => {
   const rows = [student(1, 0), student(2, "4,5"), student(3, "ET"), student(4, null)];

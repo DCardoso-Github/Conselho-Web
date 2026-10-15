@@ -8,9 +8,11 @@ import {
   Database,
   TrendingUp,
   ArrowUpRight,
+  Play,
 } from "lucide-react";
 import type { StudentRecord } from "@/lib/db";
 import { classOverview } from "@/lib/class-analytics";
+import { analyticsPresentationHref } from "@/lib/analytics-presentation";
 import { formatSubject } from "@/lib/mapao/subjects";
 import { SubjectIcon } from "./subject-icon";
 import { Button } from "./ui/button";
@@ -55,6 +57,12 @@ export function ClassDashboard({
             Resultados, pontos de atenção e cobertura das notas em um só lugar.
           </p>
         </div>
+        <Button asChild>
+          <Link href={analyticsPresentationHref(classId, "overview")}>
+            <Play />
+            Apresentar visão geral
+          </Link>
+        </Button>
         <Button asChild variant="outline">
           <Link href={`/turmas/${encodeURIComponent(classId)}/evolucao`}>
             <TrendingUp />
@@ -139,7 +147,9 @@ export function ClassDashboard({
               .map((row) => (
                 <div key={row.subject}>
                   <span>{formatSubject(row.subject)}</span>
-                  <strong>{row.low} {row.low === 1 ? "aluno" : "alunos"}</strong>
+                  <strong>
+                    {row.low} {row.low === 1 ? "aluno" : "alunos"}
+                  </strong>
                   <div className="bar-track" aria-hidden="true">
                     <i
                       className="tone-low"

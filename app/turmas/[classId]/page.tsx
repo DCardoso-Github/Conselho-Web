@@ -1,6 +1,6 @@
 "use client";
 import { use, useState, useDeferredValue } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useLiveQuery } from "dexie-react-hooks";
 import * as Tabs from "@radix-ui/react-tabs";
@@ -51,6 +51,7 @@ export default function TurmaPage({
   const { classId: raw } = use(params);
   const classId = decodeURIComponent(raw);
   const router = useRouter();
+  const query = useSearchParams();
   const data = useLiveQuery(
     async () => ({
       cls: await db.classes.get(classId),
@@ -139,7 +140,7 @@ export default function TurmaPage({
           </Button>
         </div>
       </header>
-      <Tabs.Root defaultValue="students">
+      <Tabs.Root defaultValue={query.get("view") === "overview" ? "overview" : "students"}>
         <Tabs.List className="section-tabs" aria-label="Visualização da turma">
           <Tabs.Trigger value="students">Alunos</Tabs.Trigger>
           <Tabs.Trigger value="highlights">

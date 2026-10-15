@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import {
   TrendingUp,
   Users,
@@ -8,9 +9,11 @@ import {
   ChartColumn,
   Search,
   ArrowRight,
+  Play,
 } from "lucide-react";
 import type { GradePeriodRecord, StudentRecord } from "@/lib/db";
 import { classEvolution, matchesSearch } from "@/lib/class-analytics";
+import { analyticsPresentationHref } from "@/lib/analytics-presentation";
 import {
   comparePeriods,
   formatGain,
@@ -43,8 +46,19 @@ export function ClassEvolutionDashboard({
   periods: GradePeriodRecord[];
   classId: string;
 }) {
-  const [beforeId, setBeforeId] = useState(periods.at(-2)?.id ?? "");
-  const [afterId, setAfterId] = useState(periods.at(-1)?.id ?? "");
+  const query = useSearchParams();
+  const [beforeId, setBeforeId] = useState(
+    () =>
+      periods.find((p) => p.id === query.get("before"))?.id ??
+      periods.at(-2)?.id ??
+      "",
+  );
+  const [afterId, setAfterId] = useState(
+    () =>
+      periods.find((p) => p.id === query.get("after"))?.id ??
+      periods.at(-1)?.id ??
+      "",
+  );
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
   const [sort, setSort] = useState("gain");
@@ -116,6 +130,23 @@ export function ClassEvolutionDashboard({
           Mesmos alunos, mesmas disciplinas e notas numéricas nos dois
           bimestres. A média da turma dá o mesmo peso a cada aluno comparável.
         </p>
+        {valid && (
+          <div className="analytics-heading projection-launch">
+            <Button asChild>
+              <Link
+                href={analyticsPresentationHref(
+                  classId,
+                  "evolution",
+                  beforeId,
+                  afterId,
+                )}
+              >
+                <Play />
+                Apresentar evolução da turma
+              </Link>
+            </Button>
+          </div>
+        )}
       </div>
       {!valid ? (
         <p className="empty-panel" role="alert">
