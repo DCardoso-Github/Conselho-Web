@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef } from "react";
 import { blobToObjectURL } from "@/lib/photos";
 import { cn } from "@/lib/utils";
 
@@ -49,10 +49,10 @@ export function Avatar({
     className,
     rounded = "full",
 }: AvatarProps) {
-    const [url, setUrl] = useState<string | null>(null);
+    const image = useRef<HTMLImageElement>(null);
     useEffect(() => {
         const u = blobToObjectURL(photo ?? undefined);
-        setUrl(u);
+        if (u && image.current) image.current.src = u;
         return () => {
             if (u) URL.revokeObjectURL(u);
         };
@@ -61,11 +61,11 @@ export function Avatar({
     const sz = SIZE_MAP[size];
     const radius = rounded === "full" ? "rounded-full" : "rounded-2xl";
 
-    if (url) {
+    if (photo) {
         return (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-                src={url}
+                ref={image}
                 alt={name}
                 className={cn(sz.box, radius, "object-cover bg-[var(--surface-2)]", className)}
             />

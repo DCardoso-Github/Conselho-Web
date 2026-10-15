@@ -55,6 +55,14 @@ async function persistParsed(parsed: ParsedClass): Promise<boolean> {
                 order: idx,
                 photo: prev?.photo,
                 notes: prev?.notes,
+                provaPaulista: prev?.provaPaulista,
+                frequenciaAnual: prev?.frequenciaAnual,
+                tutor: prev?.tutor,
+                educacaoEspecial: prev?.educacaoEspecial,
+                tutoriaMatematica: prev?.tutoriaMatematica,
+                tutoriaPortugues: prev?.tutoriaPortugues,
+                programaSouMais: prev?.programaSouMais,
+                outrasInformacoes: prev?.outrasInformacoes,
             };
         });
         if (records.length > 0) await db.students.bulkAdd(records);

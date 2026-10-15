@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "motion/react";
 import { toast } from "sonner";
@@ -35,7 +34,6 @@ interface FileResult {
 }
 
 export default function ImportarPage() {
-    const router = useRouter();
     const [step, setStep] = React.useState<Step>("select");
     const [files, setFiles] = React.useState<File[]>([]);
     const [busy, setBusy] = React.useState(false);
@@ -55,7 +53,6 @@ export default function ImportarPage() {
         setBusy(true);
         setProgress(0);
         const out: FileResult[] = [];
-        let lastClass: string | null = null;
         let i = 0;
         for (const f of files) {
             try {
@@ -68,7 +65,6 @@ export default function ImportarPage() {
                     studentCount: r.studentCount,
                     overwritten: r.overwritten,
                 });
-                lastClass = r.classId;
             } catch (e) {
                 out.push({ name: f.name, ok: false, msg: (e as Error).message });
             }
@@ -88,12 +84,6 @@ export default function ImportarPage() {
             );
         }
         if (out.length - ok > 0) toast.error(`${out.length - ok} falharam.`);
-        if (lastClass && out.every((r) => r.ok) && files.length === 1) {
-            setTimeout(
-                () => router.push(`/turmas/${encodeURIComponent(lastClass!)}`),
-                700
-            );
-        }
     };
 
     const reset = () => {
@@ -104,7 +94,7 @@ export default function ImportarPage() {
     };
 
     return (
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+        <div className="console-container import-screen max-w-5xl">
             <div className="mb-8">
                 <Badge variant="soft" className="mb-2">
                     <Sparkles className="size-3" /> Importar

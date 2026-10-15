@@ -11,7 +11,6 @@ import {
     Sun,
     Moon,
     Monitor,
-    Sparkles,
     GraduationCap,
 } from "lucide-react";
 import {
@@ -30,7 +29,7 @@ export function useCommandPalette() {
     const [open, setOpen] = React.useState(false);
     React.useEffect(() => {
         const onKey = (e: KeyboardEvent) => {
-            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k" && !document.querySelector('[role="dialog"], [role="alertdialog"]')) {
                 e.preventDefault();
                 setOpen((v) => !v);
             }
