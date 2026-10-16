@@ -12,16 +12,18 @@ type Props = Omit<ComponentProps<typeof StudentPanels>, "evolution" | "compariso
   initial?: PresentationCheckpoint;
   onAnalysisChange?: (state: PresentationCheckpoint) => void;
   startInEvolution?: boolean;
+  allowEvolution?: boolean;
+  showHistoryChart?: boolean;
 };
-export function StudentAnalysis({ periods, initial, onAnalysisChange, startInEvolution, ...props }: Props) {
+export function StudentAnalysis({ periods, initial, onAnalysisChange, startInEvolution, allowEvolution = true, showHistoryChart = true, ...props }: Props) {
   const defaults = defaultComparison(periods);
   const [beforeId,setBeforeId] = useState(initial?.beforeId ?? defaults.before?.id ?? "");
   const [afterId,setAfterId] = useState(initial?.afterId ?? defaults.after?.id ?? "");
   const [panel,setPanel] = useState(initial?.panel ?? (startInEvolution ? "evolution" : "grades"));
   const before = periods.find(p=>p.id===beforeId) ?? defaults.before;
   const after = periods.find(p=>p.id===afterId) ?? defaults.after;
-  const available = !!defaults.before;
-  const valid = before && after && before.year===after.year && before.term<after.term;
+  const available = allowEvolution && !!defaults.before;
+  const valid = available && before && after && before.year===after.year && before.term<after.term;
   const evolution = valid ? comparePeriods([props.student],before,after)[0] : undefined;
   const activePanel = !available && panel==="evolution" ? "grades" : ["grades","evolution","pp","support"].includes(panel) ? panel : "grades";
   useEffect(() => {
@@ -41,7 +43,7 @@ export function StudentAnalysis({ periods, initial, onAnalysisChange, startInEvo
     evolution={evolution} comparisonLabels={available ? [before ? periodLabel(before) : "", after ? periodLabel(after) : ""] : undefined}
     provaEvolution={valid ? compareProvaPaulista(props.student,before,after) : undefined}
     comparisonControls={controls}
-    historyChart={available && after ? <StudentHistoryChart student={props.student} periods={periods} year={after.year} /> : undefined}
+    historyChart={showHistoryChart && available && after ? <StudentHistoryChart student={props.student} periods={periods} year={after.year} /> : undefined}
   />;
 }
 

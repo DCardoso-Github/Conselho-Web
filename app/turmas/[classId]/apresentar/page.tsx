@@ -233,6 +233,8 @@ function Presentation({
         periods={periods}
         initial={{ ...analysis, panel: student.id === initial?.studentId ? analysis.panel : groupLabel === "Alunos evolução" ? "evolution" : "grades" }}
         startInEvolution={groupLabel === "Alunos evolução"}
+        allowEvolution={groupLabel === "Alunos evolução"}
+        showHistoryChart={false}
         onAnalysisChange={onAnalysisChange}
         onlyLow={onlyLow}
         onOnlyLowChange={setOnlyLow}
