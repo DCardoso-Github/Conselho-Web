@@ -20,6 +20,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { db } from "@/lib/db";
+import { gradeBands, readBand } from "@/lib/analysis-navigation";
 import { deleteClass, isLowGrade } from "@/lib/actions";
 import { hasLowGrades, hasValue } from "@/lib/presentation";
 import { formatSubject } from "@/lib/mapao/subjects";
@@ -44,7 +45,11 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-export default function TurmaPage({
+export default function TurmaPage(props: { params: Promise<{ classId: string }> }) {
+  const query = useSearchParams();
+  return <TurmaContent key={query.toString()} {...props} />;
+}
+function TurmaContent({
   params,
 }: {
   params: Promise<{ classId: string }>;
@@ -64,11 +69,12 @@ export default function TurmaPage({
     [classId],
   );
   const [search, setSearch] = useState("");
+  const [band, setBand] = useState(readBand(query.get("band")));
   const [view, setView] = useState(query.get("view") === "overview" ? "overview" : "students");
   const [selectionRequest, setSelectionRequest] = useState<{ id: number; serial: number } | null>(null);
   const deferredSearch = useDeferredValue(search);
   const [onlyLow, setOnlyLow] = useState(false);
-  const [redSubject, setRedSubject] = useState<string | null>(null);
+  const [redSubject, setRedSubject] = useState<string | null>(query.get("subject"));
   const [sort, setSort] = useState<StudentSort>("order");
   const [filters, setFilters] = useState(false);
   const [manage, setManage] = useState(false);
@@ -83,6 +89,7 @@ export default function TurmaPage({
   const clear = () => {
     setSelectionRequest(null);
     setSearch("");
+    setBand(undefined);
     setOnlyLow(false);
     setRedSubject(null);
     setSort("order");
@@ -96,9 +103,10 @@ export default function TurmaPage({
       </div>
     );
   const { cls, students } = data;
+  const activeSubject = cls.subjects.includes(redSubject ?? "") ? redSubject : null;
   const low = students.filter(hasLowGrades).length;
   const filterCount =
-    Number(onlyLow || !!redSubject) + Number(sort !== "order");
+    Number(onlyLow || !!redSubject || !!band) + Number(sort !== "order");
   const runExport = async (pdf: boolean) => {
     setExporting(true);
     try {
@@ -181,11 +189,12 @@ export default function TurmaPage({
               {filterCount ? ` (${filterCount})` : ""}
             </Button>
           </div>
-          {(onlyLow || redSubject || sort !== "order") && (
+          {(onlyLow || redSubject || band || sort !== "order") && (
             <div className="active-filters" role="status">
               <span>
-                {redSubject
-                  ? `Notas vermelhas em ${formatSubject(redSubject)}`
+                {activeSubject
+                  ? `${band ? gradeBands[band] : "Notas vermelhas"} em ${formatSubject(activeSubject)}`
+                  : band ? gradeBands[band]
                   : onlyLow
                     ? "Só alunos com notas vermelhas"
                     : ""}
@@ -199,12 +208,13 @@ export default function TurmaPage({
             </div>
           )}
           <StudentGrid
+            band={band}
             selectionRequest={selectionRequest}
             onClearSelection={() => setSelectionRequest(null)}
             classId={classId}
             search={deferredSearch}
             onlyLow={onlyLow}
-            redSubject={redSubject}
+            redSubject={activeSubject}
             sort={sort}
             onClearFilters={clear}
           />
@@ -243,6 +253,7 @@ export default function TurmaPage({
               onChange={(event) => {
                 setSelectionRequest(null);
                 setOnlyLow(event.target.checked);
+                setBand(undefined);
                 setRedSubject(null);
               }}
             />{" "}
@@ -255,6 +266,7 @@ export default function TurmaPage({
               onChange={(event) => {
                 setSelectionRequest(null);
                 setRedSubject(event.target.value || null);
+                setBand(undefined);
                 setOnlyLow(false);
               }}
             >

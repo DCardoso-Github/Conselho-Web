@@ -28,6 +28,55 @@ import { workbook, multiWorkbook } from "./fixtures";
 import { prepareComplementaryImport, applyComplementaryImport } from "../lib/complementary-import";
 import { compareProvaPaulista, numericPercentage } from "../lib/prova-evolution";
 import { studentDraft, validateStudentDraft } from "../lib/student-edit";
+import { analysisHref, checkpointIndex, defaultComparison, filterAnalysisStudents, inGradeBand, readBand, selectedStudents, studentTimeline } from "../lib/analysis-navigation";
+import { getMeta, setMeta } from "../lib/db";
+
+test("analysis filters preserve boundary grades, skip missing data and never duplicate students", () => {
+  const rows = [student(1,0),student(2,4),student(3,4.5),student(4,7),student(5,10),student(6,"ET"),student(7,null)];
+  rows[0].grades.PORTUGUES = 4;
+  assert.deepEqual(filterAnalysisStudents(rows,["MATEMATICA","PORTUGUES"],null,"low").map(s=>s.id),[1,2]);
+  assert.deepEqual(filterAnalysisStudents(rows,["MATEMATICA"],null,"mid").map(s=>s.id),[3]);
+  assert.deepEqual(filterAnalysisStudents(rows,["MATEMATICA"],null,"high").map(s=>s.id),[4,5]);
+  assert.deepEqual(filterAnalysisStudents(rows,["MATEMATICA","PORTUGUES"],"PORTUGUES","low").map(s=>s.id),[1]);
+  assert.equal(inGradeBand("", "low"),false);
+  assert.equal(inGradeBand("11", "high"),false);
+  assert.equal(readBand("unknown"),undefined);
+  assert.equal(readBand("low"),"low");
+  const href = new URL(analysisHref("8A","LÍNGUA PORTUGUESA"),"https://example.test");
+  assert.equal(href.searchParams.get("subject"),"LÍNGUA PORTUGUESA");
+  assert.equal(href.searchParams.get("band"),"low");
+});
+
+test("selection links preserve order and discard duplicate, deleted and foreign student IDs", () => {
+  const rows = [student(1,3),student(2,5),student(3,7)];
+  assert.deepEqual(selectedStudents(rows,"3,1,3,999,-1,abc").map(s=>s.id),[3,1]);
+  assert.deepEqual(selectedStudents(rows,""),[]);
+  assert.equal(checkpointIndex([3,1],1),1);
+  assert.equal(checkpointIndex([3,1],999),0);
+});
+
+test("student timelines preserve gaps and zero without linking a different class or duplicate name", () => {
+  const s=student(1,8);
+  const p1=periodRecord(1,[student(1,0)]);
+  const p3=periodRecord(3,[s]);
+  const data=studentTimeline(s,[p1,p3],2026);
+  assert.deepEqual(data.map(p=>p.value),[0,null,8,null]);
+  assert.equal(studentTimeline(s,[periodRecord(1,[s,s])],2026)[0].value,null);
+  assert.equal(studentTimeline(s,[{...p1,classId:"OUTRA"}],2026)[0].value,null);
+  assert.equal(defaultComparison([p3,p1]).before?.id,p1.id);
+  assert.equal(defaultComparison([p3,periodRecord(1,[s],2027)]).before,undefined);
+});
+
+test("presentation checkpoints and projector preferences persist without modifying student data", async () => {
+  const previous=await db.students.toArray();
+  const checkpoint={studentId:42,panel:"pp",remaining:true,onlyLow:true,beforeId:"initial",afterId:"final"};
+  await setMeta("presentation:test",checkpoint);
+  await setMeta("presentation:projector",true);
+  assert.deepEqual(await getMeta("presentation:test"),checkpoint);
+  assert.equal(await getMeta("presentation:projector"),true);
+  assert.deepEqual(await db.students.toArray(),previous);
+  await db.meta.bulkDelete(["presentation:test","presentation:projector"]);
+});
 
 test("student editor retains support information and validates changed grades across tabs", async () => {
   const original = { ...student(701, "ET"), tutor: "Tutor original", educacaoEspecial: "Apoio registrado", notes: "Anotação existente", outrasInformacoes: "Conselho", tutoriaMatematica: true };
@@ -631,7 +680,7 @@ test("new imports label periods and reject empty or duplicate mapoes atomically"
   await importMapaoFile(file(evolutionMapao(1), "8B.xlsx"), { period: { year: 2026, term: 1 } });
   const old = await db.classes.get("8B");
   const buffer = evolutionMapao(3);
-  const parsed = parseMapao("8B.xlsx", buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength));
+  const parsed = parseMapao("8B.xlsx", Uint8Array.from(buffer).buffer);
   await assert.rejects(persistMapao({ ...parsed, students: [] }, { period: { year: 2026, term: 2 } }), /Nenhum aluno/);
   await assert.rejects(persistMapao({ ...parsed, students: [...parsed.students, parsed.students[0]] }, { period: { year: 2026, term: 2 } }), /nomes de alunos repetidos/);
   assert.deepEqual(await db.classes.get("8B"), old);

@@ -37,7 +37,15 @@ export function StudentPanels({
   evolution,
   comparisonLabels,
   provaEvolution,
+  comparisonControls,
+  historyChart,
+  activePanel,
+  onPanelChange,
 }: {
+  comparisonControls?: ReactNode;
+  historyChart?: ReactNode;
+  activePanel?: string;
+  onPanelChange?: (panel: string) => void;
   provaEvolution?: ProvaEvolution;
   evolution?: StudentEvolution;
   comparisonLabels?: [string, string];
@@ -49,7 +57,9 @@ export function StudentPanels({
 }) {
   return (
     <Tabs.Root
-      defaultValue={comparisonLabels ? "evolution" : "grades"}
+      defaultValue="grades"
+      value={activePanel}
+      onValueChange={onPanelChange}
       className="student-panels presentation-layout"
     >
       <Tabs.List className="panel-tabs" aria-label="Informações do aluno">
@@ -78,6 +88,8 @@ export function StudentPanels({
           value="evolution"
           className="panel-content comparison-panel"
         >
+          {comparisonControls}
+          {historyChart}
           {evolution ? <EvolutionDetail
             row={evolution}
             beforeLabel={comparisonLabels[0]}
@@ -89,7 +101,7 @@ export function StudentPanels({
           </div>}
         </Tabs.Content>
       )}
-      <Tabs.Content value="grades" className="panel-content academic-panel">
+      <Tabs.Content value="grades" className="panel-content academic-panel" tabIndex={0}>
         <Academic
           student={student}
           subjects={subjects}
@@ -98,6 +110,7 @@ export function StudentPanels({
         />
       </Tabs.Content>
       <Tabs.Content value="pp" className={`panel-content ${comparisonLabels ? "comparison-panel" : "academic-panel"}`}>
+        {comparisonLabels && comparisonControls}
         {comparisonLabels ? <ProvaEvolutionSummary comparison={provaEvolution} labels={comparisonLabels} /> : <Academic student={student} subjects={subjects} prova />}
       </Tabs.Content>
       <Tabs.Content value="support" className="panel-content">

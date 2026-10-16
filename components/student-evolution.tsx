@@ -217,12 +217,12 @@ function EvolutionCard({ classId, student, row, prova, leader = false }: {
       <h3>{student.name}</h3>
       <StudentTutor tutor={student.tutor} />
       {row ? <div className="highlight-average">
-        <span>Média final</span>
-        <strong>{formatGrade(row.after)}</strong>
-        <span>Média inicial: {formatGrade(row.before)}</span>
+        <span>Variação da média</span>
         <strong className={`evolution-gain ${gainTone(row.gain)}`}>
-          {formatGain(row.gain)} <span>pontos</span>
+          <span aria-hidden="true">{row.gain > 0 ? "↑" : row.gain < 0 ? "↓" : "→"}</span> {formatGain(row.gain)} <span>pontos</span>
         </strong>
+        <span className="evolution-current">Média final <b>{formatGrade(row.after)}</b></span>
+        <span>Média inicial: {formatGrade(row.before)}</span>
       </div> : <div className="highlight-average">
         <span>Média atual</span>
         <strong>{average === null ? "Sem informação" : formatGrade(average)}</strong>

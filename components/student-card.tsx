@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
-import { AlertTriangle, ArrowUpRight, SearchX, Star, CheckSquare, Trash2 } from "lucide-react";
+import { AlertTriangle, ArrowUpRight, SearchX, Star, CheckSquare, Trash2, Play } from "lucide-react";
 import type { StudentHighlight } from "@/lib/highlights";
 import { studentAverage } from "@/lib/highlights";
 import { formatGrade } from "@/lib/evolution";
@@ -15,6 +15,7 @@ import { StudentTutor } from "./student-tutor";
 import { Button } from "./ui/button";
 import { ConfirmDialog } from "./confirm-dialog";
 import { StudentActions } from "./student-actions";
+import { inGradeBand, type GradeBand } from "@/lib/analysis-navigation";
 export interface StudentCardProps {
   classId: string;
   student: StudentRecord;
@@ -64,6 +65,7 @@ export function StudentCard({ classId, student, highlight, subjects, selection, 
 }
 export type StudentSort = "order" | "name" | "redCount";
 export interface StudentGridProps {
+  band?: GradeBand;
   classId: string;
   search: string;
   onlyLow: boolean;
@@ -83,10 +85,10 @@ export function StudentGrid(props: StudentGridProps) {
   if (props.redSubject)
     filtered = filtered.filter(
       (student) =>
-        hasValue(student.grades[props.redSubject!]) &&
-        isLowGrade(student.grades[props.redSubject!]),
+        inGradeBand(student.grades[props.redSubject!], props.band ?? "low"),
     );
   else if (props.onlyLow) filtered = filtered.filter(hasLowGrades);
+  if (props.band && !props.redSubject) filtered = filtered.filter(student => Object.values(student.grades).some(value => inGradeBand(value, props.band!)));
   if (props.sort === "name")
     filtered = [...filtered].sort((a, b) => a.name.localeCompare(b.name));
   if (props.sort === "redCount") {
@@ -103,6 +105,7 @@ export function StudentGrid(props: StudentGridProps) {
         props.search,
         props.onlyLow,
         props.redSubject,
+        props.band,
         props.sort,
         props.selectionRequest?.serial,
       ])}
@@ -148,7 +151,10 @@ function StudentResults({
           <Button variant="destructive" disabled={!chosen.length} onClick={() => setPending([...chosen])}><Trash2 /> Excluir selecionados ({chosen.length})</Button>
           <Button variant="ghost" onClick={clearSelection}>Cancelar seleção</Button>
           <p className="supporting-text">Alterar a busca, os filtros ou a ordenação limpa a seleção.</p>
-        </> : <Button variant="outline" onClick={() => setSelecting(true)}><CheckSquare /> Selecionar alunos</Button>}
+        </> : <>
+          <Button variant="outline" onClick={() => setSelecting(true)}><CheckSquare /> Selecionar alunos</Button>
+          <Button asChild><Link href={`/turmas/${encodeURIComponent(classId)}/apresentar?${new URLSearchParams({ scope: "selection", ids: students.map(s=>s.id).join(",") })}`}><Play /> Apresentar seleção</Link></Button>
+        </>}
       </div>
       <p className="results-count" aria-live="polite">
         {students.length} alunos · todos nesta página

@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import type { StudentRecord } from "@/lib/db";
 import { classOverview } from "@/lib/class-analytics";
+import { analysisHref } from "@/lib/analysis-navigation";
 import { analyticsPresentationHref } from "@/lib/analytics-presentation";
 import { formatSubject } from "@/lib/mapao/subjects";
 import { SubjectIcon } from "./subject-icon";
@@ -93,13 +94,15 @@ export function ClassDashboard({
                   label: "0 a 4 · notas vermelhas",
                   count: data.bands[0],
                   tone: "tone-low",
+                  href: analysisHref(classId, undefined, "low"),
                 },
                 {
                   label: "Acima de 4 e abaixo de 7",
                   count: data.bands[1],
                   tone: "tone-mid",
+                  href: analysisHref(classId, undefined, "mid"),
                 },
-                { label: "7 a 10", count: data.bands[2], tone: "tone-high" },
+                { label: "7 a 10", count: data.bands[2], tone: "tone-high", href: analysisHref(classId, undefined, "high") },
               ]}
             />
           ) : (
@@ -120,7 +123,7 @@ export function ClassDashboard({
               .filter((row) => row.low > 0)
               .slice(0, 5)
               .map((row) => (
-                <div key={row.subject}>
+                <Link className="attention-chart-row" key={row.subject} href={analysisHref(classId, row.subject)} aria-label={`${formatSubject(row.subject)}: ${row.low} alunos com notas vermelhas. Ver alunos.`}>
                   <span>{formatSubject(row.subject)}</span>
                   <strong>
                     {row.low} {row.low === 1 ? "aluno" : "alunos"}
@@ -133,7 +136,7 @@ export function ClassDashboard({
                       }}
                     />
                   </div>
-                </div>
+                </Link>
               ))}
           </div>
           {!data.withLow && (

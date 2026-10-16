@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, type HTMLMotionProps } from "motion/react";
+import { motion, useReducedMotion, type HTMLMotionProps } from "motion/react";
 import { cn } from "@/lib/utils";
 
 export function MotionPage({
@@ -8,12 +8,13 @@ export function MotionPage({
     className,
     ...props
 }: HTMLMotionProps<"div">) {
+    const reduced = useReducedMotion();
     return (
         <motion.div
-            initial={{ opacity: 0, y: 8 }}
+            initial={reduced ? false : { opacity: 0 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -4 }}
-            transition={{ duration: 0.32, ease: [0.2, 0.8, 0.2, 1] }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: reduced ? 0 : 0.18 }}
             className={cn(className)}
             {...props}
         >

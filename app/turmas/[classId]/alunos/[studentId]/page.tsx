@@ -17,7 +17,7 @@ import { deleteStudent, setStudentPhoto } from "@/lib/actions";
 import { processPhoto } from "@/lib/photos";
 import { shortcutBlocked } from "@/lib/presentation";
 import { StudentProfile } from "@/components/student-profile";
-import { StudentPanels } from "@/components/student-panels";
+import { StudentAnalysis } from "@/components/student-analysis";
 import { StudentEditor } from "@/components/student-editor";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/confirm-dialog";
@@ -37,6 +37,7 @@ export default function AlunoPage({
   const data = useLiveQuery(
     async () => ({
       cls: await db.classes.get(classId),
+      periods: await db.gradePeriods.where("classId").equals(classId).toArray(),
       students: await db.students
         .where("classId")
         .equals(classId)
@@ -126,7 +127,8 @@ export default function AlunoPage({
           </Button>
         </div>
       </header>
-      <StudentPanels
+      <StudentAnalysis
+        periods={data.periods}
         onlyLow={onlyLow}
         onOnlyLowChange={setOnlyLow}
         key={student.id}

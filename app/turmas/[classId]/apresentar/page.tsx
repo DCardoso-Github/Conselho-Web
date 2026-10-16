@@ -4,18 +4,17 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useLiveQuery } from "dexie-react-hooks";
 import { ChevronLeft, ChevronRight, Maximize, Users, X } from "lucide-react";
-import { db, type ClassRecord, type StudentRecord, type SchoolPeriod } from "@/lib/db";
-import { compareProvaPaulista } from "@/lib/prova-evolution";
+import { db, type ClassRecord, type StudentRecord, type GradePeriodRecord } from "@/lib/db";
+import { checkpointIndex, filterAnalysisStudents, readBand, selectedStudents, type PresentationCheckpoint } from "@/lib/analysis-navigation";
+import { PresentationSession, useProjector } from "@/components/presentation-settings";
 import { presentationStudents, remainingPresentationStudents, shortcutBlocked } from "@/lib/presentation";
 import {
   comparePeriods,
   evolutionLeaders,
   periodId,
-  periodLabel,
-  type StudentEvolution,
 } from "@/lib/evolution";
 import { StudentProfile } from "@/components/student-profile";
-import { StudentPanels } from "@/components/student-panels";
+import { StudentAnalysis } from "@/components/student-analysis";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 export default function ApresentarPage({
@@ -75,7 +74,8 @@ function PresentationLoader({ classId }: { classId: string }) {
     query.get("scope") === "evolution"
       ? comparePeriods(data.students, before, after)
       : undefined;
-  const list = evolution
+  const filtered = filterAnalysisStudents(data.students, data.cls.subjects, query.get("subject"), readBand(query.get("band")), query.get("search") ?? "");
+  const list = query.get("scope") === "selection" ? selectedStudents(filtered, query.get("ids")) : evolution
     ? evolutionLeaders(evolution).map((row) => row.student)
     : presentationStudents(
         data.students,
@@ -86,54 +86,58 @@ function PresentationLoader({ classId }: { classId: string }) {
   const groupLabel = query.get("scope") === "top"
     ? "Alunos destaque"
     : query.get("scope") === "evolution" ? "Alunos evolução" : undefined;
+  const cls = data.cls;
   return (
-    <Presentation
+    <PresentationSession key={classId + query.toString()} sessionKey={`presentation:students:${classId}:${query.toString()}`}>
+    {(initial, save) => <Presentation
+      initial={initial} save={save} periods={data.periods}
       key={`${classId}:${query.toString()}`}
-      evolution={evolution}
-      comparisonPeriods={evolution && before && after ? [before, after] : undefined}
+      initialComparison={evolution && before && after ? { beforeId: before.id, afterId: after.id } : undefined}
       groupLabel={groupLabel}
-      remaining={groupLabel ? remainingPresentationStudents(data.students, list, data.cls.subjects, evolution) : []}
-      comparisonLabels={
-        evolution && before && after ? [periodLabel(before), periodLabel(after)] : undefined
-      }
-      cls={data.cls}
+      remaining={groupLabel ? remainingPresentationStudents(data.students, list, cls.subjects, evolution) : []}
+      cls={cls}
       students={list}
       from={query.get("from")}
-    />
+    />}
+    </PresentationSession>
   );
 }
 function Presentation({
   cls,
   students: selected,
   from,
-  evolution,
-  comparisonLabels,
-  comparisonPeriods,
+  initialComparison,
+  periods,
+  initial,
+  save,
   remaining,
   groupLabel,
 }: {
   remaining: StudentRecord[];
   groupLabel?: string;
-  evolution?: StudentEvolution[];
-  comparisonLabels?: [string, string];
-  comparisonPeriods?: [SchoolPeriod, SchoolPeriod];
+  initialComparison?: PresentationCheckpoint;
+  periods: GradePeriodRecord[];
+  initial?: PresentationCheckpoint;
+  save: (state: PresentationCheckpoint) => void;
   cls: ClassRecord;
   students: StudentRecord[];
   from: string | null;
 }) {
   const router = useRouter();
-  const [showRemaining, setShowRemaining] = useState(false);
+  const projector = useProjector();
+  const [showRemaining, setShowRemaining] = useState(initial?.remaining ?? false);
   const students = showRemaining ? [...selected, ...remaining] : selected;
-  const [index, setIndex] = useState(() =>
-    Math.max(
-      0,
-      students.findIndex((student) => String(student.id) === from),
-    ),
-  );
-  const [onlyLow, setOnlyLow] = useState(false);
+  const [index, setIndex] = useState(() => checkpointIndex(students.map(s=>s.id), initial?.studentId ?? (from ? Number(from) : undefined)));
+  const [onlyLow, setOnlyLow] = useState(initial?.onlyLow ?? false);
+  const [analysis, setAnalysis] = useState<PresentationCheckpoint>(initial ?? initialComparison ?? {});
+  const onAnalysisChange = useCallback((state: PresentationCheckpoint) => setAnalysis(previous => JSON.stringify(previous) === JSON.stringify(state) ? previous : state), []);
   const [exit, setExit] = useState(false);
   const [fullscreenMessage, setFullscreenMessage] = useState("");
   const safeIndex = Math.min(index, Math.max(0, students.length - 1));
+  const currentId = students[safeIndex]?.id;
+  useEffect(() => {
+    if (currentId !== undefined) save({ ...analysis, studentId: currentId, remaining: showRemaining, onlyLow });
+  }, [analysis,currentId,showRemaining,onlyLow,save]);
   const canContinue = !showRemaining && remaining.length > 0;
   const includeRemaining = useCallback(() => {
     setShowRemaining(true);
@@ -185,7 +189,7 @@ function Presentation({
     );
   const student = students[safeIndex];
   return (
-    <section className="presentation-screen">
+    <section className={`presentation-screen ${projector.enabled ? "projector-mode" : ""}`}>
       <header className="presentation-header">
         {remaining.length > 0 && (
           <Button
@@ -204,6 +208,7 @@ function Presentation({
           <strong>{cls.name}</strong>
         </div>
         <div className="presentation-actions">
+          {projector.control}
           <Button variant="outline" onClick={fullscreen}>
             <Maximize />
             <span>Tela cheia</span>
@@ -223,13 +228,14 @@ function Presentation({
           {fullscreenMessage}
         </p>
       )}
-      <StudentPanels
-        provaEvolution={comparisonPeriods ? compareProvaPaulista(student, ...comparisonPeriods) : undefined}
-        evolution={evolution?.find((row) => row.student.id === student.id)}
-        comparisonLabels={comparisonLabels}
+      <StudentAnalysis
+        key={student.id}
+        periods={periods}
+        initial={{ ...analysis, panel: student.id === initial?.studentId ? analysis.panel : groupLabel === "Alunos evolução" ? "evolution" : "grades" }}
+        startInEvolution={groupLabel === "Alunos evolução"}
+        onAnalysisChange={onAnalysisChange}
         onlyLow={onlyLow}
         onOnlyLowChange={setOnlyLow}
-        key={student.id}
         student={student}
         subjects={cls.subjects}
         profile={<StudentProfile student={student} />}

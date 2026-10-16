@@ -6,6 +6,10 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import Link from "next/link";
+import { analysisHref, checkpointIndex, type PresentationCheckpoint } from "@/lib/analysis-navigation";
+import { PresentationSession, useProjector } from "./presentation-settings";
+import { shortcutBlocked } from "@/lib/presentation";
 import { useRouter } from "next/navigation";
 import {
   ChevronLeft,
@@ -28,6 +32,7 @@ import { comparePeriods, formatGain, periodLabel } from "@/lib/evolution";
 import { formatSubject } from "@/lib/mapao/subjects";
 import {
   Distribution,
+  ChartTable,
   PairedBars,
   StatCard,
   gradeLabel,
@@ -35,13 +40,23 @@ import {
 import { SubjectIcon } from "./subject-icon";
 import { Button } from "./ui/button";
 
-export function AnalyticsPresentation({
+type AnalyticsProps = { cls: ClassRecord; students: StudentRecord[]; view: AnalyticsView; before?: GradePeriodRecord; after?: GradePeriodRecord };
+export function AnalyticsPresentation(props: AnalyticsProps) {
+  const sessionKey = `presentation:analytics:${props.cls.id}:${props.view}:${props.before?.id ?? ""}:${props.after?.id ?? ""}`;
+  return <PresentationSession key={sessionKey} sessionKey={sessionKey}>{(initial,save)=><AnalyticsSlides {...props} initial={initial} save={save} />}</PresentationSession>;
+}
+const panelKey = (panel: ReturnType<typeof analyticsPanels>[number], subjects: string[]) => JSON.stringify([panel.kind, panel.subject ?? (panel.start !== undefined ? subjects[panel.start] : "")]);
+function AnalyticsSlides({
   cls,
   students,
   view,
   before,
   after,
+  initial,
+  save,
 }: {
+  initial?: PresentationCheckpoint;
+  save: (state: PresentationCheckpoint) => void;
   cls: ClassRecord;
   students: StudentRecord[];
   view: AnalyticsView;
@@ -49,7 +64,8 @@ export function AnalyticsPresentation({
   after?: GradePeriodRecord;
 }) {
   const router = useRouter();
-  const [index, setIndex] = useState(0);
+  const projector = useProjector();
+  const [activeKey,setActiveKey] = useState(initial?.panel);
   const [full, setFull] = useState(false);
   const [message, setMessage] = useState("");
   const titleRef = useRef<HTMLHeadingElement>(null);
@@ -65,8 +81,17 @@ export function AnalyticsPresentation({
     view === "overview" ? subjects.length : evolution.subjects.length,
     prova.subjects,
   );
-  const safeIndex = Math.min(index, panels.length - 1);
+  const subjectKeys = view === "overview" ? subjects.map(s=>s.subject) : evolution.subjects.map(s=>s.subject);
+  const panelKeys = panels.map(p=>panelKey(p,subjectKeys));
+  const serializedKeys = JSON.stringify(panelKeys);
+  const safeIndex = checkpointIndex(panelKeys,activeKey);
+  const setIndex = (next: number) => {
+    const keys: string[] = JSON.parse(serializedKeys);
+    setActiveKey(keys[next]);
+  };
   const panel = panels[safeIndex];
+  const currentKey = panelKeys[safeIndex];
+  useEffect(()=>save({panel:currentKey,beforeId:before?.id,afterId:after?.id}),[currentKey,before?.id,after?.id,save]);
   const context =
     view === "overview"
       ? cls.currentPeriod
@@ -97,6 +122,7 @@ export function AnalyticsPresentation({
   }, [safeIndex]);
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
+      if (shortcutBlocked(event.target)) return;
       if (
         event.altKey ||
         event.ctrlKey ||
@@ -119,18 +145,20 @@ export function AnalyticsPresentation({
       const previous = event.key === "ArrowLeft" || event.key === "PageUp";
       if (next || previous || event.key === "Home" || event.key === "End") {
         event.preventDefault();
-        setIndex((i) =>
-          event.key === "Home"
+        setActiveKey(current => {
+          const keys: string[] = JSON.parse(serializedKeys);
+          const i = checkpointIndex(keys,current);
+          return keys[event.key === "Home"
             ? 0
             : event.key === "End"
-              ? panels.length - 1
-              : Math.max(0, Math.min(panels.length - 1, i + (next ? 1 : -1))),
-        );
+              ? keys.length - 1
+              : Math.max(0, Math.min(keys.length - 1, i + (next ? 1 : -1)))];
+        });
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [panels.length, leave]);
+  }, [serializedKeys, leave]);
   const toggleFullscreen = async () => {
     try {
       if (document.fullscreenElement) await document.exitFullscreen();
@@ -179,13 +207,15 @@ export function AnalyticsPresentation({
               label: "0 a 4 · notas vermelhas",
               count: overview.bands[0],
               tone: "tone-low",
+              href: analysisHref(cls.id,undefined,"low"),
             },
             {
               label: "Acima de 4 e abaixo de 7",
               count: overview.bands[1],
               tone: "tone-mid",
+              href: analysisHref(cls.id,undefined,"mid"),
             },
-            { label: "7 a 10", count: overview.bands[2], tone: "tone-high" },
+            { label: "7 a 10", count: overview.bands[2], tone: "tone-high", href: analysisHref(cls.id,undefined,"high") },
           ]}
         />
       ) : (
@@ -209,6 +239,7 @@ export function AnalyticsPresentation({
                   ? `${row.low} ${row.low === 1 ? "nota vermelha" : "notas vermelhas"}`
                   : "Sem informação"}
               </p>
+              <Link className="subject-filter-link" href={analysisHref(cls.id,row.subject)} aria-label={`Ver alunos com notas vermelhas em ${formatSubject(row.subject)}`}>
               <div className="bar-track" aria-hidden="true">
                 <i
                   className="tone-low"
@@ -217,6 +248,8 @@ export function AnalyticsPresentation({
                   }}
                 />
               </div>
+              </Link>
+              <ChartTable label={formatSubject(row.subject)} headers={["Indicador","Valor"]} rows={[["Média",gradeLabel(row.average)],["Notas vermelhas",row.low]]} />
             </article>
           ))}
         </div>
@@ -375,7 +408,7 @@ export function AnalyticsPresentation({
     }
   }
   return (
-    <section className="analytics-presentation">
+    <section className={`analytics-presentation ${projector.enabled ? "projector-mode" : ""}`}>
       <header className="projection-header">
         <div>
           <span className="eyebrow">
@@ -385,6 +418,7 @@ export function AnalyticsPresentation({
           <p>{context}</p>
         </div>
         <div className="presentation-actions">
+          {projector.control}
           <Button variant="outline" onClick={toggleFullscreen}>
             {full ? <Minimize /> : <Maximize />}
             {full ? "Sair da tela cheia" : "Tela cheia"}
