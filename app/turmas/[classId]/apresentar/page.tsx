@@ -235,6 +235,7 @@ function Presentation({
         startInEvolution={groupLabel === "Alunos evolução"}
         allowEvolution={groupLabel === "Alunos evolução"}
         showHistoryChart={false}
+        presentation
         onAnalysisChange={onAnalysisChange}
         onlyLow={onlyLow}
         onOnlyLowChange={setOnlyLow}

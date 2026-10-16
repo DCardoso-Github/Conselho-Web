@@ -41,7 +41,9 @@ export function StudentPanels({
   historyChart,
   activePanel,
   onPanelChange,
+  presentation = false,
 }: {
+  presentation?: boolean;
   comparisonControls?: ReactNode;
   historyChart?: ReactNode;
   activePanel?: string;
@@ -111,7 +113,7 @@ export function StudentPanels({
       </Tabs.Content>
       <Tabs.Content value="pp" className={`panel-content ${comparisonLabels ? "comparison-panel" : "academic-panel"}`}>
         {comparisonLabels && comparisonControls}
-        {comparisonLabels ? <ProvaEvolutionSummary comparison={provaEvolution} labels={comparisonLabels} /> : <Academic student={student} subjects={subjects} prova />}
+        {comparisonLabels ? <ProvaEvolutionSummary comparison={provaEvolution} labels={comparisonLabels} presentation={presentation} /> : <Academic student={student} subjects={subjects} prova />}
       </Tabs.Content>
       <Tabs.Content value="support" className="panel-content">
         <Support student={student} />

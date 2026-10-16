@@ -89,6 +89,30 @@
 .individual-periods { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; flex-shrink: 0; }
 .individual-periods label { flex: 1 1 190px; display: grid; gap: 6px; text-align: center; font-size: 16px; }
 .individual-periods>p { flex-basis: 100%; text-align: center; }
+.prova-presentation { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.prova-presentation .prova-evolution-metrics>div { padding: 10px 14px; gap: 2px; border: 1px solid var(--border); border-radius: 16px; background: var(--card); }
+.prova-presentation .prova-evolution-metrics strong { font-size: clamp(26px,2vw,36px); line-height: 1.15; }
+.prova-presentation-caption { text-align: center; font-size: 14px; color: var(--muted-foreground); }
+.prova-presentation-subjects { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 10px; }
+.prova-presentation-subjects article { display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; gap: 8px; padding: 12px 10px; min-width: 0; background: var(--card); border: 1px solid var(--border); border-radius: 18px; }
+.prova-presentation-subjects h3 { display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; font-size: clamp(17px,1.2vw,22px); line-height: 1.2; font-weight: 700; overflow-wrap: anywhere; }
+.prova-presentation-subjects h3 svg { width: 22px; height: 22px; flex-shrink: 0; color: var(--primary); }
+.prova-presentation-subjects p { font-size: clamp(16px,1.1vw,20px); font-variant-numeric: tabular-nums; }
+.prova-presentation-subjects strong { font-size: clamp(22px,1.6vw,30px); line-height: 1.2; font-weight: 750; }
+@media(min-width:1201px) and (min-height:650px) {
+  .presentation-screen:has(.prova-presentation) { height: 100dvh; min-height: 0; }
+  .presentation-screen:has(.prova-presentation) .presentation-layout { min-height: 0; grid-template-rows: auto minmax(0,1fr) auto; }
+  .presentation-screen:has(.prova-presentation) .presentation-identity .profile-photo { min-height: 120px; flex: 1 1 120px; }
+  .presentation-screen:has(.prova-presentation) .presentation-identity>.profile { gap: 8px; padding: 12px; }
+  .presentation-screen:has(.prova-presentation) .individual-periods label { display: flex; align-items: center; gap: 8px; white-space: nowrap; font-size: 14px; }
+  .presentation-screen:has(.prova-presentation) .individual-periods select { min-width: 0; }
+  .prova-presentation .prova-evolution-metrics>div { display: grid; grid-template-columns: 1fr auto; column-gap: 10px; padding: 8px 12px; }
+  .prova-presentation .prova-evolution-metrics small { grid-column: 1 / -1; }
+  .prova-presentation { flex: 1 0 auto; }
+  .prova-presentation-subjects { flex: 1; grid-auto-rows: 1fr; }
+  .prova-presentation-subjects article { padding: clamp(4px,.8vh,12px) 8px; gap: 4px; }
+  .prova-presentation-subjects h3 { min-height: 40px; }
+}
 .student-history-chart { flex-shrink: 0; padding: 18px; background: var(--card); border: 1px solid var(--border); border-radius: 20px; }
 .student-history-chart h3 { font-size: 22px; font-weight: 700; text-align: center; }
 .student-history-chart svg { display: block; width: 100%; max-height: 260px; }
@@ -157,6 +181,7 @@
   .presentation-actions { justify-content: center; }
 }
 @media(max-width:900px) {
+  .prova-presentation-subjects { grid-template-columns: repeat(2,minmax(0,1fr)); }
   .presentation-screen, .analytics-presentation { height: auto; min-height: 100dvh; }
   .presentation-layout, .projector-mode .presentation-layout { display: flex; flex-direction: column; min-height: auto; }
   .presentation-identity>.profile, .presentation-identity>.profile-column { height: auto; }
@@ -167,6 +192,8 @@
   .detail-screen .presentation-header, .presentation-footer, .projection-footer { justify-content: center; }
 }
 @media(max-width:600px) {
+  .prova-presentation .prova-evolution-metrics { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .prova-presentation-subjects { grid-template-columns: 1fr; }
   .presentation-layout>.panel-tabs>button { flex-direction: column; font-size: 15px; }
   .presentation-screen, .analytics-presentation { padding: 12px; }
   .presentation-layout .all-grades { grid-template-columns: repeat(2,minmax(0,1fr)); }
@@ -182,6 +209,14 @@
 @media(max-height:650px) and (min-width:901px) {
   .presentation-screen, .analytics-presentation { height: auto; }
   .presentation-layout { flex: none; grid-template-rows: auto minmax(480px,auto) auto; }
+}
+@media(min-width:1201px) and (min-height:650px) and (max-height:850px) {
+  .projector-mode:has(.prova-presentation) .profile h1 { font-size: clamp(22px,1.8vw,28px); }
+  .projector-mode:has(.prova-presentation) .student-tutor { font-size: 18px; }
+  .projector-mode:has(.prova-presentation) .profile-average { font-size: 16px; }
+  .projector-mode:has(.prova-presentation) .profile-grade-count { font-size: 14px; }
+  .projector-mode:has(.prova-presentation) .academic-metrics h3 { font-size: 16px; }
+  .projector-mode:has(.prova-presentation) .academic-metrics .metric-value { font-size: 26px; }
 }
 @media(prefers-reduced-motion:no-preference) {
   .student-tile, .grade-tile, .panel-tabs button { transition: border-color 180ms, box-shadow 180ms, background-color 180ms; }
