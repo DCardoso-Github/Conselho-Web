@@ -58,7 +58,8 @@ export function StudentActionsProvider({ children, subjects, onSelect }: {
 }
 
 /** Student commands live in the card's context menu. */
-export function StudentActions({ student, children, onSelect, selected = false }: {
+export function StudentActions({ student, children, onSelect, selected = false, viewQuery = "scope=all" }: {
+  viewQuery?: string;
   student: StudentRecord;
   children: ReactNode;
   onSelect?: () => void;
@@ -82,8 +83,8 @@ export function StudentActions({ student, children, onSelect, selected = false }
     if (id === "select") { if (onSelect) onSelect(); else actions.select(student); }
     if (id === "edit") pendingDialog.current = () => actions.edit(student, cardFocusTarget());
     if (id === "delete") pendingDialog.current = () => actions.remove(student, cardFocusTarget());
-    if (id === "open") router.push(`${base}/alunos/${student.id}`);
-    if (id === "present") router.push(`${base}/apresentar?scope=all&from=${student.id}`);
+    if (id === "open") router.push(`${base}/alunos/${student.id}?${viewQuery}`);
+    if (id === "present") router.push(`${base}/apresentar?${viewQuery}&from=${student.id}`);
   };
   const restoreFocus = (event: Event) => {
     event.preventDefault();

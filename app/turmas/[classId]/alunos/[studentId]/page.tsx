@@ -1,6 +1,6 @@
 "use client";
-import { use, useCallback, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, use, useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useLiveQuery } from "dexie-react-hooks";
 import {
   ArrowLeft,
@@ -15,7 +15,9 @@ import { toast } from "sonner";
 import { db } from "@/lib/db";
 import { deleteStudent, setStudentPhoto } from "@/lib/actions";
 import { processPhoto } from "@/lib/photos";
-import { shortcutBlocked } from "@/lib/presentation";
+import { remainingPresentationStudents, shortcutBlocked } from "@/lib/presentation";
+import { comparePeriods, periodId } from "@/lib/evolution";
+import { defaultComparison, type PresentationCheckpoint } from "@/lib/analysis-navigation";
 import { StudentProfile } from "@/components/student-profile";
 import { StudentAnalysis } from "@/components/student-analysis";
 import { StudentEditor } from "@/components/student-editor";
@@ -27,8 +29,20 @@ export default function AlunoPage({
   params: Promise<{ classId: string; studentId: string }>;
 }) {
   const { classId: raw, studentId } = use(params);
-  const classId = decodeURIComponent(raw);
+  return <Suspense fallback={<p className="empty-panel">Carregando aluno…</p>}>
+    <AlunoRoute classId={decodeURIComponent(raw)} studentId={studentId} />
+  </Suspense>;
+}
+function AlunoRoute({ classId, studentId }: { classId: string; studentId: string }) {
+  const query = useSearchParams();
+  return <AlunoContent key={`${classId}:${studentId}:${query}`} classId={classId} studentId={studentId} query={new URLSearchParams(query.toString())} />;
+}
+function AlunoContent({ classId, studentId, query }: { classId: string; studentId: string; query: URLSearchParams }) {
   const router = useRouter();
+  const scope = query.get("scope") === "evolution" ? "evolution" : query.get("scope") === "top" ? "top" : "all";
+  const returnHref = `/turmas/${encodeURIComponent(classId)}?view=${scope === "evolution" ? "evolution" : scope === "top" ? "highlights" : "students"}`;
+  const [analysis, setAnalysis] = useState<PresentationCheckpoint>({});
+  const onAnalysisChange = useCallback((state: PresentationCheckpoint) => setAnalysis(previous => JSON.stringify(previous) === JSON.stringify(state) ? previous : state), []);
   const [onlyLow, setOnlyLow] = useState(false);
   const [editing, setEditing] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -45,20 +59,26 @@ export default function AlunoPage({
     }),
     [classId],
   );
-  const index =
-    data?.students.findIndex((student) => String(student.id) === studentId) ??
-    -1;
-  const student = data?.students[index];
-  const go = useCallback(
-    (next: number) => {
-      const target = data?.students[next];
+  const defaults = defaultComparison(data?.periods ?? []);
+  const before = data?.periods.find(p => p.id === (analysis.beforeId ?? periodId(classId, { year: Number(query.get("year")), term: Number(query.get("baseline")) }))) ?? defaults.before;
+  const after = data?.periods.find(p => p.id === (analysis.afterId ?? periodId(classId, { year: Number(query.get("year")), term: Number(query.get("target")) }))) ?? defaults.after;
+  const viewQuery = new URLSearchParams({ scope });
+  if (scope === "evolution" && before && after) {
+    viewQuery.set("year", String(before.year));
+    viewQuery.set("baseline", String(before.term));
+    viewQuery.set("target", String(after.term));
+  }
+  const students = useMemo(() => !data ? [] : scope === "all" ? data.students : remainingPresentationStudents(data.students, [], data.cls?.subjects, scope === "evolution" ? comparePeriods(data.students, before, after) : undefined), [data, scope, before, after]);
+  const index = students.findIndex(student => String(student.id) === studentId);
+  const student = students[index];
+  const navigationQuery = viewQuery.toString();
+  const go = useCallback((next: number) => {
+      const target = students[next];
       if (target && !editing)
         router.push(
-          `/turmas/${encodeURIComponent(classId)}/alunos/${target.id}`,
+          `/turmas/${encodeURIComponent(classId)}/alunos/${target.id}?${navigationQuery}`,
         );
-    },
-    [classId, data, editing, router],
-  );
+    }, [students, editing, router, classId, navigationQuery]);
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (editing || shortcutBlocked(event.target)) return;
@@ -71,18 +91,18 @@ export default function AlunoPage({
         go(index - 1);
       }
       if (event.key === "Escape")
-        router.push(`/turmas/${encodeURIComponent(classId)}`);
+        router.push(returnHref);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [editing, go, index, router, classId]);
+  }, [editing, go, index, router, returnHref]);
   if (!data) return <p className="empty-panel">Carregando aluno…</p>;
   if (!data.cls || !student)
     return (
       <div className="empty-panel">
         <h1>Aluno não encontrado</h1>
         <Button
-          onClick={() => router.push(`/turmas/${encodeURIComponent(classId)}`)}
+          onClick={() => router.push(returnHref)}
         >
           Voltar à turma
         </Button>
@@ -105,11 +125,21 @@ export default function AlunoPage({
       <header className="presentation-header">
         <Button
           variant="ghost"
-          onClick={() => router.push(`/turmas/${encodeURIComponent(classId)}`)}
+          onClick={() => router.push(returnHref)}
         >
           <ArrowLeft /> Turma {data.cls.name}
         </Button>
         <div className="presentation-actions">
+          <Button variant="outline" asChild disabled={uploading}>
+            <label className="photo-upload">
+              <ImagePlus />{uploading ? "Processando foto…" : student.photo ? "Trocar foto" : "Adicionar foto"}
+              <input aria-label="Foto do aluno" type="file" accept="image/*" disabled={uploading} onChange={event => {
+                const file = event.target.files?.[0];
+                if (file) void addPhoto(file);
+                event.target.value = "";
+              }} />
+            </label>
+          </Button>
           <Button variant="outline" className="text-destructive" disabled={uploading} onClick={() => setConfirmDelete(true)}>
             <Trash2 /> Excluir aluno
           </Button>
@@ -119,7 +149,7 @@ export default function AlunoPage({
           <Button
             onClick={() =>
               router.push(
-                `/turmas/${encodeURIComponent(classId)}/apresentar?scope=all&from=${student.id}`,
+                `/turmas/${encodeURIComponent(classId)}/apresentar?${viewQuery}&from=${student.id}`,
               )
             }
           >
@@ -128,38 +158,17 @@ export default function AlunoPage({
         </div>
       </header>
       <StudentAnalysis
+        allowEvolution={scope === "evolution"}
+        startInEvolution={scope === "evolution"}
+        initial={{ beforeId: before?.id, afterId: after?.id }}
+        onAnalysisChange={onAnalysisChange}
         periods={data.periods}
         onlyLow={onlyLow}
         onOnlyLowChange={setOnlyLow}
         key={student.id}
         student={student}
         subjects={data.cls.subjects}
-        profile={
-          <div className="profile-column">
-            <StudentProfile key={student.id} student={student} />
-            <Button variant="outline" asChild disabled={uploading}>
-              <label className="photo-upload">
-                <ImagePlus />{" "}
-                {uploading
-                  ? "Processando foto…"
-                  : student.photo
-                    ? "Trocar foto"
-                    : "Adicionar foto"}
-                <input
-                  aria-label="Foto do aluno"
-                  type="file"
-                  accept="image/*"
-                  disabled={uploading}
-                  onChange={(event) => {
-                    const file = event.target.files?.[0];
-                    if (file) void addPhoto(file);
-                    event.target.value = "";
-                  }}
-                />
-              </label>
-            </Button>
-          </div>
-        }
+        profile={<StudentProfile key={student.id} student={student} />}
       />
       <footer className="presentation-footer">
         <span className="keyboard-hint">← → para trocar de aluno</span>
@@ -172,11 +181,11 @@ export default function AlunoPage({
             <ChevronLeft /> Anterior
           </Button>
           <span aria-live="polite">
-            <strong>{index + 1}</strong> / {data.students.length}
+            <strong>{index + 1}</strong> / {students.length}
           </span>
           <Button
             size="lg"
-            disabled={index >= data.students.length - 1}
+            disabled={index >= students.length - 1}
             onClick={() => go(index + 1)}
           >
             Próximo <ChevronRight />
@@ -200,7 +209,7 @@ export default function AlunoPage({
           if (student.id === undefined) return;
           await deleteStudent(classId, student.id);
           toast.success("Aluno excluído.");
-          router.replace(`/turmas/${encodeURIComponent(classId)}`);
+          router.replace(returnHref);
         }}
       />
     </section>

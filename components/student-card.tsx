@@ -17,6 +17,7 @@ import { ConfirmDialog } from "./confirm-dialog";
 import { StudentActions } from "./student-actions";
 import { inGradeBand, type GradeBand } from "@/lib/analysis-navigation";
 export interface StudentCardProps {
+  viewQuery?: string;
   classId: string;
   student: StudentRecord;
   index?: number;
@@ -25,7 +26,7 @@ export interface StudentCardProps {
   selection?: { checked: boolean; onChange: () => void };
   onSelect?: () => void;
 }
-export function StudentCard({ classId, student, highlight, subjects, selection, onSelect }: StudentCardProps) {
+export function StudentCard({ classId, student, highlight, subjects, selection, onSelect, viewQuery = "scope=all" }: StudentCardProps) {
   const average = highlight?.average ?? studentAverage(student, subjects);
   const low = Object.values(student.grades).filter(
     (grade) => hasValue(grade) && isLowGrade(grade),
@@ -59,8 +60,8 @@ export function StudentCard({ classId, student, highlight, subjects, selection, 
     </>
   );
   const className = `student-tile ${highlight ? "student-highlight" : ""} ${selection?.checked ? "student-tile-selected" : ""}`;
-  return <StudentActions student={student} selected={selection?.checked} onSelect={selection?.onChange ?? onSelect}>
-    {selection ? <label className={className}>{content}</label> : <Link className={className} href={`/turmas/${encodeURIComponent(classId)}/alunos/${student.id}`}>{content}</Link>}
+  return <StudentActions student={student} selected={selection?.checked} onSelect={selection?.onChange ?? onSelect} viewQuery={viewQuery}>
+    {selection ? <label className={className}>{content}</label> : <Link className={className} href={`/turmas/${encodeURIComponent(classId)}/alunos/${student.id}?${viewQuery}`}>{content}</Link>}
   </StudentActions>;
 }
 export type StudentSort = "order" | "name" | "redCount";

@@ -70,7 +70,7 @@ function TurmaContent({
   );
   const [search, setSearch] = useState("");
   const [band, setBand] = useState(readBand(query.get("band")));
-  const [view, setView] = useState(query.get("view") === "overview" ? "overview" : "students");
+  const [view, setView] = useState(["overview", "highlights", "evolution"].includes(query.get("view") ?? "") ? query.get("view")! : "students");
   const [selectionRequest, setSelectionRequest] = useState<{ id: number; serial: number } | null>(null);
   const deferredSearch = useDeferredValue(search);
   const [onlyLow, setOnlyLow] = useState(false);

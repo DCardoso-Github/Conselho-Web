@@ -5,7 +5,6 @@ import { comparePeriods, periodLabel } from "@/lib/evolution";
 import { compareProvaPaulista } from "@/lib/prova-evolution";
 import { defaultComparison, type PresentationCheckpoint } from "@/lib/analysis-navigation";
 import { StudentPanels } from "./student-panels";
-import { StudentHistoryChart } from "./student-history-chart";
 
 type Props = Omit<ComponentProps<typeof StudentPanels>, "evolution" | "comparisonLabels" | "provaEvolution"> & {
   periods: GradePeriodRecord[];
@@ -13,9 +12,8 @@ type Props = Omit<ComponentProps<typeof StudentPanels>, "evolution" | "compariso
   onAnalysisChange?: (state: PresentationCheckpoint) => void;
   startInEvolution?: boolean;
   allowEvolution?: boolean;
-  showHistoryChart?: boolean;
 };
-export function StudentAnalysis({ periods, initial, onAnalysisChange, startInEvolution, allowEvolution = true, showHistoryChart = true, ...props }: Props) {
+export function StudentAnalysis({ periods, initial, onAnalysisChange, startInEvolution, allowEvolution = false, ...props }: Props) {
   const defaults = defaultComparison(periods);
   const [beforeId,setBeforeId] = useState(initial?.beforeId ?? defaults.before?.id ?? "");
   const [afterId,setAfterId] = useState(initial?.afterId ?? defaults.after?.id ?? "");
@@ -43,7 +41,6 @@ export function StudentAnalysis({ periods, initial, onAnalysisChange, startInEvo
     evolution={evolution} comparisonLabels={available ? [before ? periodLabel(before) : "", after ? periodLabel(after) : ""] : undefined}
     provaEvolution={valid ? compareProvaPaulista(props.student,before,after) : undefined}
     comparisonControls={controls}
-    historyChart={showHistoryChart && available && after ? <StudentHistoryChart student={props.student} periods={periods} year={after.year} /> : undefined}
   />;
 }
 

@@ -53,6 +53,7 @@ export function StudentHighlights({
                 classId={classId}
                 student={highlight.student}
                 highlight={highlight}
+                viewQuery="scope=top"
               />
             ))}
           </div>
@@ -69,7 +70,7 @@ export function StudentHighlights({
           {showRest ? "Ocultar restante da turma" : `Mostrar restante da turma (${rest.length})`}
         </Button>
         {showRest && <div id="highlight-rest" className="selection-grid student-selection-grid">
-          {rest.map(student => <StudentCard key={student.id} classId={classId} student={student} subjects={subjects} />)}
+          {rest.map(student => <StudentCard key={student.id} classId={classId} student={student} subjects={subjects} viewQuery="scope=top" />)}
         </div>}
       </>}
     </section>

@@ -80,7 +80,7 @@ function PresentationLoader({ classId }: { classId: string }) {
     : presentationStudents(
         data.students,
         query.get("scope"),
-        query.get("from"),
+        query.get("scope") === "top" ? null : query.get("from"),
         data.cls.subjects,
       );
   const groupLabel = query.get("scope") === "top"
@@ -125,7 +125,7 @@ function Presentation({
 }) {
   const router = useRouter();
   const projector = useProjector();
-  const [showRemaining, setShowRemaining] = useState(initial?.remaining ?? false);
+  const [showRemaining, setShowRemaining] = useState(initial?.remaining ?? remaining.some(student => String(student.id) === from));
   const students = showRemaining ? [...selected, ...remaining] : selected;
   const [index, setIndex] = useState(() => checkpointIndex(students.map(s=>s.id), initial?.studentId ?? (from ? Number(from) : undefined)));
   const [onlyLow, setOnlyLow] = useState(initial?.onlyLow ?? false);
@@ -234,8 +234,6 @@ function Presentation({
         initial={{ ...analysis, panel: student.id === initial?.studentId ? analysis.panel : groupLabel === "Alunos evolução" ? "evolution" : "grades" }}
         startInEvolution={groupLabel === "Alunos evolução"}
         allowEvolution={groupLabel === "Alunos evolução"}
-        showHistoryChart={false}
-        presentation
         onAnalysisChange={onAnalysisChange}
         onlyLow={onlyLow}
         onOnlyLowChange={setOnlyLow}

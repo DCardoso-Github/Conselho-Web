@@ -82,6 +82,7 @@ function EvolutionSelection({
   const leaders = evolutionLeaders(comparisons);
   const rest = remainingPresentationStudents(students, leaders.map(row => row.student), cls.subjects, comparisons);
   const comparisonById = new Map(comparisons.map(row => [row.student.id, row]));
+  const viewQuery = `scope=evolution&year=${before?.year ?? ""}&baseline=${before?.term ?? ""}&target=${after?.term ?? ""}`;
   const heading = (
     <div className="highlights-heading">
       <div>
@@ -170,7 +171,7 @@ function EvolutionSelection({
           </div>
           {leaders.length ? (
             <div className="selection-grid student-selection-grid">
-              {leaders.map(row => <EvolutionCard key={row.student.id} classId={cls.id} student={row.student} row={row} prova={row.provaPaulista} leader />)}
+              {leaders.map(row => <EvolutionCard key={row.student.id} classId={cls.id} student={row.student} row={row} prova={row.provaPaulista} viewQuery={viewQuery} leader />)}
             </div>
           ) : (
             <div className="empty-panel">
@@ -191,7 +192,7 @@ function EvolutionSelection({
               {showAll ? "Ocultar restante da turma" : `Mostrar restante da turma (${rest.length})`}
             </Button>
             {showAll && <div id="evolution-rest" className="selection-grid student-selection-grid">
-              {rest.map(student => <EvolutionCard key={student.id} classId={cls.id} student={student} row={comparisonById.get(student.id)} prova={compareProvaPaulista(student, before, after)} />)}
+              {rest.map(student => <EvolutionCard key={student.id} classId={cls.id} student={student} row={comparisonById.get(student.id)} prova={compareProvaPaulista(student, before, after)} viewQuery={viewQuery} />)}
             </div>}
           </>}
         </>
@@ -202,7 +203,8 @@ function EvolutionSelection({
 
 const gainTone = (gain: number) => gain > 1e-9 ? "evolution-positive" : gain < -1e-9 ? "evolution-negative" : "";
 
-function EvolutionCard({ classId, student, row, prova, leader = false }: {
+function EvolutionCard({ classId, student, row, prova, leader = false, viewQuery }: {
+  viewQuery: string;
   classId: string;
   student: StudentRecord;
   row?: Evolution;
@@ -210,7 +212,7 @@ function EvolutionCard({ classId, student, row, prova, leader = false }: {
   leader?: boolean;
 }) {
   const average = studentAverage(student);
-  return <StudentActions student={student}><article className={`student-tile evolution-tile ${leader ? "student-highlight" : ""}`}>
+  return <StudentActions student={student} viewQuery={viewQuery}><article className={`student-tile evolution-tile ${leader ? "student-highlight" : ""}`}>
     <StudentProfile compact student={student} />
     <div className="student-tile-content">
       {leader && <span className="highlight-label"><TrendingUp aria-hidden="true" /> Aluno evolução</span>}
@@ -230,7 +232,7 @@ function EvolutionCard({ classId, student, row, prova, leader = false }: {
       </div>}
     </div>
     <ProvaEvolutionSummary compact comparison={prova} />
-    <Link className="tile-action" href={`/turmas/${encodeURIComponent(classId)}/alunos/${student.id}`}>Abrir aluno <ArrowUpRight aria-hidden="true" /></Link>
+    <Link className="tile-action" href={`/turmas/${encodeURIComponent(classId)}/alunos/${student.id}?${viewQuery}`}>Abrir aluno <ArrowUpRight aria-hidden="true" /></Link>
   </article></StudentActions>;
 }
 

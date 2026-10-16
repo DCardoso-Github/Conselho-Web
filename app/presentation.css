@@ -21,7 +21,7 @@
 .presentation-actions { display: flex; align-items: center; justify-content: flex-end; gap: 8px; flex-wrap: wrap; min-width: 0; }
 .presentation-header>.presentation-actions, .projection-header>.presentation-actions { grid-column: 3; grid-row: 1; }
 .presentation-group-toggle { grid-column: 1; grid-row: 1; justify-self: start; white-space: normal; }
-.presentation-header button, .projection-header button { min-height: 48px; height: auto; padding: 10px 14px; font-size: 15px; }
+.presentation-header button, .presentation-header .photo-upload, .projection-header button { min-height: 48px; height: auto; padding: 10px 14px; font-size: 15px; }
 .detail-screen .presentation-header { display: flex; justify-content: space-between; }
 .presentation-layout {
   display: grid; grid-template-columns: minmax(0,28fr) minmax(0,72fr);
