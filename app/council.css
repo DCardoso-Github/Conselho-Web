@@ -1,0 +1,8 @@
+.council-work {display:grid;gap:20px;max-width:1100px;margin:auto}
+.council-work section,.prep-strip,.council-box {border:1px solid var(--border);background:var(--card);border-radius:20px;padding:clamp(14px,2vw,26px);display:grid;gap:14px;min-width:0}
+.council-work h2,.council-box h2 {font-size:1.4rem;font-weight:700}
+.council-work label,.council-box label {display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.council-work textarea,.council-work select,.council-work input:not([type=checkbox]),.council-box input:not([type=checkbox]),.council-box select {padding:10px;border:1px solid var(--border);border-radius:10px;background:var(--card);color:var(--foreground);max-width:100%}
+.council-row,.prep-strip {display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+.council-work button:not([disabled]):hover {border-color:var(--primary)}
+

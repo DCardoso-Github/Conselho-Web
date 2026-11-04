@@ -1,4 +1,5 @@
 import Dexie, { type Table } from "dexie";
+import type { Transfer, Meeting, Followup } from "./council-types";
 
 export interface ClassRecord {
     id: string; // className, ex.: "9A"
@@ -65,6 +66,9 @@ export class ConselhoDB extends Dexie {
     classes!: Table<ClassRecord, string>;
     students!: Table<StudentRecord, number>;
     meta!: Table<MetaRecord, string>;
+    transfers!: Table<Transfer,string>;
+    meetings!: Table<Meeting,string>;
+    followups!: Table<Followup,string>;
     gradePeriods!: Table<GradePeriodRecord, string>;
 
     constructor(name = "conselho-db") {
@@ -77,6 +81,7 @@ export class ConselhoDB extends Dexie {
         this.version(2).stores({
             gradePeriods: "id, classId, [classId+year+term]",
         });
+        this.version(3).stores({transfers:"id,classId,sourceClass,studentId",meetings:"id,classId",followups:"id,classId,studentId"});
     }
 }
 

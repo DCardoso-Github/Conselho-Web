@@ -500,7 +500,7 @@ test("v1 database upgrade preserves students, photos and notes without guessing 
   old.close();
   const upgraded = new ConselhoDB("migration-test");
   await upgraded.open();
-  assert.equal(upgraded.verno, 2);
+  assert.equal(upgraded.verno, 3);
   assert.equal((await upgraded.students.get(55))?.notes, "Preservar");
   assert.equal(await (await upgraded.students.get(55))?.photo?.text(), "foto");
   assert.equal((await upgraded.classes.get("TESTE"))?.currentPeriod, undefined);

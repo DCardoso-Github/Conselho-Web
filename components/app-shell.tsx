@@ -79,6 +79,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <Upload /> Importar mapão
             </Link>
           </Button>
+          <Button asChild variant="outline"><Link href="/backup" onClick={()=>setMenu(false)}>Backup e restauração</Link></Button>
           <h2 className="text-lg font-semibold mt-4 text-center">Aparência</h2>
           <div className="flex flex-wrap justify-center gap-2">
             {[
