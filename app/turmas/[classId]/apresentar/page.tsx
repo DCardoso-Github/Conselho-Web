@@ -15,6 +15,7 @@ import {
 } from "@/lib/evolution";
 import { StudentProfile } from "@/components/student-profile";
 import { StudentAnalysis } from "@/components/student-analysis";
+import { StudentJump } from "@/components/student-jump";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 export default function ApresentarPage({
@@ -165,7 +166,8 @@ function Presentation({
   const leave = () => {
     if (document.fullscreenElement)
       void document.exitFullscreen().catch(() => {});
-    router.push(`/turmas/${encodeURIComponent(cls.id)}`);
+    const view = groupLabel === "Alunos evolução" ? "evolution" : groupLabel === "Alunos destaque" ? "highlights" : "students";
+    router.push(`/turmas/${encodeURIComponent(cls.id)}?view=${view}`);
   };
   const fullscreen = async () => {
     try {
@@ -251,10 +253,8 @@ function Presentation({
           >
             <ChevronLeft /> Anterior
           </Button>
-          <span aria-live="polite" aria-atomic="true">
-            <strong>{safeIndex + 1}</strong> / {students.length}
-            <span className="sr-only"> alunos · {student.name}</span>
-          </span>
+          <StudentJump students={students} current={safeIndex} onChoose={setIndex} />
+          <span className="sr-only" aria-live="polite">{safeIndex + 1} de {students.length} · {student.name}</span>
           <Button
             size="lg"
             disabled={safeIndex >= students.length - 1 && !canContinue}

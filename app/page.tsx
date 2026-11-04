@@ -6,6 +6,7 @@ import {
   ArrowUpRight,
   GraduationCap,
   Plus,
+  Search,
   Users,
   AlertTriangle,
 } from "lucide-react";
@@ -13,14 +14,19 @@ import { useClasses } from "@/lib/hooks";
 import { db } from "@/lib/db";
 import { hasLowGrades, PAGE_SIZE } from "@/lib/presentation";
 import { Pagination } from "@/components/pagination";
+import { compactKey } from "@/lib/mapao/normalize";
+import { periodLabel } from "@/lib/evolution";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 export default function HomePage() {
   const classes = useClasses();
   const students = useLiveQuery(() => db.students.toArray(), [], []) ?? [];
   const [page, setPage] = useState(0);
+  const [query, setQuery] = useState("");
+  const visible = classes.filter(cls => compactKey(cls.name).includes(compactKey(query)));
   const safePage = Math.min(
     page,
-    Math.max(0, Math.ceil(classes.length / PAGE_SIZE) - 1),
+    Math.max(0, Math.ceil(visible.length / PAGE_SIZE) - 1),
   );
   if (!classes.length)
     return (
@@ -61,8 +67,10 @@ export default function HomePage() {
           </Link>
         </Button>
       </header>
+      <div className="search-toolbar"><div className="search-field"><Search aria-hidden="true"/><Input type="search" aria-label="Buscar turma" placeholder="Buscar turma, por exemplo: 6A" value={query} onChange={e => { setQuery(e.target.value); setPage(0); }} /></div></div>
+      {!visible.length && <div className="empty-panel"><p role="status">Nenhuma turma encontrada.</p><Button variant="outline" onClick={() => setQuery("")}>Mostrar todas as turmas</Button></div>}
       <div className="selection-grid">
-        {classes
+        {visible
           .slice(safePage * PAGE_SIZE, (safePage + 1) * PAGE_SIZE)
           .map((cls) => {
             const members = students.filter(
@@ -76,7 +84,7 @@ export default function HomePage() {
                 className="class-tile"
               >
                 <div className="tile-top">
-                  <span className="eyebrow">Turma</span>
+                  <span className="eyebrow">{cls.currentPeriod ? periodLabel(cls.currentPeriod) : "Turma"}</span>
                   <ArrowUpRight />
                 </div>
                 <h2>{cls.name}</h2>
@@ -95,7 +103,7 @@ export default function HomePage() {
       </div>
       <Pagination
         page={safePage}
-        total={classes.length}
+        total={visible.length}
         size={PAGE_SIZE}
         onChange={setPage}
         label="Turmas"

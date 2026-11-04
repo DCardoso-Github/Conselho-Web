@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { AlertTriangle, ArrowUpRight, SearchX, Star, CheckSquare, Trash2, Play } from "lucide-react";
 import type { StudentHighlight } from "@/lib/highlights";
 import { studentAverage } from "@/lib/highlights";
-import { formatGrade } from "@/lib/evolution";
+import { formatGrade, nameKey } from "@/lib/evolution";
 import type { StudentRecord } from "@/lib/db";
 import { useStudents } from "@/lib/hooks";
 import { deleteStudents, isLowGrade } from "@/lib/actions";
@@ -79,9 +79,7 @@ export interface StudentGridProps {
 export function StudentGrid(props: StudentGridProps) {
   const students = useStudents(props.classId);
   let filtered = students.filter((student) =>
-    student.name
-      .toLocaleLowerCase("pt-BR")
-      .includes(props.search.trim().toLocaleLowerCase("pt-BR")),
+    nameKey(student.name).includes(nameKey(props.search)),
   );
   if (props.redSubject)
     filtered = filtered.filter(

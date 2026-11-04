@@ -7,6 +7,7 @@ import * as Tabs from "@radix-ui/react-tabs";
 import { toast } from "sonner";
 import {
   Play,
+  ChartColumn,
   Settings2,
   Search,
   SlidersHorizontal,
@@ -162,16 +163,15 @@ function TurmaContent({
         });
       }}>
       <Tabs.Root value={view} onValueChange={setView}>
-        <Tabs.List className="section-tabs" aria-label="Visualização da turma">
-          <Tabs.Trigger value="students">Alunos</Tabs.Trigger>
-          <Tabs.Trigger value="highlights">
-            <Star aria-hidden="true" /> Alunos destaque
-          </Tabs.Trigger>
-          <Tabs.Trigger value="evolution">
-            <TrendingUp aria-hidden="true" />
-            Alunos evolução
-          </Tabs.Trigger>
-          <Tabs.Trigger value="overview">Visão geral</Tabs.Trigger>
+        <Tabs.List className="section-tabs class-destinations" aria-label="Visualização da turma">
+          {([
+            ["students", Users, "Alunos", "Fichas e notas atuais"],
+            ["highlights", Star, "Alunos destaque", "Maiores médias"],
+            ["evolution", TrendingUp, "Alunos evolução", "Comparar bimestres"],
+            ["overview", ChartColumn, "Visão geral", "Indicadores da turma"],
+          ] as const).map(([value, Icon, label, hint]) => <Tabs.Trigger key={value} value={value} aria-label={label}>
+            <Icon aria-hidden="true"/><span>{label}<small>{hint}</small></span>
+          </Tabs.Trigger>)}
         </Tabs.List>
         <Tabs.Content value="students">
           <div className="search-toolbar">

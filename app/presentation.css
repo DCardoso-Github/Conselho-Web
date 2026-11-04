@@ -222,3 +222,15 @@
   .student-tile, .grade-tile, .panel-tabs button { transition: border-color 180ms, box-shadow 180ms, background-color 180ms; }
 }
 
+
+/* Destinos da turma e seleção de aluno durante o conselho. */
+.class-destinations { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; padding:6px; border:1px solid var(--border); background:var(--card); border-radius:20px; }
+.class-destinations>button { min-height:68px; padding:8px; gap:12px; }
+.class-destinations small { display:block; margin-top:3px; font-size:14px; font-weight:400; }
+.sequence-dialog { grid-template-rows:auto auto minmax(0,1fr); }
+.sequence-results { overflow:auto; max-height:48dvh; padding:4px; }
+.sequence-results button { display:grid; grid-template-columns:2.4rem 1fr auto; align-items:center; gap:12px; width:100%; padding:8px; min-height:48px; text-align:left; border-radius:12px; overflow-wrap:anywhere; }
+.sequence-results button:hover,.sequence-results button[aria-current=true] { background:var(--muted); }
+.sequence-position { color:var(--primary); font-weight:700; text-align:center; font-variant-numeric:tabular-nums; }
+.jump-counter { font-variant-numeric:tabular-nums; }
+@media(max-width:760px) { .class-destinations { grid-template-columns:repeat(2,minmax(0,1fr)); } .class-destinations>button { gap:6px; padding:8px 4px; } }
