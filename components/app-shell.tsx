@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
 import {
   GraduationCap,
-  Home,
   Menu,
   Search,
   Upload,
@@ -36,26 +35,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </a>
       {!focused && (
         <header className="console-nav">
-          <Link className="brand" href="/">
+          <Link className="brand" href="/" aria-label="Conselho de Classe · Início">
             <span className="brand-icon">
               <GraduationCap />
             </span>
             <span>
-              Conselho<span className="brand-subtitle">Espaço de decisões</span>
+              Conselho
             </span>
           </Link>
           <nav aria-label="Navegação principal">
-            <Button asChild variant={pathname === "/" ? "secondary" : "ghost"}>
-              <Link href="/">
-                <Home />
-                <span>Início</span>
-              </Link>
-            </Button>
-            <Button variant="ghost" onClick={() => cmd.setOpen(true)}>
+            <Button variant="ghost" aria-label="Busca" onClick={() => cmd.setOpen(true)}>
               <Search />
               <span>Busca</span>
             </Button>
-            <Button variant="ghost" onClick={() => setMenu(true)}>
+            <Button variant="ghost" aria-label="Menu" onClick={() => setMenu(true)}>
               <Menu />
               <span>Menu</span>
             </Button>

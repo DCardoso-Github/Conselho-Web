@@ -3,9 +3,10 @@ import { use, useState, useDeferredValue } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useLiveQuery } from "dexie-react-hooks";
-import * as Tabs from "@radix-ui/react-tabs";
 import { toast } from "sonner";
 import {
+  ArrowLeft,
+  ArrowUpRight,
   Play,
   ChartColumn,
   Settings2,
@@ -71,7 +72,21 @@ function TurmaContent({
   );
   const [search, setSearch] = useState("");
   const [band, setBand] = useState(readBand(query.get("band")));
-  const [view, setView] = useState(["overview", "highlights", "evolution"].includes(query.get("view") ?? "") ? query.get("view")! : "students");
+  const requested = query.get("view") ?? "";
+  const [view, setView] = useState(
+    ["students", "analyses", "overview", "highlights", "evolution"].includes(requested)
+      ? requested : query.has("band") || query.has("subject") ? "students" : "home"
+  );
+  const classPath = `/turmas/${encodeURIComponent(classId)}`;
+  const destinations = [
+    { value: "students", label: "Alunos", icon: Users },
+    { value: "analyses", label: "Análises", icon: ChartColumn },
+  ];
+  const analyses = [
+    { value: "highlights", label: "Alunos destaque", icon: Star },
+    { value: "evolution", label: "Alunos evolução", icon: TrendingUp },
+    { value: "overview", label: "Visão geral", icon: ChartColumn },
+  ];
   const [selectionRequest, setSelectionRequest] = useState<{ id: number; serial: number } | null>(null);
   const deferredSearch = useDeferredValue(search);
   const [onlyLow, setOnlyLow] = useState(false);
@@ -127,32 +142,38 @@ function TurmaContent({
   };
   return (
     <div className="console-container class-screen">
-      <header className="page-heading">
+      {view === "home" ? <>
+        <header className="class-hub">
+          <div>
+            <p className="focus-label">Turma</p>
+            <h1>{cls.name}</h1>
+            <p>{[cls.currentPeriod && periodLabel(cls.currentPeriod), `${students.length} alunos`].filter(Boolean).join(" · ")}</p>
+            <Button size="xl" disabled={!students.length} onClick={() => { setScope("all"); setStart(true); }}>
+              <Play fill="currentColor" /> Iniciar conselho
+            </Button>
+          </div>
+          <div className="hub-art" aria-hidden="true"><Play fill="currentColor" /></div>
+        </header>
+        <nav aria-label="Áreas da turma" className="destination-choices">
+          {destinations.map(({value,label,icon:Icon}) => <Link key={value} href={`${classPath}?view=${value}`}>
+            <Icon aria-hidden="true" /><strong>{label}</strong><ArrowUpRight aria-hidden="true" />
+          </Link>)}
+        </nav>
+        <Button variant="ghost" onClick={() => setManage(true)}><Settings2 />Gerenciar turma</Button>
+      </> : <header className="focus-heading subview-heading">
         <div>
-          <p className="eyebrow">Sua turma</p>
-          <h1>{cls.name}</h1>
-          <p>
-            {students.length} alunos · {cls.subjects.length} disciplinas
-            {cls.currentPeriod && ` · ${periodLabel(cls.currentPeriod)}`}
-          </p>
+          <Link className="focus-back" href={analyses.some(item => item.value === view) ? `${classPath}?view=analyses` : classPath}>
+            <ArrowLeft />{analyses.some(item => item.value === view) ? "Análises" : "Turma " + cls.name}
+          </Link>
+          <h1>{[...destinations, ...analyses].find(item => item.value === view)?.label}</h1>
         </div>
-        <div className="heading-actions">
-          <Button asChild variant="outline"><Link href={`/turmas/${encodeURIComponent(classId)}/evolucao`}><TrendingUp />Evolução da turma</Link></Button>
-          <Button variant="outline" onClick={() => setManage(true)}>
-            <Settings2 /> Gerenciar turma
-          </Button>
-          <Button
-            size="lg"
-            disabled={!students.length}
-            onClick={() => {
-              setScope("all");
-              setStart(true);
-            }}
-          >
-            <Play /> Iniciar conselho
-          </Button>
-        </div>
-      </header>
+      </header>}
+      {view === "analyses" && <nav className="destination-choices analysis-choices" aria-label="Análises da turma">
+        {analyses.map(({value,label,icon:Icon}) => <Link key={value} href={`${classPath}?view=${value}`}>
+          <Icon aria-hidden="true" /><strong>{label}</strong><ArrowUpRight aria-hidden="true" />
+        </Link>)}
+        <Link href={`${classPath}/evolucao`}><TrendingUp /><strong>Evolução da turma</strong><ArrowUpRight /></Link>
+      </nav>}
       <StudentActionsProvider subjects={cls.subjects} onSelect={student => {
         if (student.id === undefined) return;
         clear();
@@ -162,18 +183,7 @@ function TurmaContent({
           document.querySelector<HTMLInputElement>(`[data-student-id="${student.id}"] input[type="checkbox"]`)?.focus();
         });
       }}>
-      <Tabs.Root value={view} onValueChange={setView}>
-        <Tabs.List className="section-tabs class-destinations" aria-label="Visualização da turma">
-          {([
-            ["students", Users, "Alunos", "Fichas e notas atuais"],
-            ["highlights", Star, "Alunos destaque", "Maiores médias"],
-            ["evolution", TrendingUp, "Alunos evolução", "Comparar bimestres"],
-            ["overview", ChartColumn, "Visão geral", "Indicadores da turma"],
-          ] as const).map(([value, Icon, label, hint]) => <Tabs.Trigger key={value} value={value} aria-label={label}>
-            <Icon aria-hidden="true"/><span>{label}<small>{hint}</small></span>
-          </Tabs.Trigger>)}
-        </Tabs.List>
-        <Tabs.Content value="students">
+      {view === "students" && <section aria-label="Lista de alunos">
           <div className="search-toolbar">
             <div className="search-field">
               <Search />
@@ -218,25 +228,24 @@ function TurmaContent({
             sort={sort}
             onClearFilters={clear}
           />
-        </Tabs.Content>
-        <Tabs.Content value="highlights">
+        </section>}
+      {view === "highlights" && <section>
           <StudentHighlights
             students={students}
             subjects={cls.subjects}
             classId={classId}
           />
-        </Tabs.Content>
-        <Tabs.Content value="evolution">
+        </section>}
+      {view === "evolution" && <section>
           <StudentEvolution
             cls={cls}
             students={students}
             onImport={() => setHistory(true)}
           />
-        </Tabs.Content>
-        <Tabs.Content value="overview">
+        </section>}
+      {view === "overview" && <section>
           <ClassDashboard students={students} subjects={cls.subjects} classId={classId} />
-        </Tabs.Content>
-      </Tabs.Root>
+        </section>}
       </StudentActionsProvider>
       <Dialog open={filters} onOpenChange={setFilters}>
         <DialogContent className="filter-dialog">

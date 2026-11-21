@@ -11,9 +11,7 @@ import {
     ArrowRight,
     ArrowLeft,
     FileSpreadsheet,
-    Sparkles,
     Trash2,
-    ShieldCheck,
 } from "lucide-react";
 import type { SchoolPeriod } from "@/lib/db";
 import { PeriodFields } from "@/components/period-fields";
@@ -23,7 +21,6 @@ import { importMapaoFile } from "@/lib/actions";
 import { FileDrop } from "@/components/file-drop";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 type Step = "select" | "review" | "done";
@@ -111,25 +108,11 @@ export default function ImportarPage() {
 
     return (
         <div className="console-container import-screen max-w-5xl">
-            <div className="import-heading mb-8">
-                <Badge variant="soft" className="mb-2">
-                    <Sparkles className="size-3" /> Importar
-                </Badge>
-                <h1 className="h-hero text-3xl sm:text-4xl mb-2">
-                    Carregar mapão
-                </h1>
-                <p className="text-muted-foreground">
-                    Selecione um ou mais arquivos <code className="font-mono text-xs px-1.5 py-0.5 rounded bg-muted">.xlsx</code>.
-                    O sistema detecta o cabeçalho automaticamente e mantém apenas alunos{" "}
-                    <strong>ATIVOS</strong>.
-                </p>
-                <p className="flex items-center gap-1.5 text-xs text-muted-foreground mt-2">
-                    <ShieldCheck className="size-3.5 shrink-0" />
-                    Dados armazenados apenas neste dispositivo · nunca enviados a servidores
-                </p>
-            </div>
-
-            <Stepper step={step} />
+            <header className="focus-heading"><div>
+                <p className="focus-label">Importação · {step === "select" ? "1" : step === "review" ? "2" : "3"} de 3</p>
+                <h1>{step === "select" ? "Selecionar mapão" : step === "review" ? "Revisar arquivos" : "Resultado da importação"}</h1>
+                {step === "select" && <p>Escolha as planilhas da turma em formato XLSX. Apenas alunos ativos serão importados.</p>}
+            </div></header>
 
             <div className="mt-6 min-h-[280px]">
                 <AnimatePresence mode="wait">
@@ -149,9 +132,12 @@ export default function ImportarPage() {
                                 onFiles={onPicked}
                                 disabled={busy}
                                 label={busy ? "Identificando os bimestres…" : "Clique ou arraste arquivos .xlsx"}
-                                hint="O nome da turma é extraído do nome do arquivo (ex.: 9º_ANO_A → 9A)"
+                                hint="O nome da turma é identificado pelo nome do arquivo."
                                 icon={<FileSpreadsheet className="size-6" />}
                             />
+                            <Button variant="link" asChild className="mt-3">
+                                <a href="/MAPAO_6_ANO_A_2026_1BIM.xlsx" download>Baixar mapão fictício para testar</a>
+                            </Button>
                         </motion.div>
                     )}
 
@@ -293,56 +279,5 @@ export default function ImportarPage() {
                 </AnimatePresence>
             </div>
         </div>
-    );
-}
-
-function Stepper({ step }: { step: Step }) {
-    const steps: { id: Step; label: string }[] = [
-        { id: "select", label: "Selecionar" },
-        { id: "review", label: "Revisar" },
-        { id: "done", label: "Concluído" },
-    ];
-    const idx = steps.findIndex((s) => s.id === step);
-    return (
-        <ol className="flex items-center gap-2">
-            {steps.map((s, i) => {
-                const active = i === idx;
-                const done = i < idx;
-                return (
-                    <React.Fragment key={s.id}>
-                        <li
-                            className={cn(
-                                "flex items-center gap-2 text-sm font-medium transition-colors",
-                                active
-                                    ? "text-foreground"
-                                    : done
-                                        ? "text-success"
-                                        : "text-muted-foreground"
-                            )}
-                        >
-                            <span
-                                className={cn(
-                                    "grid size-6 place-items-center rounded-full border text-[11px] font-bold tabular-nums",
-                                    active && "border-primary bg-primary text-primary-foreground",
-                                    done && "border-success bg-success text-white",
-                                    !active && !done && "border-border bg-card"
-                                )}
-                            >
-                                {done ? <CheckCircle2 className="size-3.5" /> : i + 1}
-                            </span>
-                            {s.label}
-                        </li>
-                        {i < steps.length - 1 && (
-                            <span
-                                className={cn(
-                                    "h-px w-8 sm:w-12",
-                                    i < idx ? "bg-success" : "bg-border"
-                                )}
-                            />
-                        )}
-                    </React.Fragment>
-                );
-            })}
-        </ol>
     );
 }

@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import "./presentation.css";
 import "./council.css";
+import "./focus.css";
 import { Providers } from "./providers";
 import { AppShell } from "@/components/app-shell";
 

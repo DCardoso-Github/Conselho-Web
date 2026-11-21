@@ -19,6 +19,7 @@ import { remainingPresentationStudents, shortcutBlocked } from "@/lib/presentati
 import { comparePeriods, periodId } from "@/lib/evolution";
 import { defaultComparison, type PresentationCheckpoint } from "@/lib/analysis-navigation";
 import { StudentProfile } from "@/components/student-profile";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { StudentAnalysis } from "@/components/student-analysis";
 import { StudentEditor } from "@/components/student-editor";
 import { Button } from "@/components/ui/button";
@@ -44,6 +45,7 @@ function AlunoContent({ classId, studentId, query }: { classId: string; studentI
   const [analysis, setAnalysis] = useState<PresentationCheckpoint>({});
   const onAnalysisChange = useCallback((state: PresentationCheckpoint) => setAnalysis(previous => JSON.stringify(previous) === JSON.stringify(state) ? previous : state), []);
   const [onlyLow, setOnlyLow] = useState(false);
+  const [toolsOpen, setToolsOpen] = useState(false);
   const [editing, setEditing] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -130,6 +132,10 @@ function AlunoContent({ classId, studentId, query }: { classId: string; studentI
           <ArrowLeft /> Turma {data.cls.name}
         </Button>
         <div className="presentation-actions">
+          <Dialog open={toolsOpen} onOpenChange={setToolsOpen}>
+            <DialogTrigger asChild><Button variant="outline"><Edit2 />Gerenciar aluno</Button></DialogTrigger>
+            <DialogContent><DialogHeader><DialogTitle>Gerenciar aluno</DialogTitle>
+              <DialogDescription>{student.name}</DialogDescription></DialogHeader>
           <Button variant="outline" asChild disabled={uploading}>
             <label className="photo-upload">
               <ImagePlus />{uploading ? "Processando foto…" : student.photo ? "Trocar foto" : "Adicionar foto"}
@@ -140,12 +146,14 @@ function AlunoContent({ classId, studentId, query }: { classId: string; studentI
               }} />
             </label>
           </Button>
-          <Button variant="outline" className="text-destructive" disabled={uploading} onClick={() => setConfirmDelete(true)}>
+          <Button variant="outline" className="text-destructive" disabled={uploading} onClick={() => { setToolsOpen(false); setConfirmDelete(true); }}>
             <Trash2 /> Excluir aluno
           </Button>
-          <Button variant="outline" onClick={() => setEditing(true)}>
+          <Button variant="outline" onClick={() => { setToolsOpen(false); setEditing(true); }}>
             <Edit2 /> Editar aluno
           </Button>
+            </DialogContent>
+          </Dialog>
           <Button
             onClick={() =>
               router.push(

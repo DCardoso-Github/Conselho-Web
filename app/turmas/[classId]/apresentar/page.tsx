@@ -3,7 +3,7 @@ import { Suspense, use, useCallback, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useLiveQuery } from "dexie-react-hooks";
-import { ChevronLeft, ChevronRight, Maximize, Users, X } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, Maximize, Settings2, Users, X } from "lucide-react";
 import { db, type ClassRecord, type StudentRecord, type GradePeriodRecord } from "@/lib/db";
 import { checkpointIndex, filterAnalysisStudents, readBand, selectedStudents, type PresentationCheckpoint } from "@/lib/analysis-navigation";
 import { PresentationSession, useProjector } from "@/components/presentation-settings";
@@ -17,6 +17,8 @@ import { StudentProfile } from "@/components/student-profile";
 import { StudentAnalysis } from "@/components/student-analysis";
 import { StudentJump } from "@/components/student-jump";
 import { Button } from "@/components/ui/button";
+import { MeetingSummary } from "@/components/meeting-summary";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 export default function ApresentarPage({
   params,
@@ -130,7 +132,7 @@ function Presentation({
   const students = showRemaining ? [...selected, ...remaining] : selected;
   const [index, setIndex] = useState(() => checkpointIndex(students.map(s=>s.id), initial?.studentId ?? (from ? Number(from) : undefined)));
   const [onlyLow, setOnlyLow] = useState(initial?.onlyLow ?? false);
-  const [analysis, setAnalysis] = useState<PresentationCheckpoint>(initial ?? initialComparison ?? {});
+  const [analysis, setAnalysis] = useState<PresentationCheckpoint>({ ...initialComparison, ...initial, panel: initial?.panel ?? "summary" });
   const onAnalysisChange = useCallback((state: PresentationCheckpoint) => setAnalysis(previous => JSON.stringify(previous) === JSON.stringify(state) ? previous : state), []);
   const [exit, setExit] = useState(false);
   const [fullscreenMessage, setFullscreenMessage] = useState("");
@@ -143,10 +145,16 @@ function Presentation({
   const includeRemaining = useCallback(() => {
     setShowRemaining(true);
   }, []);
+  const chooseStudent = useCallback((position: number) => {
+    if (position === safeIndex) return;
+    setAnalysis(previous => ({ ...previous, panel: "summary" }));
+    setIndex(position);
+  }, [safeIndex]);
+  const openPanel = (panel: string) => setAnalysis(previous => ({ ...previous, panel }));
   const nextStudent = useCallback(() => {
     if (safeIndex >= students.length - 1 && canContinue) includeRemaining();
-    else setIndex(Math.min(safeIndex + 1, Math.max(0, students.length - 1)));
-  }, [safeIndex, students.length, canContinue, includeRemaining]);
+    else chooseStudent(Math.min(safeIndex + 1, Math.max(0, students.length - 1)));
+  }, [safeIndex, students.length, canContinue, includeRemaining, chooseStudent]);
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (shortcutBlocked(event.target)) return;
@@ -157,12 +165,12 @@ function Presentation({
       }
       if (event.key === "ArrowLeft") {
         event.preventDefault();
-        setIndex((i) => Math.max(0, i - 1));
+        chooseStudent(Math.max(0, safeIndex - 1));
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [nextStudent]);
+  }, [nextStudent, chooseStudent, safeIndex]);
   const leave = () => {
     if (document.fullscreenElement)
       void document.exitFullscreen().catch(() => {});
@@ -191,8 +199,18 @@ function Presentation({
     );
   const student = students[safeIndex];
   return (
-    <section className={`presentation-screen ${projector.enabled ? "projector-mode" : ""}`}>
+    <section className={`presentation-screen meeting-screen ${projector.enabled ? "projector-mode" : ""}`}>
       <header className="presentation-header">
+        <div className="presentation-context">
+          <span className="eyebrow">{groupLabel ?? "Conselho em apresentação"}</span>
+          <strong>{cls.name}</strong>
+        </div>
+        <div className="presentation-actions">
+          <Dialog>
+            <DialogTrigger asChild><Button variant="outline"><Settings2 /><span>Controles</span></Button></DialogTrigger>
+            <DialogContent><DialogHeader><DialogTitle>Controles da apresentação</DialogTitle><DialogDescription>Opções para conduzir a reunião.</DialogDescription></DialogHeader>
+              {projector.control}
+              <Button variant="outline" onClick={fullscreen}><Maximize />Tela cheia</Button>
         {remaining.length > 0 && (
           <Button
             variant="outline"
@@ -205,16 +223,8 @@ function Presentation({
             {showRemaining ? `Turma completa (${students.length})` : `Restante da turma (${remaining.length})`}
           </Button>
         )}
-        <div className="presentation-context">
-          <span className="eyebrow">{groupLabel ?? "Conselho em apresentação"}</span>
-          <strong>{cls.name}</strong>
-        </div>
-        <div className="presentation-actions">
-          {projector.control}
-          <Button variant="outline" onClick={fullscreen}>
-            <Maximize />
-            <span>Tela cheia</span>
-          </Button>
+            </DialogContent>
+          </Dialog>
           <Button
             variant="ghost"
             onClick={() => setExit(true)}
@@ -230,30 +240,31 @@ function Presentation({
           {fullscreenMessage}
         </p>
       )}
-      <StudentAnalysis
-        key={student.id}
-        periods={periods}
-        initial={{ ...analysis, panel: student.id === initial?.studentId ? analysis.panel : groupLabel === "Alunos evolução" ? "evolution" : "grades" }}
-        startInEvolution={groupLabel === "Alunos evolução"}
-        allowEvolution={groupLabel === "Alunos evolução"}
-        onAnalysisChange={onAnalysisChange}
-        onlyLow={onlyLow}
-        onOnlyLowChange={setOnlyLow}
-        student={student}
-        subjects={cls.subjects}
-        profile={<StudentProfile student={student} />}
-      />
+      {analysis.panel === "summary" ? <MeetingSummary
+        student={student} subjects={cls.subjects}
+        before={periods.find(period => period.id === analysis.beforeId)}
+        after={periods.find(period => period.id === analysis.afterId)}
+        showEvolution={groupLabel === "Alunos evolução"} onOpen={openPanel}
+      /> : <>
+        <Button variant="ghost" className="meeting-back" onClick={() => openPanel("summary")}><ArrowLeft />Resumo do aluno</Button>
+        <StudentAnalysis
+          key={student.id} periods={periods} initial={analysis}
+          allowEvolution={groupLabel === "Alunos evolução"} onAnalysisChange={onAnalysisChange}
+          onlyLow={onlyLow} onOnlyLowChange={setOnlyLow} student={student} subjects={cls.subjects}
+          profile={<StudentProfile student={student} />}
+        />
+      </>}
       <footer className="presentation-footer">
         <span className="keyboard-hint">← → para trocar de aluno</span>
         <div className="student-navigation">
           <Button
             variant="outline"
             disabled={safeIndex === 0}
-            onClick={() => setIndex(safeIndex - 1)}
+            onClick={() => chooseStudent(safeIndex - 1)}
           >
             <ChevronLeft /> Anterior
           </Button>
-          <StudentJump students={students} current={safeIndex} onChoose={setIndex} />
+          <StudentJump students={students} current={safeIndex} onChoose={chooseStudent} />
           <span className="sr-only" aria-live="polite">{safeIndex + 1} de {students.length} · {student.name}</span>
           <Button
             size="lg"

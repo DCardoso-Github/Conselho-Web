@@ -8,14 +8,16 @@ Consulte a documentação da versão instalada em `node_modules/next/dist/docs` 
 
 ## Interface para reuniões
 
-- Início: seis turmas por página. Lista da turma: todos os alunos na mesma página, com busca, filtros e ordenação.
+- O início mostra até três turmas por página. A busca considera todas as turmas. A tela de importação oferece um mapão fictício para experimentar.
+- Abra a turma para iniciar o conselho, consultar a lista completa de alunos ou escolher uma análise. A lista mantém busca, filtros e ordenação.
 - Alunos destaque: até cinco alunos com maior média de notas numéricas de 0 a 10 nas disciplinas da turma. Ausências e conceitos não numéricos são ignorados; alunos sem nota numérica ficam fora. Empates: menos notas vermelhas, nome e ordem original. A lista exibe a média e a quantidade de disciplinas consideradas, com apresentação exclusiva via `scope=top`. A seleção é calculada sobre a turma inteira, independentemente dos filtros da lista.
 - Iniciar conselho: escolha explícita entre todos os alunos e alunos com notas vermelhas.
-- Ficha e apresentação: foto ampliada e identidade do aluno em aproximadamente 28% da largura e informações acadêmicas em 72%, com adaptação para celular.
+- A apresentação começa pelo resumo com foto, nome, média e quantidade de notas vermelhas. **Ver disciplinas** abre a grade. **Controles** reúne o modo projetor e a tela cheia.
+- Nos painéis detalhados da ficha e da apresentação, foto ampliada e identidade do aluno em aproximadamente 28% da largura e informações acadêmicas em 72%, com adaptação para celular.
 - Abas ocupam toda a faixa superior; foto ampliada e disciplinas ficam no centro. Frequência anual, participação e acertos da Prova Paulista ocupam toda a faixa inferior e permanecem visíveis em qualquer aba.
 - Todas as disciplinas juntas, com ícones e títulos centralizados. Filtro Somente notas vermelhas com contagem por aluno, mantido ao navegar entre alunos e abas.
 - Cabeçalho centralizado, controles compactos e cartões com altura mínima baseada no conteúdo. Em janelas menores, rolagem acessível evita sobreposição. Fotos são exibidas inteiras, sem corte para preencher o espaço. Novas importações preservam a proporção original (até 1200 px); fotos já recortadas precisam ser reenviadas para recuperar as áreas removidas.
-- Abas para notas do bimestre, resultados por disciplina da Prova Paulista e acompanhamento. Trocar o aluno retorna às notas do bimestre.
+- Abas para notas do bimestre, resultados por disciplina da Prova Paulista e acompanhamento. Durante a apresentação, cada troca de aluno volta ao resumo. Retomar uma sessão recupera o aluno e o painel salvos.
 - Grade adaptável: dezoito disciplinas simultâneas em 1886×886 e 1886×1065; em telas menores ou conjuntos maiores, rolagem acessível mantém todos os resultados disponíveis sem paginação.
 - Ferramentas de importação, fotos, exportação e exclusão em Gerenciar turma.
 - Tema escuro inicial; a preferência salva e o tema claro continuam disponíveis no Menu.
@@ -36,7 +38,7 @@ Domínios de prévia e produção têm armazenamentos independentes.
 - **Alunos evolução** compara dois bimestres escolhidos, sempre do inicial para um posterior. A média usa somente disciplinas comuns com notas numéricas válidas de 0 a 10 nos dois períodos. Notas ausentes, conceitos (ET etc.) e disciplinas novas/removidas não são imputados como zero.
 - A associação usa o nome normalizado (acentos, caixa e espaços), sem aproximação. Participam os alunos da turma atual encontrados nos dois períodos; nomes ambíguos e alunos sem pares de notas são excluídos da comparação. Importações com nomes duplicados são rejeitadas.
 - São exibidos até cinco ganhos positivos na média, do maior para o menor; desempate por maior quantidade de disciplinas comparadas, nome e ordem original. A cobertura pode variar por aluno e é indicada nos cartões. A comparação da turma inteira inclui quedas, estabilidade e ausência de comparação.
-- **Apresentar evolução** usa `scope=evolution&year=2026&baseline=1&target=3` e abre a comparação selecionada, retornando a esse painel ao trocar de aluno. As outras abas continuam mostrando os dados atuais.
+- **Apresentar evolução** usa `scope=evolution&year=2026&baseline=1&target=3` e inclui os bimestres e a variação da média no resumo de cada aluno. **Ver evolução** abre a comparação detalhada. As outras abas continuam mostrando os dados atuais.
 - Edições nas notas atuais atualizam apenas o bimestre ativo. Importar um bimestre anterior nunca substitui a turma atual; excluir a turma também exclui seus bimestres. Anos diferentes na mesma turma são rejeitados para evitar associações entre turmas anuais distintas.
 
 ## Validação

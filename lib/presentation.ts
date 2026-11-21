@@ -3,7 +3,7 @@ import { evolutionRanking, type StudentEvolution } from "./evolution";
 import type { StudentRecord } from "./db";
 import { isLowGrade } from "./actions";
 
-export const PAGE_SIZE = 6;
+export const PAGE_SIZE = 3;
 export const hasValue = (value: unknown) =>
   value !== null &&
   value !== undefined &&

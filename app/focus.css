@@ -1,0 +1,159 @@
+/* Class selection, meeting lobby and the projected student summary. */
+.console-nav {
+  max-width: 92rem;
+  padding: 1rem clamp(1rem, 4vw, 4rem);
+}
+.console-nav .brand { font-size: 1.25rem; letter-spacing: -.04em; }
+.console-nav .brand-icon { width: 2.6rem; height: 2.6rem; border-radius: .85rem; }
+.console-nav nav button { min-height: 2.75rem; }
+
+.focus-home, .console-container.focus-library, .console-container.class-screen, .console-container.import-screen {
+  max-width: 80rem;
+  margin-inline: auto;
+  padding: clamp(1rem, 4vw, 3.75rem);
+}
+.focus-home { display: grid; align-items: center; min-height: calc(100svh - 5rem); }
+.welcome-stage, .class-hub {
+  --stage-ink: #f8f7ff;
+  --stage-accent: #a7ebe4;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr);
+  align-items: center;
+  gap: 1.5rem;
+  padding: clamp(2rem, 5.5vw, 5.5rem);
+  border-radius: 2rem;
+  border: 1px solid #535783;
+  color: var(--stage-ink);
+  background: radial-gradient(ellipse at 95% 5%, #505b9a 0%, transparent 58%), linear-gradient(125deg, #171c34, #302d5c);
+}
+.welcome-stage { min-height: clamp(28rem, 66svh, 42rem); }
+.welcome-stage h1, .class-hub h1, .focus-heading h1, .meeting-copy h1 {
+  margin: 0;
+  font-weight: 720;
+  letter-spacing: -.055em;
+  line-height: 1.02;
+  overflow-wrap: anywhere;
+}
+.welcome-copy h1 { font-size: clamp(3.2rem, 6.8vw, 6.5rem); }
+.welcome-copy h1 em { font-style: normal; color: var(--stage-accent); }
+.welcome-copy > p, .class-hub p:not(.focus-label) { max-width: 27rem; margin: 1.35rem 0 2rem; color: #d5d7ed; font-size: clamp(1.05rem, 1.65vw, 1.4rem); }
+.welcome-copy small { display: block; color: #bac2db; font-size: .95rem; margin-top: 1rem; }
+.welcome-copy a, .class-hub button {
+  background: var(--stage-accent); color: #13292c; border: 0; border-radius: .95rem;
+  font-weight: 700; min-height: 3.5rem; height: auto; padding: .9rem 1.45rem; font-size: 1.1rem;
+}
+.welcome-copy a:hover, .class-hub button:hover { background: #c8fff7; }
+.folio-stage { position: relative; width: min(100%, 24rem); aspect-ratio: 1; justify-self: center; }
+.folio-sheet { position: absolute; width: 66%; height: 76%; top: 12%; left: 17%; border-radius: 12% 12% 13% 13%; border: 1px solid #ffffff66; }
+.folio-back { transform: rotate(18deg) translate(12%, -5%); background: linear-gradient(135deg, #85d6cd, #3a737f); }
+.folio-middle { transform: rotate(6deg) translate(4%, -1%); background: linear-gradient(145deg, #d6d2fc, #838ac7); }
+.folio-front { display: grid; place-items: center; transform: rotate(-9deg); background: linear-gradient(145deg, #7377d7, #383475 83%); box-shadow: inset 0 2px 1px #ffffff55, 0 1.5rem 2rem #10152f60; }
+.folio-front svg { width: 57%; height: auto; color: #edecff; }
+.folio-front::after { content: ""; position: absolute; bottom: 10%; width: 23%; height: 3px; border-radius: 4px; background: #acaee3; }
+
+.focus-heading, .library-tools { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+.focus-heading { margin-bottom: clamp(1.5rem, 4vw, 3rem); }
+.focus-heading h1 { font-size: clamp(2.35rem, 4.4vw, 4.4rem); }
+.focus-label { color: var(--console-accent); font-size: .9rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; margin: 0 0 .75rem; }
+.focus-heading p:not(.focus-label) { color: var(--muted-foreground); margin-top: .9rem; font-size: 1.1rem; }
+.library-tools { border-top: 1px solid var(--border); padding: 1.25rem 0; }
+.library-tools .search-field { width: min(27rem, 100%); }
+.library-tools > span { color: var(--muted-foreground); }
+.class-library { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.1rem; }
+.class-choice, .destination-choices > :is(a,button) {
+  --tile-color: var(--primary);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--tile-color) 13%, var(--card)), var(--card) 85%);
+  border: 1px solid color-mix(in srgb, var(--tile-color) 31%, var(--border));
+  border-radius: 1.45rem; text-align: left; color: var(--foreground); transition: border-color .16s, background-color .16s;
+}
+.class-choice:hover, .destination-choices > :is(a,button):hover { border-color: var(--tile-color); background-color: var(--surface-2); }
+.class-choice:nth-child(2), .destination-choices > :nth-child(even) { --tile-color: var(--console-accent); }
+.class-choice { padding: clamp(1.2rem, 2.35vw, 2.2rem); display: grid; align-content: space-between; gap: 2rem; min-height: clamp(15rem, 25vw, 20rem); }
+.class-choice-top, .class-choice > span { display: flex; align-items: center; gap: .6rem; }
+.class-choice-top { justify-content: space-between; color: var(--tile-color); }
+.class-choice-top svg:first-child { width: 2.25rem; height: 2.25rem; }
+.class-choice-top svg:last-child { width: 1.35rem; }
+.class-choice p, .class-choice > span { color: var(--muted-foreground); font-size: 1rem; }
+.class-choice > span svg { width: 1.1rem; }
+.class-choice h2 { overflow-wrap: anywhere; margin: 0; font-size: clamp(2.75rem, 5.4vw, 5.5rem); font-weight: 750; letter-spacing: -.06em; line-height: 1.12; }
+.class-hub { min-height: 18rem; padding-block: clamp(1.8rem, 4vw, 3.5rem); }
+.class-hub h1 { font-size: clamp(3.4rem, 6vw, 6rem); }
+.class-hub .focus-label { color: var(--stage-accent); }
+.hub-art { justify-self: center; display: grid; place-items: center; width: clamp(7rem, 14vw, 13rem); aspect-ratio: 1; border: 1px solid #c4c5ff88; border-radius: 30%; color: #d9d8ff; background: linear-gradient(145deg,#8388d1,#494984); box-shadow: .7rem .7rem 0 -.1rem #4a4b80, .75rem .75rem 0 0 #9a9bc2; transform: rotate(-8deg); }
+.hub-art svg { width: 38%; height: 38%; transform: rotate(8deg); }
+.destination-choices { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 1rem; margin: 1.2rem 0; }
+.destination-choices > :is(a,button) { min-height: 7rem; padding: 1.4rem; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 1.1rem; }
+.destination-choices strong { font-size: clamp(1.35rem,2.2vw,2.1rem); letter-spacing: -.035em; }
+.destination-choices svg:first-child { color: var(--tile-color); width: 2rem; height: 2rem; }
+.destination-choices svg:last-child { color: var(--muted-foreground); width: 1.25rem; }
+.focus-back { display: inline-flex; align-items: center; gap: .5rem; color: var(--muted-foreground); margin-bottom: 1rem; min-height: 2.75rem; }
+.focus-back svg { width: 1.2rem; }
+.backup-step { max-width: 45rem; padding: clamp(1.2rem, 3vw, 2.2rem); border: 1px solid var(--border); border-radius: 1.5rem; background: var(--card); }
+.backup-step, .backup-step fieldset, .backup-upload { display: grid; gap: 1.2rem; }
+.backup-step button { justify-self: start; }
+.backup-upload input { max-width: 100%; font-size: 1rem; }
+.backup-upload input::file-selector-button { color: var(--primary-foreground); background: var(--primary); padding: .8rem 1rem; margin-right: .75rem; border-radius: .65rem; }
+.backup-status { margin-top: 1rem; }
+.import-screen [role="button"] { min-height: 12rem; }
+.meeting-screen { padding: clamp(.75rem,2vw,1.8rem); gap: 1rem; }
+.meeting-screen > .presentation-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+.meeting-screen .presentation-context { text-align: left; justify-content: flex-start; }
+.meeting-screen .presentation-context strong { font-size: 1.65rem; }
+.meeting-screen .meeting-back { align-self: flex-start; }
+.meeting-summary { flex: 1; width: min(100%, 92rem); margin: auto; display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.45fr); align-items: center; gap: clamp(1.75rem, 5vw, 5.5rem); padding: clamp(1.4rem, 4vw, 4.5rem); border-radius: 1.8rem; background: var(--card); border: 1px solid var(--border); }
+.meeting-portrait { position: relative; width: 100%; max-width: 29rem; justify-self: center; }
+.meeting-portrait .profile-photo { position: relative; display: grid; place-items: center; width: 100%; max-width: none; height: clamp(13rem, 44svh, 33rem); border-radius: 1.35rem; border: 1px solid color-mix(in srgb,var(--primary) 30%,var(--border)); background: linear-gradient(145deg,color-mix(in srgb,var(--primary) 19%,var(--surface-2)),var(--surface-2)); box-shadow: none; }
+.meeting-portrait img { width: 100%; height: 100%; position: absolute; inset: 0; object-fit: contain; }
+.meeting-portrait .profile-photo > span { font-weight: 650; color: var(--primary); letter-spacing: -.07em; font-size: clamp(4rem, 8vw, 9rem); }
+.meeting-copy { min-width: 0; }
+.meeting-copy h1 { font-size: clamp(2.35rem, 3.65vw, 4.8rem); line-height: 1.08; text-wrap: balance; }
+.meeting-stats { display: flex; flex-wrap: wrap; margin: clamp(1.25rem, 3vh, 2.5rem) 0; gap: clamp(1rem,3vw,3rem); }
+.meeting-stats > div + div { padding-left: clamp(1rem,3vw,3rem); border-left: 1px solid var(--border); }
+.meeting-stats dt { color: var(--muted-foreground); font-weight: 550; font-size: clamp(1rem,1.2vw,1.35rem); }
+.meeting-stats dd { font-size: clamp(2.1rem,3.5vw,4rem); font-weight: 700; letter-spacing: -.055em; line-height: 1.16; font-variant-numeric: tabular-nums; }
+.meeting-stats .missing-average { font-size: clamp(1.2rem,1.8vw,2rem); margin-top: .35rem; letter-spacing: -.02em; }
+.meeting-stats .attention-number { color: var(--low-fg); }
+.meeting-comparison, .meeting-links { display: flex; align-items: center; flex-wrap: wrap; gap: .7rem; }
+.meeting-comparison { margin: 0 0 1rem; color: var(--console-accent); }
+.meeting-comparison strong { display: block; font-size: 1.2rem; }
+.meeting-links button { min-height: 3.1rem; }
+.meeting-screen .presentation-footer { margin-top: auto; }
+.meeting-screen:has(.meeting-summary) { min-height: 100svh; }
+.meeting-screen:has(.meeting-summary) .presentation-footer { position: static; }
+@media (max-width: 760px) {
+  .welcome-stage { grid-template-columns: minmax(0, 1fr) minmax(0, .55fr); padding-inline: 1.6rem; }
+  .class-choice { gap: 1rem; }
+  .destination-choices { grid-template-columns: 1fr; }
+  .destination-choices > :is(a,button) { min-height: 5rem; }
+  .class-library { grid-template-columns: 1fr; }
+  .class-choice { min-height: 0; grid-template-columns: auto minmax(0,1fr) auto; align-items: center; }
+  .class-choice-top svg:last-child { display: none; }
+  .class-choice h2 { font-size: 2.5rem; }
+  .meeting-summary { gap: 1.1rem; grid-template-columns: minmax(0,.65fr) minmax(0,1.35fr); }
+  .meeting-screen .student-navigation { gap: .45rem; }
+}
+@media (max-width: 520px) {
+  .welcome-stage { grid-template-columns: 1fr; gap: .5rem; padding: 1.8rem; }
+  .folio-stage { order: -1; justify-self: start; width: 6.5rem; }
+  .focus-home { align-items: start; min-height: auto; }
+  .welcome-copy > p { margin: 1rem 0 1.5rem; }
+  .class-hub { gap: .5rem; grid-template-columns: minmax(0, 1fr) auto; padding: 1.4rem; }
+  .hub-art { width: 4.5rem; }
+  .meeting-summary { grid-template-columns: 1fr; align-content: center; padding: 1.1rem; }
+  .meeting-portrait .profile-photo { height: 8rem; width: 8rem; margin-inline: auto; }
+  .meeting-copy h1 { font-size: clamp(1.85rem,7vw,2.5rem); }
+  .meeting-screen > .presentation-header { align-items: center; gap: .35rem; }
+  .meeting-screen .presentation-context { display: grid; gap: 0; }
+  .meeting-screen .presentation-context .eyebrow { font-size: .82rem; }
+  .meeting-screen .presentation-actions button { font-size: .95rem; padding: .5rem; }
+  .meeting-screen .presentation-footer .keyboard-hint { display: none; }
+  .meeting-screen .student-navigation { justify-content: center; width: 100%; flex-wrap: wrap; }
+  .meeting-screen .student-navigation button { padding: .45rem .6rem; font-size: .95rem; }
+  .meeting-screen .jump-counter span { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .class-choice, .destination-choices > :is(a,button) { transition: none; }
+}
