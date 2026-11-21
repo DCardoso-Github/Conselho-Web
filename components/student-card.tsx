@@ -42,7 +42,7 @@ export function StudentCard({ classId, student, highlight, subjects, selection, 
           </span>
         )}
         <h2>{student.name}</h2>
-        <StudentTutor tutor={student.tutor} />
+        {student.tutor?.trim() && <StudentTutor tutor={student.tutor} />}
           <div className="highlight-average">
             <span>Média das notas</span>
             <strong>

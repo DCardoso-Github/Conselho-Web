@@ -49,12 +49,12 @@ export function ComplementaryImporter({ classId, open, onOpenChange, kind }: Com
     <DialogContent className="complementary-import-dialog" hideClose={busy} onEscapeKeyDown={event => busy && event.preventDefault()} onPointerDownOutside={event => busy && event.preventDefault()}>
       <DialogHeader>
         <DialogTitle>{title}</DialogTitle>
-        <DialogDescription>Uma aba por turma. Selecione o arquivo e confira o destino de cada aba antes de importar.</DialogDescription>
+        <DialogDescription>{result ? "Resultado das abas importadas." : preview ? "Confira a turma de destino de cada aba." : "Selecione uma planilha XLSX com uma aba por turma."}</DialogDescription>
       </DialogHeader>
       <div className="complementary-import-body">
         {!preview ? <>
           <p className="supporting-text">{pp ? "Inclua Aluno(a), Participação, Acertos e os resultados por disciplina." : "Inclua Aluno(a), Frequência anual e/ou Tutor(a)."} Use nomes como 6A ou 7º ano B nas abas para identificar as turmas.</p>
-          <FileDrop accept={{ "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"] }} onFiles={readFile} label="Selecionar planilha" hint="Um arquivo .xlsx pode conter várias turmas" icon={busy ? <Loader2 className="animate-spin" /> : <FileSpreadsheet />} disabled={busy} multiple={false} />
+          <FileDrop accept={{ "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"] }} onFiles={readFile} label="Selecionar planilha" hint="Arraste o arquivo XLSX ou clique para escolher" icon={busy ? <Loader2 className="animate-spin" /> : <FileSpreadsheet />} disabled={busy} multiple={false} />
         </> : result ? <section aria-label="Resultado da importação">
           <h3 className="import-result-heading"><CheckCircle2 aria-hidden="true" /> {result.matched} alunos atualizados</h3>
           <div className="import-sheet-list">

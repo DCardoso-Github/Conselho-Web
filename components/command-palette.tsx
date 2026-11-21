@@ -99,7 +99,7 @@ function SearchContent({ close }: { close: () => void }) {
       title: `Evolução da turma ${cls.name}`,
       detail: "Comparar bimestres",
       icon: TrendingUp,
-      run: () => go(`/turmas/${encodeURIComponent(cls.id)}/evolucao`),
+      run: () => go(`/turmas/${encodeURIComponent(cls.id)}?view=class-evolution`),
     })),
     ...[
       { id: "light", title: "Tema claro", icon: Sun },

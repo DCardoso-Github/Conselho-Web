@@ -53,7 +53,8 @@ export function FileDrop({
     return (
         <div
             role="button"
-            tabIndex={0}
+            aria-disabled={disabled || undefined}
+            tabIndex={disabled ? -1 : 0}
             onClick={() => !disabled && inputRef.current?.click()}
             onKeyDown={(e) => {
                 if ((e.key === "Enter" || e.key === " ") && !disabled) { e.preventDefault(); inputRef.current?.click(); }
@@ -66,7 +67,7 @@ export function FileDrop({
             onDragLeave={() => setOver(false)}
             onDrop={onDrop}
             className={cn(
-                "group relative flex min-h-64 flex-col items-center justify-center gap-6 rounded-3xl border-2 border-dashed border-border bg-card px-6 py-10 text-center transition-all cursor-pointer",
+                "file-drop group relative flex min-h-64 flex-col items-center justify-center gap-6 rounded-3xl border-2 border-dashed border-border bg-card px-6 py-10 text-center transition-all cursor-pointer",
                 "hover:border-primary/60 hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                 over && "border-primary bg-primary/10 scale-[1.01]",
                 disabled && "opacity-60 cursor-not-allowed",

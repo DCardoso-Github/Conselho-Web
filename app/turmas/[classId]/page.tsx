@@ -1,19 +1,18 @@
 "use client";
-import { use, useState, useDeferredValue } from "react";
+import { use, useState, useDeferredValue, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useLiveQuery } from "dexie-react-hooks";
 import { toast } from "sonner";
 import {
-  ArrowLeft,
-  ArrowUpRight,
+  Activity,
+  CalendarCheck,
+  Layers,
   Play,
   ChartColumn,
   Settings2,
   Search,
   SlidersHorizontal,
-  Upload,
-  Image as ImageIcon,
   FileText,
   Download,
   Trash2,
@@ -28,15 +27,15 @@ import { hasLowGrades, hasValue } from "@/lib/presentation";
 import { formatSubject } from "@/lib/mapao/subjects";
 import { exportClassToXlsx } from "@/lib/mapao/exporter";
 import { StudentGrid, type StudentSort } from "@/components/student-card";
+import { importOptions, type ImportKind } from "@/components/import-options";
+import { ClassImportDialog } from "@/components/class-import-dialogs";
 import { GradeHistoryDialog } from "@/components/grade-history-dialog";
 import { StudentEvolution } from "@/components/student-evolution";
 import { periodLabel } from "@/lib/evolution";
 import { StudentHighlights } from "@/components/student-highlights";
 import { StudentActionsProvider } from "@/components/student-actions";
+import { ClassEvolutionSection } from "@/components/class-evolution-dashboard";
 import { ClassDashboard } from "@/components/class-dashboard";
-import { PhotoImporter } from "@/components/photo-importer";
-import { ProvaPaulistaImporter } from "@/components/prova-paulista-importer";
-import { FrequenciaTutorImporter } from "@/components/frequencia-tutor-importer";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -47,46 +46,36 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-export default function TurmaPage(props: { params: Promise<{ classId: string }> }) {
+const sections = [
+  { value: "students", label: "Alunos", icon: Users },
+  { value: "highlights", label: "Alunos destaque", icon: Star },
+  { value: "evolution", label: "Alunos evolução", icon: TrendingUp },
+  { value: "overview", label: "Visão geral", icon: ChartColumn },
+  { value: "class-evolution", label: "Evolução da turma", icon: Activity },
+] as const;
+
+export default function TurmaPage({ params }: { params: Promise<{ classId: string }> }) {
+  const { classId } = use(params);
   const query = useSearchParams();
-  return <TurmaContent key={query.toString()} {...props} />;
+  const filterKey = JSON.stringify([classId, query.get("subject"), query.get("band")]);
+  return <TurmaContent key={filterKey} classId={decodeURIComponent(classId)} />;
 }
-function TurmaContent({
-  params,
-}: {
-  params: Promise<{ classId: string }>;
-}) {
-  const { classId: raw } = use(params);
-  const classId = decodeURIComponent(raw);
+
+function TurmaContent({ classId }: { classId: string }) {
   const router = useRouter();
   const query = useSearchParams();
-  const data = useLiveQuery(
-    async () => ({
-      cls: await db.classes.get(classId),
-      students: await db.students
-        .where("classId")
-        .equals(classId)
-        .sortBy("order"),
-    }),
-    [classId],
-  );
+  const data = useLiveQuery(async () => {
+    const [cls, students] = await Promise.all([
+      db.classes.get(classId),
+      db.students.where("classId").equals(classId).sortBy("order"),
+    ]);
+    return { cls, students };
+  }, [classId]);
   const [search, setSearch] = useState("");
   const [band, setBand] = useState(readBand(query.get("band")));
   const requested = query.get("view") ?? "";
-  const [view, setView] = useState(
-    ["students", "analyses", "overview", "highlights", "evolution"].includes(requested)
-      ? requested : query.has("band") || query.has("subject") ? "students" : "home"
-  );
+  const view = requested === "analyses" ? "overview" : sections.find(item => item.value === requested)?.value ?? "students";
   const classPath = `/turmas/${encodeURIComponent(classId)}`;
-  const destinations = [
-    { value: "students", label: "Alunos", icon: Users },
-    { value: "analyses", label: "Análises", icon: ChartColumn },
-  ];
-  const analyses = [
-    { value: "highlights", label: "Alunos destaque", icon: Star },
-    { value: "evolution", label: "Alunos evolução", icon: TrendingUp },
-    { value: "overview", label: "Visão geral", icon: ChartColumn },
-  ];
   const [selectionRequest, setSelectionRequest] = useState<{ id: number; serial: number } | null>(null);
   const deferredSearch = useDeferredValue(search);
   const [onlyLow, setOnlyLow] = useState(false);
@@ -95,6 +84,9 @@ function TurmaContent({
   const [filters, setFilters] = useState(false);
   const [manage, setManage] = useState(false);
   const [history, setHistory] = useState(false);
+  const [returnToManagement, setReturnToManagement] = useState<ImportKind | null>(null);
+  const manageButton = useRef<HTMLButtonElement>(null);
+  const importButtonToFocus = useRef<ImportKind | null>(null);
   const [start, setStart] = useState(false);
   const [scope, setScope] = useState<"all" | "low">("all");
   const [importer, setImporter] = useState<"photo" | "pp" | "frequency" | null>(
@@ -136,54 +128,58 @@ function TurmaContent({
       setExporting(false);
     }
   };
-  const openImporter = (type: "photo" | "pp" | "frequency") => {
+  const openImporter = (kind: ImportKind) => {
+    setReturnToManagement(kind);
     setManage(false);
-    setImporter(type);
+    if (kind === "map") setHistory(true);
+    else setImporter(kind);
+  };
+  const closeImporter = () => {
+    setHistory(false);
+    setImporter(null);
+    if (returnToManagement) {
+      importButtonToFocus.current = returnToManagement;
+      setManage(true);
+    }
+    setReturnToManagement(null);
   };
   return (
     <div className="console-container class-screen">
-      {view === "home" ? <>
-        <header className="class-hub">
-          <div>
-            <p className="focus-label">Turma</p>
-            <h1>{cls.name}</h1>
-            <p>{[cls.currentPeriod && periodLabel(cls.currentPeriod), `${students.length} alunos`].filter(Boolean).join(" · ")}</p>
-            <Button size="xl" disabled={!students.length} onClick={() => { setScope("all"); setStart(true); }}>
-              <Play fill="currentColor" /> Iniciar conselho
-            </Button>
-          </div>
-          <div className="hub-art" aria-hidden="true"><Play fill="currentColor" /></div>
-        </header>
-        <nav aria-label="Áreas da turma" className="destination-choices">
-          {destinations.map(({value,label,icon:Icon}) => <Link key={value} href={`${classPath}?view=${value}`}>
-            <Icon aria-hidden="true" /><strong>{label}</strong><ArrowUpRight aria-hidden="true" />
-          </Link>)}
-        </nav>
-        <Button variant="ghost" onClick={() => setManage(true)}><Settings2 />Gerenciar turma</Button>
-      </> : <header className="focus-heading subview-heading">
-        <div>
-          <Link className="focus-back" href={analyses.some(item => item.value === view) ? `${classPath}?view=analyses` : classPath}>
-            <ArrowLeft />{analyses.some(item => item.value === view) ? "Análises" : "Turma " + cls.name}
-          </Link>
-          <h1>{[...destinations, ...analyses].find(item => item.value === view)?.label}</h1>
+      <header className="class-banner">
+        <div className="class-banner-identity">
+          <span className="class-insignia" aria-hidden="true"><Layers /></span>
+          <div><p className="focus-label">Turma</p><h1>{cls.name}</h1></div>
         </div>
-      </header>}
-      {view === "analyses" && <nav className="destination-choices analysis-choices" aria-label="Análises da turma">
-        {analyses.map(({value,label,icon:Icon}) => <Link key={value} href={`${classPath}?view=${value}`}>
-          <Icon aria-hidden="true" /><strong>{label}</strong><ArrowUpRight aria-hidden="true" />
+        <div className="class-facts">
+          {cls.currentPeriod && <span><CalendarCheck />{periodLabel(cls.currentPeriod)}</span>}
+          <span><Users />{students.length} alunos</span>
+        </div>
+        <div className="class-primary-actions">
+          <Button size="xl" disabled={!students.length} onClick={() => { setScope("all"); setStart(true); }}>
+            <Play fill="currentColor" />Iniciar conselho
+          </Button>
+          <Button size="xl" variant="outline" ref={manageButton} className="manage-class" onClick={() => setManage(true)}>
+            <Settings2 />Gerenciar turma
+          </Button>
+        </div>
+      </header>
+      <nav className="class-sections" aria-label="Áreas da turma">
+        {sections.map(({value,label,icon:Icon}) => <Link key={value}
+          href={`${classPath}?view=${value}`} scroll={false} aria-current={view === value ? "page" : undefined}>
+          <Icon aria-hidden="true" /><span>{label}</span>
         </Link>)}
-        <Link href={`${classPath}/evolucao`}><TrendingUp /><strong>Evolução da turma</strong><ArrowUpRight /></Link>
-      </nav>}
+      </nav>
       <StudentActionsProvider subjects={cls.subjects} onSelect={student => {
         if (student.id === undefined) return;
         clear();
         setSelectionRequest({ id: student.id, serial: Date.now() });
-        setView("students");
+        if (view !== "students") router.push(`${classPath}?view=students`, { scroll: false });
         requestAnimationFrame(() => {
           document.querySelector<HTMLInputElement>(`[data-student-id="${student.id}"] input[type="checkbox"]`)?.focus();
         });
       }}>
-      {view === "students" && <section aria-label="Lista de alunos">
+      {view === "students" && <section className="roster" aria-label="Lista de alunos">
+          <header className="roster-heading"><h2>Alunos</h2>
           <div className="search-toolbar">
             <div className="search-field">
               <Search />
@@ -199,6 +195,7 @@ function TurmaContent({
               {filterCount ? ` (${filterCount})` : ""}
             </Button>
           </div>
+          </header>
           {(onlyLow || redSubject || band || sort !== "order") && (
             <div className="active-filters" role="status">
               <span>
@@ -246,6 +243,7 @@ function TurmaContent({
       {view === "overview" && <section>
           <ClassDashboard students={students} subjects={cls.subjects} classId={classId} />
         </section>}
+      {view === "class-evolution" && <ClassEvolutionSection classId={classId} students={students} onImport={() => setHistory(true)} />}
       </StudentActionsProvider>
       <Dialog open={filters} onOpenChange={setFilters}>
         <DialogContent className="filter-dialog">
@@ -367,77 +365,37 @@ function TurmaContent({
         </DialogContent>
       </Dialog>
       <Dialog open={manage} onOpenChange={setManage}>
-        <DialogContent className="sm:max-w-2xl">
+        <DialogContent className="management-dialog"
+          onOpenAutoFocus={event => {
+            const kind = importButtonToFocus.current;
+            importButtonToFocus.current = null;
+            const button = kind && document.querySelector<HTMLButtonElement>(`[data-import-option="${kind}"]`);
+            if (button) { event.preventDefault(); button.focus(); }
+          }}
+          onCloseAutoFocus={event => { event.preventDefault(); if (!document.querySelector('[role="dialog"][data-state="open"]')) manageButton.current?.focus(); }}
+        >
           <DialogHeader>
             <DialogTitle>Gerenciar turma {cls.name}</DialogTitle>
-            <DialogDescription>
-              Importada em{" "}
-              {new Date(cls.importedAt).toLocaleDateString("pt-BR")}. Atualize
-              os dados ou exporte os resultados.
-            </DialogDescription>
+            <DialogDescription>Importada em {new Date(cls.importedAt).toLocaleDateString("pt-BR")}.</DialogDescription>
           </DialogHeader>
-          <div className="management-grid">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setManage(false);
-                setHistory(true);
-              }}
-            >
-              <Upload />
-              Mapões e bimestres
-            </Button>
-            <Button variant="outline" onClick={() => openImporter("photo")}>
-              <ImageIcon aria-hidden="true" /> Fotos dos alunos
-            </Button>
-            <Button variant="outline" onClick={() => openImporter("pp")}>
-              <Upload /> Prova Paulista
-            </Button>
-            <Button variant="outline" onClick={() => openImporter("frequency")}>
-              <Upload /> Frequência/Tutor
-            </Button>
-            <Button
-              variant="outline"
-              disabled={exporting}
-              onClick={() => runExport(false)}
-            >
-              <Download /> Exportar planilha
-            </Button>
-            <Button
-              variant="outline"
-              disabled={exporting}
-              onClick={() => runExport(true)}
-            >
-              <FileText /> {exporting ? "Gerando arquivo…" : "Exportar PDF"}
-            </Button>
+          <div className="management-body">
+            <section aria-label="Importações"><h3>Importar dados</h3>
+              <div className="import-choices">
+                {importOptions.map(({value, label, detail, icon: Icon}) => <button key={value} data-import-option={value} onClick={() => openImporter(value)} aria-label={label}>
+                  <span className="choice-symbol"><Icon /></span><span><strong>{label}</strong><small>{detail}</small></span>
+                </button>)}
+              </div>
+            </section>
+            <section className="management-exports"><h3>Exportar turma</h3>
+              <div><Button variant="outline" disabled={exporting} onClick={() => runExport(false)}><Download />Exportar planilha</Button>
+              <Button variant="outline" disabled={exporting} onClick={() => runExport(true)}><FileText />Exportar PDF</Button></div>
+            </section>
           </div>
-          <Button
-            variant="destructive"
-            onClick={() => {
-              setManage(false);
-              setConfirmDelete(true);
-            }}
-          >
-            <Trash2 /> Excluir turma
-          </Button>
+          <footer className="management-footer"><Button variant="ghost" className="text-destructive" onClick={() => { setManage(false); setConfirmDelete(true); }}><Trash2 />Excluir turma</Button></footer>
         </DialogContent>
       </Dialog>
-      <GradeHistoryDialog cls={cls} open={history} onOpenChange={setHistory} />
-      <PhotoImporter
-        classId={classId}
-        open={importer === "photo"}
-        onOpenChange={(open) => !open && setImporter(null)}
-      />
-      <ProvaPaulistaImporter
-        classId={classId}
-        open={importer === "pp"}
-        onOpenChange={(open) => !open && setImporter(null)}
-      />
-      <FrequenciaTutorImporter
-        classId={classId}
-        open={importer === "frequency"}
-        onOpenChange={(open) => !open && setImporter(null)}
-      />
+      <GradeHistoryDialog cls={cls} open={history} onOpenChange={open => { if (!open) closeImporter(); }} />
+      {importer && <ClassImportDialog kind={importer} classId={classId} onClose={closeImporter} />}
       <ConfirmDialog
         open={confirmDelete}
         onOpenChange={setConfirmDelete}

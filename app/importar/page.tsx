@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { motion, AnimatePresence } from "motion/react";
+import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 import { toast } from "sonner";
 import {
     CheckCircle2,
@@ -18,6 +18,9 @@ import { PeriodFields } from "@/components/period-fields";
 import { periodLabel } from "@/lib/evolution";
 import { detectMapaoPeriod } from "@/lib/mapao/period";
 import { importMapaoFile } from "@/lib/actions";
+import { useClasses } from "@/lib/hooks";
+import { ClassImportDialog } from "@/components/class-import-dialogs";
+import { importOptions, type ImportKind } from "@/components/import-options";
 import { FileDrop } from "@/components/file-drop";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -35,6 +38,12 @@ interface FileResult {
 }
 
 export default function ImportarPage() {
+    const classes = useClasses();
+    const reduceMotion = useReducedMotion();
+    const [kind, setKind] = React.useState<ImportKind>("map");
+    const [chosenClass, setChosenClass] = React.useState("");
+    const [dialogOpen, setDialogOpen] = React.useState(false);
+    const classId = classes.some(cls => cls.id === chosenClass) ? chosenClass : classes.length === 1 ? classes[0].id : "";
     const [step, setStep] = React.useState<Step>("select");
     const [files, setFiles] = React.useState<{ file: File; period: SchoolPeriod; suggestion: string }[]>([]);
     const [busy, setBusy] = React.useState(false);
@@ -60,6 +69,7 @@ export default function ImportarPage() {
 
     const removeFile = (index: number) => {
         setFiles(previous => previous.filter((_, i) => i !== index));
+        if (files.length === 1) { setStep("select"); setReplace(false); }
     };
 
     const startImport = async () => {
@@ -107,22 +117,30 @@ export default function ImportarPage() {
     };
 
     return (
-        <div className="console-container import-screen max-w-5xl">
-            <header className="focus-heading"><div>
-                <p className="focus-label">Importação · {step === "select" ? "1" : step === "review" ? "2" : "3"} de 3</p>
-                <h1>{step === "select" ? "Selecionar mapão" : step === "review" ? "Revisar arquivos" : "Resultado da importação"}</h1>
-                {step === "select" && <p>Escolha as planilhas da turma em formato XLSX. Apenas alunos ativos serão importados.</p>}
-            </div></header>
-
-            <div className="mt-6 min-h-[280px]">
+        <div className="console-container import-screen">
+            <header className="focus-heading"><div><h1>Importar dados</h1></div></header>
+            <div className="import-workspace">
+              <nav className="import-choices import-navigation" aria-label="Tipo de importação">
+                {importOptions.map(({value, label, detail, icon: Icon}) => (
+                  <button key={value} type="button" aria-current={kind === value ? "true" : undefined} disabled={busy} onClick={() => setKind(value)}>
+                    <span className="choice-symbol"><Icon /></span><span><strong>{label}</strong><small>{detail}</small></span>
+                  </button>
+                ))}
+              </nav>
+              <section className="import-canvas" aria-label="Arquivo e destino">
+                {kind === "map" ? <>
+                  <div className="import-step-heading">
+                    <h2>{step === "select" ? "Selecionar mapão" : step === "review" ? "Revisar arquivos" : "Resultado da importação"}</h2>
+                    <span>Etapa {step === "select" ? 1 : step === "review" ? 2 : 3} de 3</span>
+                  </div>
                 <AnimatePresence mode="wait">
                     {step === "select" && (
                         <motion.div
                             key="select"
-                            initial={{ opacity: 0, x: 16 }}
+                            initial={reduceMotion ? false : { opacity: 0, x: 16 }}
                             animate={{ opacity: 1, x: 0 }}
                             exit={{ opacity: 0, x: -16 }}
-                            transition={{ duration: 0.25 }}
+                            transition={{ duration: reduceMotion ? 0 : 0.18 }}
                         >
                             <FileDrop
                                 accept={{
@@ -131,8 +149,8 @@ export default function ImportarPage() {
                                 }}
                                 onFiles={onPicked}
                                 disabled={busy}
-                                label={busy ? "Identificando os bimestres…" : "Clique ou arraste arquivos .xlsx"}
-                                hint="O nome da turma é identificado pelo nome do arquivo."
+                                label={busy ? "Identificando os bimestres…" : "Selecionar planilhas XLSX"}
+                                hint="Arraste os mapões ou escolha os arquivos. A turma é identificada pelo nome da planilha."
                                 icon={<FileSpreadsheet className="size-6" />}
                             />
                             <Button variant="link" asChild className="mt-3">
@@ -144,10 +162,10 @@ export default function ImportarPage() {
                     {step === "review" && (
                         <motion.div
                             key="review"
-                            initial={{ opacity: 0, x: 16 }}
+                            initial={reduceMotion ? false : { opacity: 0, x: 16 }}
                             animate={{ opacity: 1, x: 0 }}
                             exit={{ opacity: 0, x: -16 }}
-                            transition={{ duration: 0.25 }}
+                            transition={{ duration: reduceMotion ? 0 : 0.18 }}
                             className="space-y-4"
                         >
                             <p className="supporting-text">Confira o período de cada arquivo. Bimestres anteriores ficam no histórico; o mais recente aparece na turma. Os alunos serão organizados em ordem alfabética.</p>
@@ -164,7 +182,8 @@ export default function ImportarPage() {
                                                 className="import-file-review"
                                             >
                                                 <FileSpreadsheet className="size-4 text-primary shrink-0" />
-                                                <div className="min-w-0 flex-1">
+                                                <div className="min-w-0 flex-1 review-file-data">
+                                                    <div>
                                                     <div className="font-medium break-words">
                                                         {f.name}
                                                     </div>
@@ -172,6 +191,7 @@ export default function ImportarPage() {
                                                         {(f.size / 1024).toFixed(1)} KB
                                                     </div>
                                                     <p className="supporting-text period-suggestion">{suggestion}</p>
+                                                    </div>
                                                     <PeriodFields value={period} onChange={value => { setFiles(previous => previous.map((entry, i) => i === index ? { ...entry, period: value } : entry)); setReplace(false); }} disabled={busy} label={`Período · ${f.name}`} />
                                                 </div>
                                                 <Button
@@ -231,10 +251,10 @@ export default function ImportarPage() {
                     {step === "done" && (
                         <motion.div
                             key="done"
-                            initial={{ opacity: 0, x: 16 }}
+                            initial={reduceMotion ? false : { opacity: 0, x: 16 }}
                             animate={{ opacity: 1, x: 0 }}
                             exit={{ opacity: 0, x: -16 }}
-                            transition={{ duration: 0.25 }}
+                            transition={{ duration: reduceMotion ? 0 : 0.18 }}
                             className="space-y-3"
                         >
                             {results.map((r) => (
@@ -277,6 +297,22 @@ export default function ImportarPage() {
                         </motion.div>
                     )}
                 </AnimatePresence>
+                </> : <>
+                  <div className="import-step-heading"><h2>{importOptions.find(option => option.value === kind)?.label}</h2></div>
+                  {classes.length ? <div className="import-destination">
+                    <label className="form-field">Turma
+                      <select value={classId} onChange={event => setChosenClass(event.target.value)}>
+                        <option value="">Escolher turma</option>
+                        {classes.map(cls => <option key={cls.id} value={cls.id}>{cls.name}</option>)}
+                      </select>
+                    </label>
+                    <p>{kind === "photo" ? "As fotos serão associadas aos alunos desta turma pelo nome do arquivo." : "Ao abrir a planilha, você poderá conferir a turma de destino de cada aba."}</p>
+                    <Button size="lg" disabled={!classId} onClick={() => setDialogOpen(true)}>Escolher arquivos</Button>
+                  </div> : <div className="empty-panel"><p>Importe um mapão para cadastrar a primeira turma.</p>
+                    <Button onClick={() => setKind("map")}>Importar primeiro mapão</Button></div>}
+                  {dialogOpen && classId && <ClassImportDialog kind={kind} classId={classId} onClose={() => setDialogOpen(false)} />}
+                </>}
+              </section>
             </div>
         </div>
     );

@@ -49,7 +49,7 @@ export default function AnalyticsPresentationPage({
           <Link
             href={
               data.cls && view === "evolution"
-                ? `/turmas/${encodeURIComponent(classId)}/evolucao`
+                ? `/turmas/${encodeURIComponent(classId)}?view=class-evolution`
                 : `/turmas/${encodeURIComponent(classId)}`
             }
           >

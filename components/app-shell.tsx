@@ -27,7 +27,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     pathname.includes("/apresentar") || /\/alunos\//.test(pathname);
   const cmd = useCommandPalette();
   const [menu, setMenu] = useState(false);
-  const { setTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
   return (
     <div className="console-app">
       <a className="skip-link" href="#main-content">
@@ -62,14 +62,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <Dialog open={menu} onOpenChange={setMenu}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Seu espaço</DialogTitle>
+            <DialogTitle>Menu do Conselho</DialogTitle>
             <DialogDescription>
-              Importação e aparência do Conselho.
+              Arquivos, cópias de segurança e aparência.
             </DialogDescription>
           </DialogHeader>
           <Button asChild size="lg">
             <Link href="/importar" onClick={() => setMenu(false)}>
-              <Upload /> Importar mapão
+              <Upload /> Importar dados
             </Link>
           </Button>
           <Button asChild variant="outline"><Link href="/backup" onClick={()=>setMenu(false)}>Backup e restauração</Link></Button>
@@ -82,7 +82,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             ].map(({ value, name, icon: Icon }) => (
               <Button
                 key={value}
-                variant="outline"
+                aria-pressed={theme === value}
+                variant={theme === value ? "secondary" : "outline"}
                 onClick={() => setTheme(value)}
               >
                 <Icon />

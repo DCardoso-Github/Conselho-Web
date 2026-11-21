@@ -109,7 +109,7 @@ function AnalyticsSlides({
     router.push(
       view === "overview"
         ? `${base}?view=overview`
-        : `${base}/evolucao?${query}`,
+        : `${base}?view=class-evolution&${query}`,
     );
   }, [router, cls.id, view, before?.id, after?.id]);
   useEffect(() => {

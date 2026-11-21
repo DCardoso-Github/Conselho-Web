@@ -36,7 +36,6 @@ export function PhotoImporter({ classId, open, onOpenChange }: Props) {
         setUnmatched(r.unmatched);
         if (r.matched > 0) {
             setDoneCount(r.matched);
-            setTimeout(() => setDoneCount(null), 1500);
             toast.success(`${r.matched} foto(s) associadas`, {
                 description:
                     r.unmatched.length > 0
@@ -55,6 +54,7 @@ export function PhotoImporter({ classId, open, onOpenChange }: Props) {
         setBusy(true);
         setProgress({ done: 0, total: files.length });
         setUnmatched([]);
+        setDoneCount(null);
         try {
             const r = await importPhotosFromFiles(classId, files, (done, total) =>
                 setProgress({ done, total })
@@ -73,6 +73,7 @@ export function PhotoImporter({ classId, open, onOpenChange }: Props) {
         setBusy(true);
         setProgress({ done: 0, total: 1 });
         setUnmatched([]);
+        setDoneCount(null);
         try {
             const r = await importPhotosFromZip(classId, zip, (done, total) =>
                 setProgress({ done, total })
@@ -86,9 +87,9 @@ export function PhotoImporter({ classId, open, onOpenChange }: Props) {
     };
 
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-2xl gap-0 p-0 overflow-hidden">
-                <DialogHeader className="p-6 pb-4 space-y-1">
+        <Dialog open={open} onOpenChange={next => { if (!busy) onOpenChange(next); }}>
+            <DialogContent className="photo-import-dialog" hideClose={busy}>
+                <DialogHeader>
                     <DialogTitle>Importar fotos · {classId}</DialogTitle>
                     <DialogDescription>
                         Os arquivos são associados pelo nome (ex.:{" "}
@@ -99,7 +100,8 @@ export function PhotoImporter({ classId, open, onOpenChange }: Props) {
                     </DialogDescription>
                 </DialogHeader>
 
-                <div className="px-6 pb-6 space-y-3 max-h-[70vh] overflow-y-auto">
+                <div className="photo-import-body">
+                    <div className="photo-sources">
                     <FileDrop
                         accept={{ "image/*": [".jpg", ".jpeg", ".png", ".webp"] }}
                         onFiles={handleFiles}
@@ -126,6 +128,7 @@ export function PhotoImporter({ classId, open, onOpenChange }: Props) {
                         disabled={busy}
                     />
 
+                    </div>
                     {doneCount !== null && (
                         <div className="flex items-center justify-center gap-2 py-2 text-sm font-semibold text-success" role="status" aria-live="polite">
                             <CheckCircle2 className="size-4" />

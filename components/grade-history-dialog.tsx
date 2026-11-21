@@ -126,6 +126,7 @@ function HistoryForm({ cls }: { cls: ClassRecord }) {
     }
   };
   return (
+    <div className="history-workspace">
     <div className="history-form">
       {!cls.currentPeriod ? (
         <p className="history-notice">
@@ -202,6 +203,7 @@ function HistoryForm({ cls }: { cls: ClassRecord }) {
             ? "Salvar mapão do bimestre"
             : "Identificar mapão atual"}
       </Button>
+      </div>
       {periods.length > 0 && (
         <section aria-label="Bimestres salvos" className="saved-periods">
           <h3>Bimestres salvos</h3>

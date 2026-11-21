@@ -8,8 +8,8 @@ Consulte a documentação da versão instalada em `node_modules/next/dist/docs` 
 
 ## Interface para reuniões
 
-- O início mostra até três turmas por página. A busca considera todas as turmas. A tela de importação oferece um mapão fictício para experimentar.
-- Abra a turma para iniciar o conselho, consultar a lista completa de alunos ou escolher uma análise. A lista mantém busca, filtros e ordenação.
+- O início mostra até três turmas por página. A busca considera todas as turmas. Importar dados reúne mapões, fotos, Prova Paulista e frequência/tutor e oferece um mapão fictício para experimentar.
+- A página da turma reúne Alunos, Alunos destaque, Alunos evolução, Visão geral e Evolução da turma. Iniciar conselho e Gerenciar turma ficam no cabeçalho. A lista mantém busca, filtros e ordenação.
 - Alunos destaque: até cinco alunos com maior média de notas numéricas de 0 a 10 nas disciplinas da turma. Ausências e conceitos não numéricos são ignorados; alunos sem nota numérica ficam fora. Empates: menos notas vermelhas, nome e ordem original. A lista exibe a média e a quantidade de disciplinas consideradas, com apresentação exclusiva via `scope=top`. A seleção é calculada sobre a turma inteira, independentemente dos filtros da lista.
 - Iniciar conselho: escolha explícita entre todos os alunos e alunos com notas vermelhas.
 - A apresentação começa pelo resumo com foto, nome, média e quantidade de notas vermelhas. **Ver disciplinas** abre a grade. **Controles** reúne o modo projetor e a tela cheia.

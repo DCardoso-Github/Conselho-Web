@@ -217,7 +217,7 @@ function EvolutionCard({ classId, student, row, prova, leader = false, viewQuery
     <div className="student-tile-content">
       {leader && <span className="highlight-label"><TrendingUp aria-hidden="true" /> Aluno evolução</span>}
       <h3>{student.name}</h3>
-      <StudentTutor tutor={student.tutor} />
+      {student.tutor?.trim() && <StudentTutor tutor={student.tutor} />}
       {row ? <div className="highlight-average">
         <span>Variação da média</span>
         <strong className={`evolution-gain ${gainTone(row.gain)}`}>
