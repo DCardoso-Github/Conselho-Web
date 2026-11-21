@@ -15,7 +15,7 @@ Consulte a documentação da versão instalada em `node_modules/next/dist/docs` 
 - Clicar no aluno abre a ficha completa. A apresentação usa a mesma ficha. **Controles** reúne o modo projetor e a tela cheia.
 - No cabeçalho da ficha, **Bimestre** reúne notas e faltas por disciplina, Prova Paulista e acompanhamento. **Evolução** abre o ano inteiro e permite comparar notas e Prova Paulista entre dois bimestres cadastrados.
 - A troca de aluno mantém a visão e o filtro de notas vermelhas. O seletor **Ir para aluno** permite abrir outra ficha na sequência. Retomar uma apresentação recupera o aluno e a seção salvos.
-- A ficha reserva uma coluna para o retrato no computador e o coloca junto ao nome no celular. Ao clicar na foto, é possível vê-la ampliada na proporção original.
+- A ficha mantém o retrato na coluna da esquerda e as notas ou a evolução na coluna da direita, inclusive no celular e durante a apresentação. Ao clicar na foto, é possível vê-la ampliada na proporção original.
 - A grade usa a largura disponível. A ficha permite rolar as disciplinas mantendo as duas visões e a navegação entre alunos acessíveis em telas com altura suficiente.
 - Ferramentas de importação, fotos, exportação e exclusão em Gerenciar turma.
 - Tema escuro inicial; a preferência salva e o tema claro continuam disponíveis no Menu.

@@ -1,7 +1,7 @@
 /* Student record and its council projection share the same reading order. */
-.student-record { display: flex; flex-direction: column; gap: clamp(.8rem,1.3vw,1.4rem); min-width: 0; }
+.student-record { display: grid; grid-template-columns: clamp(14rem,20vw,23rem) minmax(0,1fr); grid-template-rows: auto minmax(0,1fr); align-content: start; gap: clamp(.8rem,1.3vw,1.4rem); min-width: 0; }
 .record-banner { display: contents; }
-.record-identity { display: flex; align-items: center; gap: 1rem; min-width: 0; padding: clamp(.75rem,1.2vw,1.5rem); border: 1px solid color-mix(in srgb,var(--primary) 36%,var(--border)); border-radius: 1.45rem; background: linear-gradient(145deg,color-mix(in srgb,var(--primary) 15%,var(--card)),var(--card) 80%); }
+.record-identity { grid-column: 1; grid-row: 1 / 3; align-self: start; display: flex; flex-direction: column; align-items: stretch; max-height: 100%; overflow: auto; gap: 1rem; min-width: 0; padding: clamp(.75rem,1.2vw,1.5rem); border: 1px solid color-mix(in srgb,var(--primary) 36%,var(--border)); border-radius: 1.45rem; background: linear-gradient(145deg,color-mix(in srgb,var(--primary) 15%,var(--card)),var(--card) 80%); }
 .record-identity .profile-photo { position: relative; display: grid; place-items: center; flex: none; width: 100%; height: auto; aspect-ratio: 4/5; border: 1px solid color-mix(in srgb,var(--primary) 35%,var(--border)); border-radius: .95rem; box-shadow: none; background: var(--surface-2,var(--card)); }
 .record-photo-button { position: relative; display: block; flex: none; width: 100%; border-radius: .95rem; cursor: zoom-in; }
 .photo-expand { position: absolute; right: .5rem; bottom: .5rem; display: grid; place-items: center; width: 2rem; height: 2rem; color: white; background: #10182cda; border: 1px solid #ffffff85; border-radius: .6rem; }
@@ -16,7 +16,7 @@
 .record-class { font-size: .85rem; font-weight: 650; color: var(--primary); margin-bottom: .35rem; }
 .record-name h1 { font-size: clamp(1.45rem,1.85vw,2.5rem); font-weight: 720; letter-spacing: -.045em; line-height: 1.08; text-wrap: pretty; overflow-wrap: anywhere; }
 .record-name .student-tutor { justify-content: flex-start; text-align: start; margin-top: .4rem; font-size: .95rem; }
-.record-switch { display: grid; grid-template-columns: 1fr 1fr; flex: 0 1 auto; gap: .3rem; padding: .3rem; border-radius: 1.1rem; background: var(--background); border: 1px solid var(--border); }
+.record-switch { grid-column: 2; grid-row: 1; justify-self: start; min-width: min(100%,26rem); display: grid; grid-template-columns: 1fr 1fr; flex: 0 1 auto; gap: .3rem; padding: .3rem; border-radius: 1.1rem; background: var(--background); border: 1px solid var(--border); }
 .record-switch button, .record-tabs button { display: inline-flex; justify-content: center; align-items: center; gap: .55rem; min-width: 0; font-weight: 640; line-height: 1.2; cursor: pointer; }
 .record-switch button { min-height: 3.5rem; padding: .75rem clamp(.9rem,1.7vw,2rem); border-radius: .85rem; font-size: clamp(1rem,1.25vw,1.4rem); }
 .record-switch button[data-state=active] { color: var(--primary-foreground); background: var(--primary); }
@@ -26,11 +26,11 @@
 .record-tabs button[data-state=active] { color: var(--foreground); background: var(--card); box-shadow: inset 0 -2px var(--primary), inset 0 0 0 1px var(--border); }
 :is(.record-switch,.record-tabs) button:not([data-state=active]):hover { background: var(--secondary); color: var(--foreground); }
 .record-tabs svg { width: 1.05rem; height: 1.05rem; flex: none; }
-.record-body { min-width: 0; }
+.record-body { grid-column: 2; grid-row: 2; min-width: 0; container-type: inline-size; }
 .record-bar, .student-record .grade-toolbar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: .55rem 1rem; }
 .record-bar { margin: 0 0 1rem; padding: .15rem .2rem .85rem; border-bottom: 1px solid var(--border); }
 .record-bar h2 { font-size: clamp(1.3rem,1.85vw,2.3rem); letter-spacing: -.035em; font-weight: 680; text-align: start; }
-.record-content[data-state=active], div.record-content:not([role]) { display: grid; gap: .85rem; }
+.record-content[data-state=active], div.record-content:not([role]) { display: grid; grid-template-columns: minmax(0,1fr); gap: .85rem; }
 .student-record .grade-toolbar { padding: .15rem 0; }
 .record-average { display: flex; align-items: baseline; gap: .6rem; font-weight: 550; color: var(--muted-foreground); }
 .record-average strong { font-size: clamp(1.35rem,1.75vw,2rem); color: var(--foreground); font-variant-numeric: tabular-nums; }
@@ -73,17 +73,10 @@
 .annual-roster tbody tr:has(a:hover), .annual-roster tbody tr:focus-within { background: var(--secondary); }
 .projector-mode .student-record .grade-value { font-size: clamp(3rem,3.6vw,4.8rem); }
 .projector-mode .student-record .all-grades h3 { font-size: clamp(1.2rem,1.6vw,1.65rem); }
-@media (min-width: 901px) {
-  .student-record { display: grid; grid-template-columns: clamp(14rem,20vw,23rem) minmax(0,1fr); grid-template-rows: auto minmax(0,1fr); align-content: start; }
-  .record-identity { grid-column: 1; grid-row: 1 / 3; align-self: start; flex-direction: column; align-items: stretch; max-height: 100%; overflow: auto; }
-  .record-identity .profile-photo { max-height: 48dvh; }
-  .record-switch { grid-column: 2; grid-row: 1; justify-self: start; min-width: min(100%,26rem); }
-  .record-body { grid-column: 2; grid-row: 2; }
-}
+.record-identity .profile-photo { max-height: 48dvh; }
 @media (max-width: 900px) {
-  .record-identity { flex: none; }
-  .record-identity > .profile-photo, .record-photo-button { width: clamp(7rem,34vw,13rem); }
-  .record-switch { flex: none; }
+  .student-record { grid-template-columns: clamp(7rem,25vw,14rem) minmax(0,1fr); }
+  .record-switch { min-width: min(100%,22rem); }
 }
 @media (min-height: 38rem) {
   .presentation-screen:is(.detail-screen,.meeting-screen) { height: 100dvh; min-height: 0; overflow: hidden; }
@@ -114,10 +107,40 @@
   .detail-screen .presentation-actions { gap: .25rem; }
   .student-record .grade-toolbar button { font-size: .9rem; }
 }
-@media (max-width: 900px) and (min-height: 38rem) {
-  .presentation-screen .student-record { overflow: auto; scrollbar-width: thin; }
-  .student-record .record-switch { position: sticky; top: 0; z-index: 2; }
-  .student-record > .record-body[data-state=active] { flex: none; overflow: visible; padding-inline: .15rem; }
+@media (max-width: 600px) {
+  .student-record { grid-template-columns: clamp(6rem,34vw,10rem) minmax(0,1fr); grid-template-rows: auto auto minmax(0,1fr); gap: .65rem .55rem; }
+  .record-identity { display: contents; }
+  .record-name { grid-column: 1/-1; grid-row: 1; }
+  .record-name .student-tutor { margin-top: .25rem; }
+  .record-switch { grid-column: 1/-1; grid-row: 2; justify-self: stretch; }
+  .record-photo-button, .record-identity > .profile-photo { grid-column: 1; grid-row: 3; align-self: start; width: 100%; }
+  .record-body { grid-column: 2; grid-row: 3; }
+}
+@container (max-width: 24rem) {
+  .record-bar { gap: .45rem; margin-bottom: .65rem; }
+  .record-bar h2 { font-size: 1.12rem; }
+  .record-tabs { gap: .15rem .35rem; }
+  .record-tabs button { padding: .3rem .4rem; min-height: 2.15rem; font-size: .84rem; }
+  .record-average { flex-wrap: wrap; gap: .2rem .4rem; font-size: .9rem; }
+  .student-record .grade-toolbar button { max-width: 100%; padding: .35rem .55rem; white-space: normal; }
+  .student-record .all-grades { grid-template-columns: 1fr; gap: .45rem; }
+  .student-record .all-grades .grade-tile { grid-template-columns: minmax(0,1fr) auto; grid-template-rows: auto; min-height: 3.75rem; align-items: center; padding: .65rem; gap: .35rem; }
+  .student-record .subject-heading { grid-column: 1; align-self: center; align-items: center; }
+  .student-record .subject-symbol { display: none; }
+  .student-record .all-grades h3 { font-size: .95rem; }
+  .student-record .all-grades .grade-value { font-size: 1.65rem; }
+  .student-record .record-absences { grid-column: 1/-1; }
+  .student-record .academic-metrics, .student-record .comparison-summary, .student-record .prova-evolution-metrics, .student-record .prova-presentation-subjects { grid-template-columns: 1fr; }
+  .student-record .year-overview { padding: .65rem; }
+  .student-record .year-overview h3 { font-size: 1.15rem; }
+  .student-record .year-fold summary { font-size: .95rem; gap: .35rem; padding: .65rem; }
+  .student-record .year-fold summary svg:first-child { display: none; }
+  .student-record .year-fold > :last-child:not(summary) { margin-inline: .25rem; }
+  .student-record .annual-matrix { min-width: 17rem; }
+  .student-record .annual-chart { gap: .12rem; }
+  .student-record .annual-chart li { padding: .45rem .1rem; min-width: 0; overflow-wrap: anywhere; }
+  .student-record .annual-chart .term-score { font-size: clamp(.85rem,7cqi,1.2rem); }
+  .student-record .annual-chart .term-name, .student-record .annual-chart .term-note { font-size: .72rem; }
 }
 @media (max-height: 37.99rem) {
   .presentation-screen:is(.detail-screen,.meeting-screen) { height: auto; min-height: 100dvh; overflow: visible; }
