@@ -13,8 +13,7 @@ import {
   Target,
   ClipboardCheck,
 } from "lucide-react";
-import { db, type GradePeriodRecord, type StudentRecord } from "@/lib/db";
-import { useLiveQuery } from "dexie-react-hooks";
+import type { GradePeriodRecord, StudentRecord } from "@/lib/db";
 import { classEvolution, classProvaEvolution, matchesSearch } from "@/lib/class-analytics";
 import { ClassProvaChart } from "./class-prova-chart";
 import { analyticsPresentationHref } from "@/lib/analytics-presentation";
@@ -23,7 +22,6 @@ import {
   formatGain,
   formatGrade,
   periodLabel,
-  periodOrder,
 } from "@/lib/evolution";
 import { formatSubject } from "@/lib/mapao/subjects";
 import {
@@ -41,24 +39,6 @@ const status = (gain: number) =>
   gain > 1e-9 ? "Melhorou" : gain < -1e-9 ? "Reduziu" : "Manteve";
 const tone = (gain: number) =>
   gain > 1e-9 ? "positive" : gain < -1e-9 ? "negative" : "";
-
-export function ClassEvolutionSection({ classId, students, onImport }: {
-  classId: string; students: StudentRecord[]; onImport: () => void;
-}) {
-  const periods = useLiveQuery(async () => {
-    const records = await db.gradePeriods.where("classId").equals(classId).toArray();
-    return records.sort((a,b) => periodOrder(a) - periodOrder(b));
-  }, [classId]);
-  return <section className="class-evolution-section">
-    <header className="section-heading"><h2>Evolução da turma</h2>
-      {periods && periods.length >= 2 && <Button variant="outline" onClick={onImport}><ClipboardCheck />Mapões e bimestres</Button>}
-    </header>
-    {!periods ? <p role="status">Carregando bimestres…</p> : periods.length < 2 ? <div className="empty-panel">
-      <TrendingUp /><h3>Compare dois bimestres</h3><p>Identifique o bimestre atual e importe outro mapão do mesmo ano.</p>
-      <Button onClick={onImport}>Adicionar bimestres</Button>
-    </div> : <ClassEvolutionDashboard key={JSON.stringify(periods.map(p => p.id))} students={students} periods={periods} classId={classId} />}
-  </section>;
-}
 
 export function ClassEvolutionDashboard({
   students,

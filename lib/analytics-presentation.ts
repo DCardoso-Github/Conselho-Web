@@ -1,4 +1,4 @@
-export type AnalyticsView = "overview" | "evolution";
+export type AnalyticsView = "overview" | "evolution" | "annual";
 export type AnalyticsPanel = {
   kind: string;
   title: string;
@@ -19,7 +19,10 @@ export function analyticsPanels(
           { kind: "summary", title: "Panorama da turma" },
           { kind: "distribution", title: "Distribuição das notas" },
         ]
-      : [
+      : view === "annual" ? [
+          { kind: "year-mean", title: "Média da turma por bimestre" },
+          { kind: "year-prova", title: "Prova Paulista no ano" },
+        ] : [
           { kind: "mean", title: "Comparação das médias" },
           { kind: "movement", title: "Movimento da turma" },
           { kind: "low", title: "Notas vermelhas entre bimestres" },
@@ -37,7 +40,7 @@ export function analyticsPanels(
       panels.push({ kind: "pp-subject", title: "Prova Paulista · Disciplinas" });
     }
   }
-  const size = view === "overview" ? 3 : 2;
+  const size = view === "annual" ? 5 : view === "overview" ? 3 : 2;
   for (let start = 0; start < subjectCount; start += size) {
     const end = Math.min(start + size, subjectCount);
     panels.push({
@@ -52,7 +55,7 @@ export function analyticsPanels(
 
 export function analyticsPresentationHref(
   classId: string,
-  view: AnalyticsView,
+  view: Exclude<AnalyticsView, "annual">,
   before?: string,
   after?: string,
 ) {

@@ -41,7 +41,8 @@ function AlunoRoute({ classId, studentId }: { classId: string; studentId: string
 function AlunoContent({ classId, studentId, query }: { classId: string; studentId: string; query: URLSearchParams }) {
   const router = useRouter();
   const scope = query.get("scope") === "evolution" ? "evolution" : query.get("scope") === "top" ? "top" : "all";
-  const returnHref = `/turmas/${encodeURIComponent(classId)}?view=${scope === "evolution" ? "evolution" : scope === "top" ? "highlights" : "students"}`;
+  const annualScope = query.get("scope") === "annual";
+  const returnHref = `/turmas/${encodeURIComponent(classId)}?view=${annualScope || scope === "evolution" ? "evolution" : scope === "top" ? "highlights" : "students"}${scope === "evolution" ? "&mode=pair" : annualScope ? "&year=" + Number(query.get("year")) : ""}`;
   const [analysis, setAnalysis] = useState<PresentationCheckpoint>({});
   const onAnalysisChange = useCallback((state: PresentationCheckpoint) => setAnalysis(previous => JSON.stringify(previous) === JSON.stringify(state) ? previous : state), []);
   const [onlyLow, setOnlyLow] = useState(false);
@@ -64,7 +65,11 @@ function AlunoContent({ classId, studentId, query }: { classId: string; studentI
   const defaults = defaultComparison(data?.periods ?? []);
   const before = data?.periods.find(p => p.id === (analysis.beforeId ?? periodId(classId, { year: Number(query.get("year")), term: Number(query.get("baseline")) }))) ?? defaults.before;
   const after = data?.periods.find(p => p.id === (analysis.afterId ?? periodId(classId, { year: Number(query.get("year")), term: Number(query.get("target")) }))) ?? defaults.after;
-  const viewQuery = new URLSearchParams({ scope });
+  const viewQuery = new URLSearchParams({ scope: annualScope ? "annual" : scope });
+  if (annualScope || analysis.panel === "annual") {
+    viewQuery.set("panel", "annual");
+    viewQuery.set("year", String(analysis.annualYear ?? query.get("year") ?? defaults.after?.year ?? ""));
+  }
   if (scope === "evolution" && before && after) {
     viewQuery.set("year", String(before.year));
     viewQuery.set("baseline", String(before.term));
@@ -168,7 +173,7 @@ function AlunoContent({ classId, studentId, query }: { classId: string; studentI
       <StudentAnalysis
         allowEvolution={scope === "evolution"}
         startInEvolution={scope === "evolution"}
-        initial={{ beforeId: before?.id, afterId: after?.id }}
+        initial={{ beforeId: before?.id, afterId: after?.id, annualYear: Number(query.get("year")), panel: annualScope || query.get("panel") === "annual" ? "annual" : undefined }}
         onAnalysisChange={onAnalysisChange}
         periods={data.periods}
         onlyLow={onlyLow}

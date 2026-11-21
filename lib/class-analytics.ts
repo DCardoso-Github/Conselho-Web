@@ -42,7 +42,7 @@ export function classProvaEvolution(
 }
 
 /** Numeric grades only: missing values and concepts are never imputed as zero. */
-export function classOverview(students: StudentRecord[], subjects: string[]) {
+export function classOverview(students: Pick<StudentRecord, "grades">[], subjects: string[]) {
   const keys = [...new Set(subjects)];
   const rows = keys.map((subject) => {
     const grades = students.flatMap((student) => {

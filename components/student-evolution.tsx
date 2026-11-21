@@ -1,10 +1,8 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import { useLiveQuery } from "dexie-react-hooks";
-import { TrendingUp, Upload, Play, ArrowUpRight } from "lucide-react";
+import { TrendingUp, Play, ArrowUpRight } from "lucide-react";
 import {
-  db,
   type ClassRecord,
   type GradePeriodRecord,
   type StudentRecord,
@@ -15,7 +13,6 @@ import {
   formatGain,
   formatGrade,
   periodLabel,
-  periodOrder,
   type StudentEvolution as Evolution,
 } from "@/lib/evolution";
 import { formatSubject } from "@/lib/mapao/subjects";
@@ -29,44 +26,14 @@ import { compareProvaPaulista, type ProvaEvolution } from "@/lib/prova-evolution
 import { SubjectIcon } from "./subject-icon";
 import { Button } from "./ui/button";
 
-export function StudentEvolution({
-  cls,
-  students,
-  onImport,
-}: {
-  cls: ClassRecord;
-  students: StudentRecord[];
-  onImport: () => void;
-}) {
-  const periods = useLiveQuery(
-    () => db.gradePeriods.where("classId").equals(cls.id).toArray(),
-    [cls.id],
-  );
-  if (!periods) return <p className="empty-panel">Carregando bimestres…</p>;
-  return (
-    <EvolutionSelection
-      key={periods
-        .map((item) => item.id)
-        .sort()
-        .join(":")}
-      cls={cls}
-      students={students}
-      periods={[...periods].sort((a, b) => periodOrder(a) - periodOrder(b))}
-      onImport={onImport}
-    />
-  );
-}
-
-function EvolutionSelection({
+export function StudentEvolutionComparison({
   cls,
   students,
   periods,
-  onImport,
 }: {
   cls: ClassRecord;
   students: StudentRecord[];
   periods: GradePeriodRecord[];
-  onImport: () => void;
 }) {
   const [beforeId, setBeforeId] = useState(() => periods.at(-2)?.id ?? "");
   const [afterId, setAfterId] = useState(() => periods.at(-1)?.id ?? "");
@@ -83,42 +50,9 @@ function EvolutionSelection({
   const rest = remainingPresentationStudents(students, leaders.map(row => row.student), cls.subjects, comparisons);
   const comparisonById = new Map(comparisons.map(row => [row.student.id, row]));
   const viewQuery = `scope=evolution&year=${before?.year ?? ""}&baseline=${before?.term ?? ""}&target=${after?.term ?? ""}`;
-  const heading = (
-    <div className="highlights-heading">
-      <div>
-        <h2>
-          <TrendingUp aria-hidden="true" />
-          Alunos evolução
-        </h2>
-        <p>
-          Até seis alunos com as maiores melhoras de notas entre bimestres.
-        </p>
-      </div>
-      <Button variant="outline" onClick={onImport}>
-        <Upload />
-        Mapões e bimestres
-      </Button>
-    </div>
-  );
-  if (periods.length < 2)
-    return (
-      <section aria-label="Alunos evolução da turma">
-        {heading}
-        <div className="empty-panel">
-          <TrendingUp />
-          <h3>Vamos acompanhar a evolução</h3>
-          <p>
-            {!cls.currentPeriod
-              ? "Identifique o bimestre das notas atuais e importe o mapão de outro bimestre."
-              : "Importe mais um bimestre do mesmo ano para comparar as notas."}
-          </p>
-          <Button onClick={onImport}>Adicionar bimestres</Button>
-        </div>
-      </section>
-    );
   return (
     <section aria-label="Alunos evolução da turma">
-      {heading}
+      <p className="year-method">Até seis alunos com as maiores melhoras de notas entre os dois bimestres.</p>
       <div className="comparison-controls">
         <label className="form-field">
           Bimestre inicial

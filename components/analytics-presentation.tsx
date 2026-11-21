@@ -2,6 +2,7 @@
 import {
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type ReactNode,
@@ -23,6 +24,8 @@ import {
 } from "lucide-react";
 import type { ClassRecord, GradePeriodRecord, StudentRecord } from "@/lib/db";
 import { classOverview, classEvolution, classProvaEvolution } from "@/lib/class-analytics";
+import { annualGrades, annualProva } from "@/lib/annual-evolution";
+import { YearChart, YearMatrix } from "./annual-evolution";
 import { ClassProvaChart } from "./class-prova-chart";
 import {
   analyticsPanels,
@@ -40,10 +43,11 @@ import {
 import { SubjectIcon } from "./subject-icon";
 import { Button } from "./ui/button";
 
-type AnalyticsProps = { cls: ClassRecord; students: StudentRecord[]; view: AnalyticsView; before?: GradePeriodRecord; after?: GradePeriodRecord };
+type AnalyticsProps = { cls: ClassRecord; students: StudentRecord[]; view: AnalyticsView; periods: GradePeriodRecord[]; year: number; before?: GradePeriodRecord; after?: GradePeriodRecord };
 export function AnalyticsPresentation(props: AnalyticsProps) {
   const sessionKey = `presentation:analytics:${props.cls.id}:${props.view}:${props.before?.id ?? ""}:${props.after?.id ?? ""}`;
-  return <PresentationSession key={sessionKey} sessionKey={sessionKey}>{(initial,save)=><AnalyticsSlides {...props} initial={initial} save={save} />}</PresentationSession>;
+  const key = props.view === "annual" ? sessionKey + props.year : sessionKey;
+  return <PresentationSession key={key} sessionKey={key}>{(initial,save)=><AnalyticsSlides {...props} initial={initial} save={save} />}</PresentationSession>;
 }
 const panelKey = (panel: ReturnType<typeof analyticsPanels>[number], subjects: string[]) => JSON.stringify([panel.kind, panel.subject ?? (panel.start !== undefined ? subjects[panel.start] : "")]);
 function AnalyticsSlides({
@@ -54,15 +58,12 @@ function AnalyticsSlides({
   after,
   initial,
   save,
+  periods,
+  year,
 }: {
   initial?: PresentationCheckpoint;
   save: (state: PresentationCheckpoint) => void;
-  cls: ClassRecord;
-  students: StudentRecord[];
-  view: AnalyticsView;
-  before?: GradePeriodRecord;
-  after?: GradePeriodRecord;
-}) {
+} & AnalyticsProps) {
   const router = useRouter();
   const projector = useProjector();
   const [activeKey,setActiveKey] = useState(initial?.panel);
@@ -76,12 +77,13 @@ function AnalyticsSlides({
   const subjects = [...overview.rows].sort(
     (a, b) => b.low - a.low || a.subject.localeCompare(b.subject, "pt-BR"),
   );
+  const annual = useMemo(() => view === "annual" ? annualGrades(periods, cls.id, year) : undefined, [view, periods, cls.id, year]);
   const panels = analyticsPanels(
     view,
-    view === "overview" ? subjects.length : evolution.subjects.length,
+    annual ? annual.subjects.length : view === "overview" ? subjects.length : evolution.subjects.length,
     prova.subjects,
   );
-  const subjectKeys = view === "overview" ? subjects.map(s=>s.subject) : evolution.subjects.map(s=>s.subject);
+  const subjectKeys = annual ? annual.subjects.map(s => s.subject) : view === "overview" ? subjects.map(s=>s.subject) : evolution.subjects.map(s=>s.subject);
   const panelKeys = panels.map(p=>panelKey(p,subjectKeys));
   const serializedKeys = JSON.stringify(panelKeys);
   const safeIndex = checkpointIndex(panelKeys,activeKey);
@@ -97,7 +99,7 @@ function AnalyticsSlides({
       ? cls.currentPeriod
         ? periodLabel(cls.currentPeriod)
         : "Notas atuais"
-      : `${periodLabel(before!)} → ${periodLabel(after!)}`;
+      : view === "annual" ? `Ano letivo · ${year}` : `${periodLabel(before!)} → ${periodLabel(after!)}`;
   const leave = useCallback(() => {
     if (document.fullscreenElement)
       void document.exitFullscreen().catch(() => {});
@@ -109,9 +111,9 @@ function AnalyticsSlides({
     router.push(
       view === "overview"
         ? `${base}?view=overview`
-        : `${base}?view=class-evolution&${query}`,
+        : view === "annual" ? `${base}?view=class-evolution&year=${year}` : `${base}?view=class-evolution&${query}`,
     );
-  }, [router, cls.id, view, before?.id, after?.id]);
+  }, [router, cls.id, view, year, before?.id, after?.id]);
   useEffect(() => {
     const update = () => setFull(!!document.fullscreenElement);
     document.addEventListener("fullscreenchange", update);
@@ -172,7 +174,20 @@ function AnalyticsSlides({
   };
   let content: ReactNode;
   let note = "";
-  if (view === "overview") {
+  if (annual) {
+    if (panel.kind === "year-mean") {
+      content = <YearChart points={annual.points} />;
+      note = "Média das notas numéricas de cada mapão, na escala de 0 a 10.";
+    } else if (panel.kind === "year-prova") {
+      const prova = annualProva(students, cls.id, year);
+      content = prova.some(row => row.values.some(value => value !== null))
+        ? <YearMatrix label="Prova Paulista por bimestre" firstColumn="Indicador" rows={prova} percent />
+        : <Empty>Nenhum resultado da Prova Paulista identificado neste ano.</Empty>;
+    } else {
+      content = <YearMatrix label="Notas por disciplina ao longo do ano" firstColumn="Disciplina"
+        rows={annual.subjects.slice(panel.start, panel.end).map(row => ({ label: formatSubject(row.subject), values: row.values }))} />;
+    }
+  } else if (view === "overview") {
     if (panel.kind === "summary") {
       content = (
         <div className="projection-stats">

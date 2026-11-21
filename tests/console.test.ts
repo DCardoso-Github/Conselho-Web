@@ -30,6 +30,7 @@ import { compareProvaPaulista, numericPercentage } from "../lib/prova-evolution"
 import { studentDraft, validateStudentDraft } from "../lib/student-edit";
 import { analysisHref, checkpointIndex, defaultComparison, filterAnalysisStudents, inGradeBand, readBand, selectedStudents, studentTimeline } from "../lib/analysis-navigation";
 import { getMeta, setMeta } from "../lib/db";
+import { annualGrades, annualProva } from "../lib/annual-evolution";
 
 test("analysis filters preserve boundary grades, skip missing data and never duplicate students", () => {
   const rows = [student(1,0),student(2,4),student(3,4.5),student(4,7),student(5,10),student(6,"ET"),student(7,null)];
@@ -65,6 +66,38 @@ test("student timelines preserve gaps and zero without linking a different class
   assert.equal(studentTimeline(s,[{...p1,classId:"OUTRA"}],2026)[0].value,null);
   assert.equal(defaultComparison([p3,p1]).before?.id,p1.id);
   assert.equal(defaultComparison([p3,periodRecord(1,[s],2027)]).before,undefined);
+});
+
+test("annual grades use every snapshot in order, with historical rosters and new disciplines", () => {
+  const first = periodRecord(1, [student(1, 0), student(2, 10)]);
+  const second = periodRecord(2, [{ ...student(1, "ET"), grades: { ARTE: 8 } }]);
+  second.subjects = ["ARTE"];
+  const third = periodRecord(3, [student(1, 3)]);
+  const fourth = periodRecord(4, [student(1, 9)]);
+  const periods = [fourth, second, periodRecord(1, [student(1, 7)], 2025), first, third];
+  const annual = annualGrades(periods, "TESTE", 2026);
+  assert.deepEqual(annual.points.map(p => p.average), [5, 8, 3, 9]);
+  assert.deepEqual(annual.points.map(p => p.studentsWithGrades), [2, 1, 1, 1]);
+  assert.deepEqual(annual.subjects.find(s => s.subject === "ARTE")?.values, [null, 8, null, null]);
+  assert.deepEqual(annualGrades(periods, "TESTE", 2026, student(1, 10)).points.map(p => p.average), [0, 8, 3, 9]);
+  const gaps = annualGrades([first, periodRecord(3, [student(1, "ET")])], "TESTE", 2026);
+  assert.deepEqual(gaps.points.map(p => [p.imported, p.average]), [[true,5], [false,null], [true,null], [false,null]]);
+  const ambiguous = periodRecord(1, [student(1, 5), student(1, 8)]);
+  assert.deepEqual(annualGrades([ambiguous], "TESTE", 2026, student(1,5)).points.map(p => p.average), [null,null,null,null]);
+});
+
+test("annual Prova Paulista uses only identified results from the selected class and year", () => {
+  const pp = (value: number) => ({ acertos: value, participacao: null, grades: { MAT: value } });
+  const alice = { ...student(1, 5), provaPaulistaHistory: {
+    [periodId("TESTE", { year: 2026, term: 1 })]: pp(0),
+    [periodId("TESTE", { year: 2026, term: 3 })]: pp(0.5),
+    [periodId("TESTE", { year: 2025, term: 2 })]: pp(1),
+  }};
+  const bob = { ...student(2, 6), provaPaulista: pp(0.9), provaPaulistaPeriod: { year: 2026, term: 3 } };
+  const rows = annualProva([alice, bob, { ...student(3, 8), provaPaulista: pp(0.95) }, { ...bob, classId: "OUTRA" }], "TESTE", 2026);
+  assert.deepEqual(rows.find(row => row.label === "Acertos")?.values, [0, null, 70, null]);
+  assert.deepEqual(rows.find(row => row.label === "Matemática")?.values, [0, null, 70, null]);
+  assert.deepEqual(rows.find(row => row.label === "Participação")?.values, [null, null, null, null]);
 });
 
 test("presentation checkpoints and projector preferences persist without modifying student data", async () => {

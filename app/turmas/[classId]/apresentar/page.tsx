@@ -82,7 +82,7 @@ function PresentationLoader({ classId }: { classId: string }) {
     ? evolutionLeaders(evolution).map((row) => row.student)
     : presentationStudents(
         data.students,
-        query.get("scope"),
+        query.get("scope") === "annual" ? "all" : query.get("scope"),
         query.get("scope") === "top" ? null : query.get("from"),
         data.cls.subjects,
       );
@@ -95,7 +95,11 @@ function PresentationLoader({ classId }: { classId: string }) {
     {(initial, save) => <Presentation
       initial={initial} save={save} periods={data.periods}
       key={`${classId}:${query.toString()}`}
-      initialComparison={evolution && before && after ? { beforeId: before.id, afterId: after.id } : undefined}
+      annualScope={query.get("scope") === "annual"}
+      initialComparison={{
+        ...(evolution && before && after ? { beforeId: before.id, afterId: after.id } : {}),
+        ...(query.get("scope") === "annual" || query.get("panel") === "annual" ? { panel: "annual", annualYear: Number(query.get("year")) } : {}),
+      }}
       groupLabel={groupLabel}
       remaining={groupLabel ? remainingPresentationStudents(data.students, list, cls.subjects, evolution) : []}
       cls={cls}
@@ -110,6 +114,7 @@ function Presentation({
   students: selected,
   from,
   initialComparison,
+  annualScope,
   periods,
   initial,
   save,
@@ -119,6 +124,7 @@ function Presentation({
   remaining: StudentRecord[];
   groupLabel?: string;
   initialComparison?: PresentationCheckpoint;
+  annualScope: boolean;
   periods: GradePeriodRecord[];
   initial?: PresentationCheckpoint;
   save: (state: PresentationCheckpoint) => void;
@@ -132,7 +138,7 @@ function Presentation({
   const students = showRemaining ? [...selected, ...remaining] : selected;
   const [index, setIndex] = useState(() => checkpointIndex(students.map(s=>s.id), initial?.studentId ?? (from ? Number(from) : undefined)));
   const [onlyLow, setOnlyLow] = useState(initial?.onlyLow ?? false);
-  const [analysis, setAnalysis] = useState<PresentationCheckpoint>({ ...initialComparison, ...initial, panel: initial?.panel ?? "summary" });
+  const [analysis, setAnalysis] = useState<PresentationCheckpoint>({ ...initialComparison, ...initial, panel: initial?.panel ?? initialComparison?.panel ?? "summary" });
   const onAnalysisChange = useCallback((state: PresentationCheckpoint) => setAnalysis(previous => JSON.stringify(previous) === JSON.stringify(state) ? previous : state), []);
   const [exit, setExit] = useState(false);
   const [fullscreenMessage, setFullscreenMessage] = useState("");
@@ -147,9 +153,9 @@ function Presentation({
   }, []);
   const chooseStudent = useCallback((position: number) => {
     if (position === safeIndex) return;
-    setAnalysis(previous => ({ ...previous, panel: "summary" }));
+    setAnalysis(previous => ({ ...previous, panel: annualScope ? "annual" : "summary" }));
     setIndex(position);
-  }, [safeIndex]);
+  }, [safeIndex, annualScope]);
   const openPanel = (panel: string) => setAnalysis(previous => ({ ...previous, panel }));
   const nextStudent = useCallback(() => {
     if (safeIndex >= students.length - 1 && canContinue) includeRemaining();
@@ -174,8 +180,8 @@ function Presentation({
   const leave = () => {
     if (document.fullscreenElement)
       void document.exitFullscreen().catch(() => {});
-    const view = groupLabel === "Alunos evolução" ? "evolution" : groupLabel === "Alunos destaque" ? "highlights" : "students";
-    router.push(`/turmas/${encodeURIComponent(cls.id)}?view=${view}`);
+    const view = annualScope || groupLabel === "Alunos evolução" ? "evolution" : groupLabel === "Alunos destaque" ? "highlights" : "students";
+    router.push(`/turmas/${encodeURIComponent(cls.id)}?view=${view}${annualScope ? "&year=" + analysis.annualYear : groupLabel === "Alunos evolução" ? "&mode=pair" : ""}`);
   };
   const fullscreen = async () => {
     try {
@@ -244,7 +250,7 @@ function Presentation({
         student={student} subjects={cls.subjects}
         before={periods.find(period => period.id === analysis.beforeId)}
         after={periods.find(period => period.id === analysis.afterId)}
-        showEvolution={groupLabel === "Alunos evolução"} onOpen={openPanel}
+        showAnnual={periods.length > 0} showEvolution={groupLabel === "Alunos evolução"} onOpen={openPanel}
       /> : <div className="meeting-details" role="region" aria-label="Detalhes do aluno" tabIndex={0}>
         <Button variant="ghost" className="meeting-back" onClick={() => openPanel("summary")}><ArrowLeft />Resumo do aluno</Button>
         <StudentAnalysis

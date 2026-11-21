@@ -30,11 +30,10 @@ import { StudentGrid, type StudentSort } from "@/components/student-card";
 import { importOptions, type ImportKind } from "@/components/import-options";
 import { ClassImportDialog } from "@/components/class-import-dialogs";
 import { GradeHistoryDialog } from "@/components/grade-history-dialog";
-import { StudentEvolution } from "@/components/student-evolution";
+import { EvolutionWorkspace } from "@/components/evolution-workspace";
 import { periodLabel } from "@/lib/evolution";
 import { StudentHighlights } from "@/components/student-highlights";
 import { StudentActionsProvider } from "@/components/student-actions";
-import { ClassEvolutionSection } from "@/components/class-evolution-dashboard";
 import { ClassDashboard } from "@/components/class-dashboard";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { Button } from "@/components/ui/button";
@@ -233,17 +232,10 @@ function TurmaContent({ classId }: { classId: string }) {
             classId={classId}
           />
         </section>}
-      {view === "evolution" && <section>
-          <StudentEvolution
-            cls={cls}
-            students={students}
-            onImport={() => setHistory(true)}
-          />
-        </section>}
+      {(view === "evolution" || view === "class-evolution") && <EvolutionWorkspace key={view} view={view} cls={cls} students={students} onImport={() => setHistory(true)} />}
       {view === "overview" && <section>
           <ClassDashboard students={students} subjects={cls.subjects} classId={classId} />
         </section>}
-      {view === "class-evolution" && <ClassEvolutionSection classId={classId} students={students} onImport={() => setHistory(true)} />}
       </StudentActionsProvider>
       <Dialog open={filters} onOpenChange={setFilters}>
         <DialogContent className="filter-dialog">

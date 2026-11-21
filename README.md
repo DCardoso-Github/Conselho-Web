@@ -23,7 +23,7 @@ Consulte a documentação da versão instalada em `node_modules/next/dist/docs` 
 - Tema escuro inicial; a preferência salva e o tema claro continuam disponíveis no Menu.
 - Edição explícita, com confirmação de descarte e proteção ao sair da página.
 
-As rotas permanecem iguais. A apresentação aceita `scope=all|low|top|evolution` e `from=<id>`.
+As rotas permanecem iguais. A apresentação aceita `scope=all|low|top|evolution|annual` e `from=<id>`.
 Sem `scope`, mantém o recorte anterior: alunos com notas vermelhas, ou a turma toda quando não houver nenhum.
 Nos recortes all/low/top, se `from` apontar para um aluno fora do recorte, a sequência passa a incluir toda a turma.
 
@@ -35,7 +35,9 @@ Domínios de prévia e produção têm armazenamentos independentes.
 - Na importação inicial, informe ano e bimestre. Importe arquivos do mesmo período por vez.
 - Para turmas existentes sem período, abra **Gerenciar turma → Mapões e bimestres** e identifique primeiro o ano/bimestre das notas atuais, sem precisar reimportá-las.
 - Importe outros mapões da mesma turma e ano nesse painel. O bimestre mais recente permanece ativo; anteriores entram apenas no histórico. Atualizar um bimestre existente exige marcar explicitamente a substituição. Cada bimestre pode ser exportado como XLSX separadamente.
-- **Alunos evolução** compara dois bimestres escolhidos, sempre do inicial para um posterior. A média usa somente disciplinas comuns com notas numéricas válidas de 0 a 10 nos dois períodos. Notas ausentes, conceitos (ET etc.) e disciplinas novas/removidas não são imputados como zero.
+- **Evolução da turma → Ano inteiro** mostra as médias dos quatro bimestres, as disciplinas e a Prova Paulista. Cada média usa as notas numéricas do mapão daquele período, inclusive dos alunos que passaram pela turma. Bimestres ausentes ficam sinalizados. **Apresentar ano** projeta os resultados.
+- **Alunos evolução → Ano inteiro** reúne as quatro médias de cada aluno atual. Abra o nome para consultar o histórico individual por disciplina. A aba **Ano inteiro** também fica disponível na ficha e no conselho a partir do primeiro mapão identificado.
+- **Alunos evolução → Dois bimestres** compara dois bimestres escolhidos, sempre do inicial para um posterior. A média usa somente disciplinas comuns com notas numéricas válidas de 0 a 10 nos dois períodos. Notas ausentes, conceitos (ET etc.) e disciplinas novas/removidas não são imputados como zero.
 - A associação usa o nome normalizado (acentos, caixa e espaços), sem aproximação. Participam os alunos da turma atual encontrados nos dois períodos; nomes ambíguos e alunos sem pares de notas são excluídos da comparação. Importações com nomes duplicados são rejeitadas.
 - São exibidos até cinco ganhos positivos na média, do maior para o menor; desempate por maior quantidade de disciplinas comparadas, nome e ordem original. A cobertura pode variar por aluno e é indicada nos cartões. A comparação da turma inteira inclui quedas, estabilidade e ausência de comparação.
 - **Apresentar evolução** usa `scope=evolution&year=2026&baseline=1&target=3` e inclui os bimestres e a variação da média no resumo de cada aluno. **Ver evolução** abre a comparação detalhada. As outras abas continuam mostrando os dados atuais.
@@ -71,6 +73,6 @@ Em **Gerenciar turma → Prova Paulista** ou **Frequência/Tutor**, selecione um
 
 Na Prova Paulista, confira ano e bimestre antes de importar. O histórico é guardado em campos opcionais dos alunos, sem migração de tabelas. Importar um bimestre anterior não substitui o resultado mais recente exibido na ficha. Importar novamente o mesmo período atualiza somente as colunas presentes; colunas ausentes são preservadas. Dados antigos sem período continuam visíveis, mas precisam ser reimportados com o bimestre correto para participar das comparações.
 
-**Alunos evolução** mantém a seleção e ordenação pela melhora das notas. Acertos e participação na Prova Paulista aparecem como indicadores complementares em pontos percentuais, usando os mesmos bimestres selecionados. Em **Apresentar evolução → Prova Paulista**, são exibidos os valores inicial/final e a comparação por disciplina. Dados ausentes não são convertidos em zero.
+**Alunos evolução → Dois bimestres** mantém a seleção e ordenação pela melhora das notas. Acertos e participação na Prova Paulista aparecem como indicadores complementares em pontos percentuais, usando os mesmos bimestres selecionados. Em **Apresentar evolução → Prova Paulista**, são exibidos os valores inicial/final e a comparação por disciplina. Dados ausentes não são convertidos em zero.
 
 `npx tsx tests/make-complementary-fixtures.ts` gera planilhas fictícias de duas turmas em `artifacts/complementary-fixtures` para testar as duas importações e a evolução entre o primeiro e o terceiro bimestre.

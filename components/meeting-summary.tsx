@@ -11,11 +11,12 @@ type Props = {
   subjects: string[];
   before?: GradePeriodRecord;
   after?: GradePeriodRecord;
+  showAnnual: boolean;
   showEvolution: boolean;
-  onOpen: (panel: "grades" | "evolution") => void;
+  onOpen: (panel: "grades" | "evolution" | "annual") => void;
 };
 
-export function MeetingSummary({ student, subjects, before, after, showEvolution, onOpen }: Props) {
+export function MeetingSummary({ student, subjects, before, after, showAnnual, showEvolution, onOpen }: Props) {
   const average = studentAverage(student, subjects);
   const low = lowGradeCount(student, subjects);
   const comparison = showEvolution && before && after ? comparePeriods([student], before, after)[0] : undefined;
@@ -33,6 +34,7 @@ export function MeetingSummary({ student, subjects, before, after, showEvolution
       </p>}
       <div className="meeting-links">
         <Button size="lg" onClick={() => onOpen("grades")}><BookOpen />Ver disciplinas</Button>
+        {showAnnual && <Button variant="outline" onClick={() => onOpen("annual")}>Ver ano inteiro</Button>}
         {showEvolution && before && after && <Button variant="outline" onClick={() => onOpen("evolution")}>Ver evolução</Button>}
       </div>
     </div>

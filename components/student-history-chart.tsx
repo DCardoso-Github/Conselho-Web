@@ -1,23 +1,22 @@
-import type { GradePeriodRecord, StudentRecord } from "@/lib/db";
-import { studentTimeline } from "@/lib/analysis-navigation";
 import { formatGrade } from "@/lib/evolution";
-import { ChartTable } from "./analytics-primitives";
-export function StudentHistoryChart({ student, periods, year }: { student: StudentRecord; periods: GradePeriodRecord[]; year: number }) {
-  const points = studentTimeline(student, periods, year);
-  return <section className="student-history-chart" aria-label="Média ao longo dos bimestres">
-    <h3>Média ao longo do ano · {year}</h3>
-    <svg viewBox="0 0 640 230" role="img" aria-label="Média individual por bimestre. Escala de zero a dez. Intervalos sem informação aparecem interrompidos.">
-      {[0,5,10].map(n => <g key={n}><line x1="50" x2="610" y1={180-n*15} y2={180-n*15} className="history-grid" /><text x="28" y={185-n*15}>{n}</text></g>)}
-      {points.map((p,i) => {
-        const x = 75+i*170, y = 180-(p.value ?? 0)*15, previous = points[i-1];
-        return <g key={p.term}>
-          {p.value !== null && previous?.value !== null && previous?.value !== undefined && <line x1={x-170} y1={180-previous.value*15} x2={x} y2={y} className="history-line" />}
-          {p.value !== null && <><circle cx={x} cy={y} r="6" className="history-point" /><text x={x} y={y-12} textAnchor="middle">{formatGrade(p.value)}</text></>}
-          <text x={x} y="215" textAnchor="middle">{p.term}º bim.</text>
-        </g>;
-      })}
-    </svg>
-    <ChartTable label="Média por bimestre" headers={["Bimestre","Média"]} rows={points.map(p=>[p.label,p.value===null?"Sem informação":formatGrade(p.value)])} />
-  </section>;
-}
 
+export function HistoryLine({ values }: { values: (number | null)[] }) {
+  const x = (index: number) => 12.5 + index * 25;
+  const y = (value: number) => 93 - value * 8.6;
+  return <div className="year-plot" aria-hidden="true">
+    <div className="year-axis"><span>10</span><span>5</span><span>0</span></div>
+    <div className="year-plot-area">
+      <svg viewBox="0 0 100 100" preserveAspectRatio="none" focusable="false">
+        {[0, 5, 10].map(n => <line key={n} x1="0" x2="100" y1={y(n)} y2={y(n)} className="year-gridline" />)}
+        {values.map((value, i) => {
+          const previous = values[i - 1];
+          if (value === null || previous == null) return null;
+          return <line key={i} x1={x(i - 1)} y1={y(previous)} x2={x(i)} y2={y(value)} className="year-segment" />;
+        })}
+      </svg>
+      {values.map((value, i) => value !== null && <span className="year-dot" key={i}
+        title={`${i + 1}º bimestre · ${formatGrade(value)}`}
+        style={{ left: x(i) + "%", top: y(value) + "%" }} />)}
+    </div>
+  </div>;
+}

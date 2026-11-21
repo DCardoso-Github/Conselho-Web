@@ -1,4 +1,6 @@
 import type { GradePeriodRecord, StudentRecord } from "./db";
+import { annualPeriods, matchedStudent } from "./annual-evolution";
+import { studentAverage } from "./highlights";
 import { nameKey, numericGrade, periodLabel, periodOrder } from "./evolution";
 
 export const gradeBands = { low: "Notas de 0 a 4", mid: "Notas acima de 4 e abaixo de 7", high: "Notas de 7 a 10" } as const;
@@ -28,11 +30,10 @@ export function defaultComparison(periods: GradePeriodRecord[]) {
   return { before, after };
 }
 export function studentTimeline(student: StudentRecord, periods: GradePeriodRecord[], year: number) {
-  return [1,2,3,4].map(term => {
-    const period = periods.find(p => p.year === year && p.term === term && p.classId === student.classId);
-    const matches = period?.students.filter(s => nameKey(s.name) === nameKey(student.name)) ?? [];
-    const values = matches.length === 1 ? period!.subjects.map(s => numericGrade(matches[0].grades[s])).filter((n): n is number => n !== null) : [];
-    return { term, label: periodLabel({ year, term }), value: values.length ? values.reduce((a,b)=>a+b,0)/values.length : null };
+  return annualPeriods(periods, student.classId, year).map((period, index) => {
+    const row = period && matchedStudent(period, student.name);
+    const term = index + 1;
+    return { term, label: periodLabel({ year, term }), value: period && row ? studentAverage(row, period.subjects) : null };
   });
 }
 export type PresentationCheckpoint = {
@@ -40,6 +41,7 @@ export type PresentationCheckpoint = {
   panel?: string;
   remaining?: boolean;
   onlyLow?: boolean;
+  annualYear?: number;
   beforeId?: string;
   afterId?: string;
 };

@@ -29,8 +29,9 @@ export default function AnalyticsPresentationPage({
   if (!data) return <p className="empty-panel">Preparando apresentação…</p>;
   const before = data.periods.find((p) => p.id === beforeId);
   const after = data.periods.find((p) => p.id === afterId);
+  const year = Number(query.get("year"));
   const valid =
-    view === "overview" ||
+    view === "overview" || (view === "annual" && data.periods.some(period => period.year === year)) ||
     (view === "evolution" &&
       before &&
       after &&
@@ -43,12 +44,12 @@ export default function AnalyticsPresentationPage({
         <p>
           {!data.cls
             ? "Turma não encontrada neste navegador."
-            : "Escolha dois bimestres disponíveis do mesmo ano, com o final posterior ao inicial."}
+            : view === "annual" ? "Escolha um ano com mapões cadastrados." : "Escolha dois bimestres disponíveis do mesmo ano, com o final posterior ao inicial."}
         </p>
         <Button asChild>
           <Link
             href={
-              data.cls && view === "evolution"
+              data.cls && (view === "evolution" || view === "annual")
                 ? `/turmas/${encodeURIComponent(classId)}?view=class-evolution`
                 : `/turmas/${encodeURIComponent(classId)}`
             }
@@ -60,10 +61,12 @@ export default function AnalyticsPresentationPage({
     );
   return (
     <AnalyticsPresentation
-      key={`${classId}:${view}:${beforeId}:${afterId}`}
+      key={`${classId}:${view}:${year}:${beforeId}:${afterId}`}
       cls={data.cls}
       students={data.students}
-      view={view === "evolution" ? "evolution" : "overview"}
+      view={view === "annual" ? "annual" : view === "evolution" ? "evolution" : "overview"}
+      periods={data.periods}
+      year={year}
       before={before}
       after={after}
     />

@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import * as Tabs from "@radix-ui/react-tabs";
 import {
   BookOpen,
+  CalendarDays,
   ClipboardList,
   ClipboardCheck,
   CalendarCheck,
@@ -35,12 +36,14 @@ export function StudentPanels({
   onlyLow,
   onOnlyLowChange,
   evolution,
+  annualReport,
   comparisonLabels,
   provaEvolution,
   comparisonControls,
   activePanel,
   onPanelChange,
 }: {
+  annualReport?: ReactNode;
   comparisonControls?: ReactNode;
   activePanel?: string;
   onPanelChange?: (panel: string) => void;
@@ -71,6 +74,7 @@ export function StudentPanels({
           <BookOpen aria-hidden="true" />
           <span>{comparisonLabels ? "Notas atuais" : "Notas do bimestre"}</span>
         </Tabs.Trigger>
+        {annualReport && <Tabs.Trigger value="annual"><CalendarDays aria-hidden="true" /><span>Ano inteiro</span></Tabs.Trigger>}
         <Tabs.Trigger value="pp">
           <ClipboardCheck aria-hidden="true" />
           <span>Prova Paulista</span>
@@ -98,6 +102,7 @@ export function StudentPanels({
           </div>}
         </Tabs.Content>
       )}
+      {annualReport && <Tabs.Content value="annual" className="panel-content" tabIndex={0}>{annualReport}</Tabs.Content>}
       <Tabs.Content value="grades" className="panel-content academic-panel" tabIndex={0}>
         <Academic
           student={student}
