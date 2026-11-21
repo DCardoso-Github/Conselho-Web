@@ -123,6 +123,17 @@
 .meeting-screen .presentation-footer { margin-top: auto; }
 .meeting-screen:has(.meeting-summary) { min-height: 100svh; }
 .meeting-screen:has(.meeting-summary) .presentation-footer { position: static; }
+.meeting-details { display: flex; flex-direction: column; gap: .75rem; }
+@media (min-height: 34rem) {
+  .presentation-screen.meeting-screen { height: 100dvh; min-height: 0; overflow: hidden; }
+  .meeting-screen > .meeting-details, .meeting-screen > .meeting-summary {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+    overscroll-behavior: contain;
+  }
+  .meeting-details > .presentation-layout { flex: 1 0 auto; }
+}
 @media (max-width: 760px) {
   .welcome-stage { grid-template-columns: minmax(0, 1fr) minmax(0, .55fr); padding-inline: 1.6rem; }
   .class-choice { gap: 1rem; }

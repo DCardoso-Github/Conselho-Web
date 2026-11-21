@@ -245,7 +245,7 @@ function Presentation({
         before={periods.find(period => period.id === analysis.beforeId)}
         after={periods.find(period => period.id === analysis.afterId)}
         showEvolution={groupLabel === "Alunos evolução"} onOpen={openPanel}
-      /> : <>
+      /> : <div className="meeting-details" role="region" aria-label="Detalhes do aluno" tabIndex={0}>
         <Button variant="ghost" className="meeting-back" onClick={() => openPanel("summary")}><ArrowLeft />Resumo do aluno</Button>
         <StudentAnalysis
           key={student.id} periods={periods} initial={analysis}
@@ -253,7 +253,7 @@ function Presentation({
           onlyLow={onlyLow} onOnlyLowChange={setOnlyLow} student={student} subjects={cls.subjects}
           profile={<StudentProfile student={student} />}
         />
-      </>}
+      </div>}
       <footer className="presentation-footer">
         <span className="keyboard-hint">← → para trocar de aluno</span>
         <div className="student-navigation">
