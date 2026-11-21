@@ -4,6 +4,7 @@ import "./globals.css";
 import "./presentation.css";
 import "./council.css";
 import "./focus.css";
+import "./student-record.css";
 import { Providers } from "./providers";
 import { AppShell } from "@/components/app-shell";
 

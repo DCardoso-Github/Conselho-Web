@@ -146,7 +146,7 @@ function EvolutionCard({ classId, student, row, prova, leader = false, viewQuery
   leader?: boolean;
 }) {
   const average = studentAverage(student);
-  return <StudentActions student={student} viewQuery={viewQuery}><article className={`student-tile evolution-tile ${leader ? "student-highlight" : ""}`}>
+  return <StudentActions student={student} viewQuery={viewQuery}><Link href={`/turmas/${encodeURIComponent(classId)}/alunos/${student.id}?${viewQuery}`} className={`student-tile evolution-tile ${leader ? "student-highlight" : ""}`}>
     <StudentProfile compact student={student} />
     <div className="student-tile-content">
       {leader && <span className="highlight-label"><TrendingUp aria-hidden="true" /> Aluno evolução</span>}
@@ -166,8 +166,8 @@ function EvolutionCard({ classId, student, row, prova, leader = false, viewQuery
       </div>}
     </div>
     <ProvaEvolutionSummary compact comparison={prova} />
-    <Link className="tile-action" href={`/turmas/${encodeURIComponent(classId)}/alunos/${student.id}?${viewQuery}`}>Abrir aluno <ArrowUpRight aria-hidden="true" /></Link>
-  </article></StudentActions>;
+    <span className="tile-action">Abrir ficha <ArrowUpRight aria-hidden="true" /></span>
+  </Link></StudentActions>;
 }
 
 export function EvolutionDetail({

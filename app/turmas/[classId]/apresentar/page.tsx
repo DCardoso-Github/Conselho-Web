@@ -3,7 +3,7 @@ import { Suspense, use, useCallback, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useLiveQuery } from "dexie-react-hooks";
-import { ArrowLeft, ChevronLeft, ChevronRight, Maximize, Settings2, Users, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Maximize, Settings2, Users, X } from "lucide-react";
 import { db, type ClassRecord, type StudentRecord, type GradePeriodRecord } from "@/lib/db";
 import { checkpointIndex, filterAnalysisStudents, readBand, selectedStudents, type PresentationCheckpoint } from "@/lib/analysis-navigation";
 import { PresentationSession, useProjector } from "@/components/presentation-settings";
@@ -13,11 +13,10 @@ import {
   evolutionLeaders,
   periodId,
 } from "@/lib/evolution";
-import { StudentProfile } from "@/components/student-profile";
+import { recordEntry, recordPanel } from "@/lib/student-record-view";
 import { StudentAnalysis } from "@/components/student-analysis";
 import { StudentJump } from "@/components/student-jump";
 import { Button } from "@/components/ui/button";
-import { MeetingSummary } from "@/components/meeting-summary";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 export default function ApresentarPage({
@@ -86,6 +85,7 @@ function PresentationLoader({ classId }: { classId: string }) {
         query.get("scope") === "top" ? null : query.get("from"),
         data.cls.subjects,
       );
+  const entry = recordEntry(query);
   const groupLabel = query.get("scope") === "top"
     ? "Alunos destaque"
     : query.get("scope") === "evolution" ? "Alunos evolução" : undefined;
@@ -96,9 +96,10 @@ function PresentationLoader({ classId }: { classId: string }) {
       initial={initial} save={save} periods={data.periods}
       key={`${classId}:${query.toString()}`}
       annualScope={query.get("scope") === "annual"}
-      initialComparison={{
-        ...(evolution && before && after ? { beforeId: before.id, afterId: after.id } : {}),
-        ...(query.get("scope") === "annual" || query.get("panel") === "annual" ? { panel: "annual", annualYear: Number(query.get("year")) } : {}),
+      entry={{
+        ...entry,
+        beforeId: entry.beforeId ?? before?.id,
+        afterId: entry.afterId ?? after?.id,
       }}
       groupLabel={groupLabel}
       remaining={groupLabel ? remainingPresentationStudents(data.students, list, cls.subjects, evolution) : []}
@@ -113,7 +114,7 @@ function Presentation({
   cls,
   students: selected,
   from,
-  initialComparison,
+  entry,
   annualScope,
   periods,
   initial,
@@ -123,7 +124,7 @@ function Presentation({
 }: {
   remaining: StudentRecord[];
   groupLabel?: string;
-  initialComparison?: PresentationCheckpoint;
+  entry: PresentationCheckpoint;
   annualScope: boolean;
   periods: GradePeriodRecord[];
   initial?: PresentationCheckpoint;
@@ -137,8 +138,10 @@ function Presentation({
   const [showRemaining, setShowRemaining] = useState(initial?.remaining ?? remaining.some(student => String(student.id) === from));
   const students = showRemaining ? [...selected, ...remaining] : selected;
   const [index, setIndex] = useState(() => checkpointIndex(students.map(s=>s.id), initial?.studentId ?? (from ? Number(from) : undefined)));
-  const [onlyLow, setOnlyLow] = useState(initial?.onlyLow ?? false);
-  const [analysis, setAnalysis] = useState<PresentationCheckpoint>({ ...initialComparison, ...initial, panel: initial?.panel ?? initialComparison?.panel ?? "summary" });
+  const [onlyLow, setOnlyLow] = useState(initial?.onlyLow ?? entry.onlyLow ?? false);
+  const [analysis, setAnalysis] = useState<PresentationCheckpoint>({
+    ...entry, ...initial, panel: recordPanel(initial?.panel, recordPanel(entry.panel)),
+  });
   const onAnalysisChange = useCallback((state: PresentationCheckpoint) => setAnalysis(previous => JSON.stringify(previous) === JSON.stringify(state) ? previous : state), []);
   const [exit, setExit] = useState(false);
   const [fullscreenMessage, setFullscreenMessage] = useState("");
@@ -153,10 +156,8 @@ function Presentation({
   }, []);
   const chooseStudent = useCallback((position: number) => {
     if (position === safeIndex) return;
-    setAnalysis(previous => ({ ...previous, panel: annualScope ? "annual" : "summary" }));
     setIndex(position);
-  }, [safeIndex, annualScope]);
-  const openPanel = (panel: string) => setAnalysis(previous => ({ ...previous, panel }));
+  }, [safeIndex]);
   const nextStudent = useCallback(() => {
     if (safeIndex >= students.length - 1 && canContinue) includeRemaining();
     else chooseStudent(Math.min(safeIndex + 1, Math.max(0, students.length - 1)));
@@ -246,20 +247,11 @@ function Presentation({
           {fullscreenMessage}
         </p>
       )}
-      {analysis.panel === "summary" ? <MeetingSummary
-        student={student} subjects={cls.subjects}
-        before={periods.find(period => period.id === analysis.beforeId)}
-        after={periods.find(period => period.id === analysis.afterId)}
-        showAnnual={periods.length > 0} showEvolution={groupLabel === "Alunos evolução"} onOpen={openPanel}
-      /> : <div className="meeting-details" role="region" aria-label="Detalhes do aluno" tabIndex={0}>
-        <Button variant="ghost" className="meeting-back" onClick={() => openPanel("summary")}><ArrowLeft />Resumo do aluno</Button>
-        <StudentAnalysis
-          key={student.id} periods={periods} initial={analysis}
-          allowEvolution={groupLabel === "Alunos evolução"} onAnalysisChange={onAnalysisChange}
-          onlyLow={onlyLow} onOnlyLowChange={setOnlyLow} student={student} subjects={cls.subjects}
-          profile={<StudentProfile student={student} />}
-        />
-      </div>}
+      <div className="meeting-details" key={student.id} role="region" aria-label="Ficha do aluno" tabIndex={0}>
+        <StudentAnalysis periods={periods} currentPeriod={cls.currentPeriod} initial={analysis}
+          onAnalysisChange={onAnalysisChange} onlyLow={onlyLow} onOnlyLowChange={setOnlyLow}
+          student={student} subjects={cls.subjects} />
+      </div>
       <footer className="presentation-footer">
         <span className="keyboard-hint">← → para trocar de aluno</span>
         <div className="student-navigation">

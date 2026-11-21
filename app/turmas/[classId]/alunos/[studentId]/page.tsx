@@ -18,7 +18,8 @@ import { processPhoto } from "@/lib/photos";
 import { remainingPresentationStudents, shortcutBlocked } from "@/lib/presentation";
 import { comparePeriods, periodId } from "@/lib/evolution";
 import { defaultComparison, type PresentationCheckpoint } from "@/lib/analysis-navigation";
-import { StudentProfile } from "@/components/student-profile";
+import { recordEntry, setRecordView } from "@/lib/student-record-view";
+import { StudentJump } from "@/components/student-jump";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { StudentAnalysis } from "@/components/student-analysis";
 import { StudentEditor } from "@/components/student-editor";
@@ -42,10 +43,23 @@ function AlunoContent({ classId, studentId, query }: { classId: string; studentI
   const router = useRouter();
   const scope = query.get("scope") === "evolution" ? "evolution" : query.get("scope") === "top" ? "top" : "all";
   const annualScope = query.get("scope") === "annual";
-  const returnHref = `/turmas/${encodeURIComponent(classId)}?view=${annualScope || scope === "evolution" ? "evolution" : scope === "top" ? "highlights" : "students"}${scope === "evolution" ? "&mode=pair" : annualScope ? "&year=" + Number(query.get("year")) : ""}`;
-  const [analysis, setAnalysis] = useState<PresentationCheckpoint>({});
+  const entry = recordEntry(query);
+  const fromClassComparison = query.get("origin") === "class-evolution";
+  const returnQuery = new URLSearchParams({ view: "students" });
+  if (fromClassComparison) {
+    returnQuery.set("view", "class-evolution");
+    returnQuery.set("mode", "pair");
+    if (entry.beforeId) returnQuery.set("before", entry.beforeId);
+    if (entry.afterId) returnQuery.set("after", entry.afterId);
+  } else if (annualScope || scope === "evolution") {
+    returnQuery.set("view", "evolution");
+    if (annualScope && entry.annualYear) returnQuery.set("year", String(entry.annualYear));
+    if (scope === "evolution") returnQuery.set("mode", "pair");
+  } else if (scope === "top") returnQuery.set("view", "highlights");
+  const returnHref = `/turmas/${encodeURIComponent(classId)}?${returnQuery}`;
+  const [analysis, setAnalysis] = useState<PresentationCheckpoint>(entry);
   const onAnalysisChange = useCallback((state: PresentationCheckpoint) => setAnalysis(previous => JSON.stringify(previous) === JSON.stringify(state) ? previous : state), []);
-  const [onlyLow, setOnlyLow] = useState(false);
+  const [onlyLow, setOnlyLow] = useState(entry.onlyLow ?? false);
   const [toolsOpen, setToolsOpen] = useState(false);
   const [editing, setEditing] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -66,10 +80,9 @@ function AlunoContent({ classId, studentId, query }: { classId: string; studentI
   const before = data?.periods.find(p => p.id === (analysis.beforeId ?? periodId(classId, { year: Number(query.get("year")), term: Number(query.get("baseline")) }))) ?? defaults.before;
   const after = data?.periods.find(p => p.id === (analysis.afterId ?? periodId(classId, { year: Number(query.get("year")), term: Number(query.get("target")) }))) ?? defaults.after;
   const viewQuery = new URLSearchParams({ scope: annualScope ? "annual" : scope });
-  if (annualScope || analysis.panel === "annual") {
-    viewQuery.set("panel", "annual");
-    viewQuery.set("year", String(analysis.annualYear ?? query.get("year") ?? defaults.after?.year ?? ""));
-  }
+  if (fromClassComparison) viewQuery.set("origin", "class-evolution");
+  setRecordView(viewQuery, { ...analysis, onlyLow });
+  if (annualScope && analysis.annualYear) viewQuery.set("year", String(analysis.annualYear));
   if (scope === "evolution" && before && after) {
     viewQuery.set("year", String(before.year));
     viewQuery.set("baseline", String(before.term));
@@ -139,7 +152,7 @@ function AlunoContent({ classId, studentId, query }: { classId: string; studentI
         <div className="presentation-actions">
           <Dialog open={toolsOpen} onOpenChange={setToolsOpen}>
             <DialogTrigger asChild><Button variant="outline"><Edit2 />Gerenciar aluno</Button></DialogTrigger>
-            <DialogContent><DialogHeader><DialogTitle>Gerenciar aluno</DialogTitle>
+            <DialogContent className="record-management"><DialogHeader><DialogTitle>Gerenciar aluno</DialogTitle>
               <DialogDescription>{student.name}</DialogDescription></DialogHeader>
           <Button variant="outline" asChild disabled={uploading}>
             <label className="photo-upload">
@@ -151,11 +164,11 @@ function AlunoContent({ classId, studentId, query }: { classId: string; studentI
               }} />
             </label>
           </Button>
-          <Button variant="outline" className="text-destructive" disabled={uploading} onClick={() => { setToolsOpen(false); setConfirmDelete(true); }}>
-            <Trash2 /> Excluir aluno
-          </Button>
           <Button variant="outline" onClick={() => { setToolsOpen(false); setEditing(true); }}>
             <Edit2 /> Editar aluno
+          </Button>
+          <Button variant="outline" className="text-destructive" disabled={uploading} onClick={() => { setToolsOpen(false); setConfirmDelete(true); }}>
+            <Trash2 /> Excluir aluno
           </Button>
             </DialogContent>
           </Dialog>
@@ -171,9 +184,8 @@ function AlunoContent({ classId, studentId, query }: { classId: string; studentI
         </div>
       </header>
       <StudentAnalysis
-        allowEvolution={scope === "evolution"}
-        startInEvolution={scope === "evolution"}
-        initial={{ beforeId: before?.id, afterId: after?.id, annualYear: Number(query.get("year")), panel: annualScope || query.get("panel") === "annual" ? "annual" : undefined }}
+        currentPeriod={data.cls.currentPeriod}
+        initial={{ ...entry, beforeId: before?.id, afterId: after?.id }}
         onAnalysisChange={onAnalysisChange}
         periods={data.periods}
         onlyLow={onlyLow}
@@ -181,7 +193,6 @@ function AlunoContent({ classId, studentId, query }: { classId: string; studentI
         key={student.id}
         student={student}
         subjects={data.cls.subjects}
-        profile={<StudentProfile key={student.id} student={student} />}
       />
       <footer className="presentation-footer">
         <span className="keyboard-hint">← → para trocar de aluno</span>
@@ -193,9 +204,8 @@ function AlunoContent({ classId, studentId, query }: { classId: string; studentI
           >
             <ChevronLeft /> Anterior
           </Button>
-          <span aria-live="polite">
-            <strong>{index + 1}</strong> / {students.length}
-          </span>
+          <StudentJump students={students} current={index} onChoose={position => { if (position !== index) go(position); }} />
+          <span className="sr-only" aria-live="polite">{index + 1} de {students.length} · {student.name}</span>
           <Button
             size="lg"
             disabled={index >= students.length - 1}

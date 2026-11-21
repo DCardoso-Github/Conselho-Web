@@ -1,5 +1,5 @@
 :root { --page-gutter: clamp(1rem, 2.5vw, 4rem); }
-/* Class selection, meeting lobby and the projected student summary. */
+/* Class selection, meeting lobby and the council workspace. */
 .console-nav {
   max-width: none;
   padding: .85rem var(--page-gutter);
@@ -99,31 +99,11 @@
 .meeting-screen > .presentation-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; }
 .meeting-screen .presentation-context { text-align: left; justify-content: flex-start; }
 .meeting-screen .presentation-context strong { font-size: 1.65rem; }
-.meeting-screen .meeting-back { align-self: flex-start; }
-.meeting-summary { flex: 1; width: 100%; margin: auto; display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.45fr); align-items: center; gap: clamp(1.75rem, 5vw, 5.5rem); padding: clamp(1.4rem, 4vw, 4.5rem); border-radius: 1.8rem; background: var(--card); border: 1px solid var(--border); }
-.meeting-portrait { position: relative; width: 100%; max-width: min(36rem, 100%); justify-self: center; }
-.meeting-portrait .profile-photo { position: relative; display: grid; place-items: center; width: 100%; max-width: none; height: clamp(13rem, 44svh, 33rem); border-radius: 1.35rem; border: 1px solid color-mix(in srgb,var(--primary) 30%,var(--border)); background: linear-gradient(145deg,color-mix(in srgb,var(--primary) 19%,var(--surface-2)),var(--surface-2)); box-shadow: none; }
-.meeting-portrait img { width: 100%; height: 100%; position: absolute; inset: 0; object-fit: contain; }
-.meeting-portrait .profile-photo > span { font-weight: 650; color: var(--primary); letter-spacing: -.07em; font-size: clamp(4rem, 8vw, 9rem); }
-.meeting-copy { min-width: 0; }
-.meeting-copy h1 { font-size: clamp(2.35rem, 3.65vw, 4.8rem); line-height: 1.08; text-wrap: balance; }
-.meeting-stats { display: flex; flex-wrap: wrap; margin: clamp(1.25rem, 3vh, 2.5rem) 0; gap: clamp(1rem,3vw,3rem); }
-.meeting-stats > div + div { padding-left: clamp(1rem,3vw,3rem); border-left: 1px solid var(--border); }
-.meeting-stats dt { color: var(--muted-foreground); font-weight: 550; font-size: clamp(1rem,1.2vw,1.35rem); }
-.meeting-stats dd { font-size: clamp(2.1rem,3.5vw,4rem); font-weight: 700; letter-spacing: -.055em; line-height: 1.16; font-variant-numeric: tabular-nums; }
-.meeting-stats .missing-average { font-size: clamp(1.2rem,1.8vw,2rem); margin-top: .35rem; letter-spacing: -.02em; }
-.meeting-stats .attention-number { color: var(--low-fg); }
-.meeting-comparison, .meeting-links { display: flex; align-items: center; flex-wrap: wrap; gap: .7rem; }
-.meeting-comparison { margin: 0 0 1rem; color: var(--console-accent); }
-.meeting-comparison strong { display: block; font-size: 1.2rem; }
-.meeting-links button { min-height: 3.1rem; }
 .meeting-screen .presentation-footer { margin-top: auto; }
-.meeting-screen:has(.meeting-summary) { min-height: 100svh; }
-.meeting-screen:has(.meeting-summary) .presentation-footer { position: static; }
 .meeting-details { display: flex; flex-direction: column; gap: .75rem; }
 @media (min-height: 34rem) {
   .presentation-screen.meeting-screen { height: 100dvh; min-height: 0; overflow: hidden; }
-  .meeting-screen > .meeting-details, .meeting-screen > .meeting-summary {
+  .meeting-screen > .meeting-details {
     flex: 1 1 auto;
     min-height: 0;
     overflow: auto;
@@ -140,7 +120,6 @@
   .class-choice { min-height: 0; grid-template-columns: auto minmax(0,1fr) auto; align-items: center; }
   .class-choice-top svg:last-child { display: none; }
   .class-choice h2 { font-size: 2.5rem; }
-  .meeting-summary { gap: 1.1rem; grid-template-columns: minmax(0,.65fr) minmax(0,1.35fr); }
   .meeting-screen .student-navigation { gap: .45rem; }
 }
 @media (max-width: 520px) {
@@ -148,9 +127,6 @@
   .folio-stage { order: -1; justify-self: start; width: 6.5rem; }
   .focus-home { align-items: start; min-height: auto; }
   .welcome-copy > p { margin: 1rem 0 1.5rem; }
-  .meeting-summary { grid-template-columns: 1fr; align-content: center; padding: 1.1rem; }
-  .meeting-portrait .profile-photo { height: 8rem; width: 8rem; margin-inline: auto; }
-  .meeting-copy h1 { font-size: clamp(1.85rem,7vw,2.5rem); }
   .meeting-screen > .presentation-header { align-items: center; gap: .35rem; }
   .meeting-screen .presentation-context { display: grid; gap: 0; }
   .meeting-screen .presentation-context .eyebrow { font-size: .82rem; }
@@ -201,7 +177,7 @@
 .roster .bulk-student-toolbar > p, .class-screen .results-count { text-align: start; margin: 0; }
 .roster .empty-panel { margin-block: 1rem; }
 .class-screen .student-selection-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 27.75rem),1fr)); gap: clamp(.8rem,1.25vw,1.5rem); }
-.class-screen .student-tile { grid-template-columns: clamp(5.5rem,7.5vw,9.25rem) minmax(0,1fr); min-height: 13rem; gap: 1.25rem; padding: clamp(1rem,1.4vw,1.6rem); align-items: center; }
+.class-screen .student-tile { grid-template-columns: clamp(7.25rem,10.5vw,13rem) minmax(0,1fr); min-height: 13rem; gap: 1.25rem; padding: clamp(1rem,1.4vw,1.6rem); align-items: center; }
 .class-screen .student-tile .profile-compact { min-height: 0; height: auto; }
 .class-screen .student-tile .profile-photo { min-height: 0; height: auto; aspect-ratio: 3/4; }
 .class-screen .student-tile .student-tile-content, .class-screen .student-tile .highlight-average { align-items: flex-start; text-align: left; gap: .45rem; }

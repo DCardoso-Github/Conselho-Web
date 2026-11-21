@@ -1,5 +1,5 @@
 "use client";
-import type { ReactNode } from "react";
+import { useRef, type ReactNode } from "react";
 import * as Tabs from "@radix-ui/react-tabs";
 import {
   BookOpen,
@@ -21,7 +21,11 @@ import type { StudentEvolution } from "@/lib/evolution";
 import { EvolutionDetail } from "./student-evolution";
 import { ProvaEvolutionSummary } from "./prova-evolution";
 import { PP_NAMES, type ProvaEvolution } from "@/lib/prova-evolution";
-import type { StudentRecord } from "@/lib/db";
+import type { SchoolPeriod, StudentRecord } from "@/lib/db";
+import { formatGrade, periodLabel } from "@/lib/evolution";
+import { studentAverage } from "@/lib/highlights";
+import { recordPanel, type RecordPanel } from "@/lib/student-record-view";
+import { StudentProfile } from "./student-profile";
 import { isLowGrade } from "@/lib/actions";
 import { displayValue, hasValue, percentage } from "@/lib/presentation";
 import { formatSubject } from "@/lib/mapao/subjects";
@@ -30,116 +34,85 @@ import { SubjectIcon } from "./subject-icon";
 
 
 export function StudentPanels({
-  student,
-  subjects,
-  profile,
-  onlyLow,
-  onOnlyLowChange,
-  evolution,
-  annualReport,
-  comparisonLabels,
-  provaEvolution,
-  comparisonControls,
-  activePanel,
-  onPanelChange,
+  student, subjects, currentPeriod, onlyLow, onOnlyLowChange, evolution, annualReport, comparisonLabels,
+  provaEvolution, comparisonControls, activePanel, onPanelChange, hasPair,
 }: {
-  annualReport?: ReactNode;
-  comparisonControls?: ReactNode;
-  activePanel?: string;
-  onPanelChange?: (panel: string) => void;
+  annualReport: ReactNode;
+  comparisonControls: ReactNode;
+  activePanel: RecordPanel;
+  onPanelChange: (panel: RecordPanel) => void;
+  hasPair: boolean;
   provaEvolution?: ProvaEvolution;
   evolution?: StudentEvolution;
   comparisonLabels?: [string, string];
   student: StudentRecord;
+  currentPeriod?: SchoolPeriod;
   subjects: string[];
-  profile: ReactNode;
   onlyLow: boolean;
   onOnlyLowChange: (value: boolean) => void;
 }) {
-  return (
-    <Tabs.Root
-      defaultValue="grades"
-      value={activePanel}
-      onValueChange={onPanelChange}
-      className="student-panels presentation-layout"
-    >
-      <Tabs.List className="panel-tabs" aria-label="Informações do aluno">
-        {comparisonLabels && (
-          <Tabs.Trigger value="evolution">
-            <TrendingUp aria-hidden="true" />
-            <span>Evolução</span>
-          </Tabs.Trigger>
-        )}
-        <Tabs.Trigger value="grades">
-          <BookOpen aria-hidden="true" />
-          <span>{comparisonLabels ? "Notas atuais" : "Notas do bimestre"}</span>
-        </Tabs.Trigger>
-        {annualReport && <Tabs.Trigger value="annual"><CalendarDays aria-hidden="true" /><span>Ano inteiro</span></Tabs.Trigger>}
-        <Tabs.Trigger value="pp">
-          <ClipboardCheck aria-hidden="true" />
-          <span>Prova Paulista</span>
-        </Tabs.Trigger>
-        <Tabs.Trigger value="support">
-          <ClipboardList aria-hidden="true" />
-          <span>Acompanhamento</span>
-        </Tabs.Trigger>
+  const isHistory = (panel: RecordPanel) => ["annual", "evolution", "pair-pp"].includes(panel);
+  const history = isHistory(activePanel);
+  const lastTerm = useRef<RecordPanel>(history ? "grades" : activePanel);
+  const lastHistory = useRef<RecordPanel>(history ? activePanel : "annual");
+  const choose = (value: string) => {
+    const panel = recordPanel(value);
+    if (isHistory(panel)) lastHistory.current = panel;
+    else lastTerm.current = panel;
+    onPanelChange(panel);
+  };
+  return <Tabs.Root className="student-record" value={history ? "history" : "term"}
+    onValueChange={mode => choose(mode === "term" ? lastTerm.current : lastHistory.current)}>
+    <header className="record-banner"><StudentProfile student={student} />
+      <Tabs.List className="record-switch" aria-label="Visão da ficha">
+        <Tabs.Trigger value="term"><CalendarDays aria-hidden="true" />Bimestre</Tabs.Trigger>
+        <Tabs.Trigger value="history"><TrendingUp aria-hidden="true" />Evolução</Tabs.Trigger>
       </Tabs.List>
-      <div className="presentation-identity">{profile}</div>
-      {comparisonLabels && (
-        <Tabs.Content
-          value="evolution"
-          className="panel-content comparison-panel"
-        >
-          {comparisonControls}
-          {evolution ? <EvolutionDetail
-            row={evolution}
-            beforeLabel={comparisonLabels[0]}
-            afterLabel={comparisonLabels[1]}
-          /> : <div className="empty-panel">
-            <p className="comparison-period-label">{comparisonLabels[0]} → {comparisonLabels[1]}</p>
-            <h2>Sem comparação neste intervalo</h2>
-            <p>As notas atuais estão disponíveis no painel Notas atuais.</p>
-          </div>}
+    </header>
+    <Tabs.Content value="term" className="record-body">
+      <Tabs.Root value={activePanel} onValueChange={choose}>
+        <div className="record-bar">
+          <h2>{currentPeriod ? periodLabel(currentPeriod) : "Bimestre atual"}</h2>
+          <Tabs.List aria-label="Informações do bimestre" className="record-tabs">
+            <Tabs.Trigger value="grades"><BookOpen />Notas</Tabs.Trigger>
+            <Tabs.Trigger value="pp"><ClipboardCheck />Prova Paulista</Tabs.Trigger>
+            <Tabs.Trigger value="support"><HeartHandshake />Acompanhamento</Tabs.Trigger>
+          </Tabs.List>
+        </div>
+        <Tabs.Content value="grades" className="record-content">
+          <Academic student={student} subjects={subjects} onlyLow={onlyLow} onOnlyLowChange={onOnlyLowChange} />
         </Tabs.Content>
-      )}
-      {annualReport && <Tabs.Content value="annual" className="panel-content" tabIndex={0}>{annualReport}</Tabs.Content>}
-      <Tabs.Content value="grades" className="panel-content academic-panel" tabIndex={0}>
-        <Academic
-          student={student}
-          subjects={subjects}
-          onlyLow={onlyLow}
-          onOnlyLowChange={onOnlyLowChange}
-        />
-      </Tabs.Content>
-      <Tabs.Content value="pp" className={`panel-content ${comparisonLabels ? "comparison-panel" : "academic-panel"}`}>
-        {comparisonLabels && comparisonControls}
-        {comparisonLabels ? <ProvaEvolutionSummary comparison={provaEvolution} labels={comparisonLabels} presentation /> : <Academic student={student} subjects={subjects} prova />}
-      </Tabs.Content>
-      <Tabs.Content value="support" className="panel-content">
-        <Support student={student} />
-      </Tabs.Content>
-      <div
-        className="academic-metrics"
-        aria-label="Frequência e Prova Paulista"
-      >
-        <Metric
-          icon={CalendarCheck}
-          label="Frequência anual"
-          value={percentage(student.frequenciaAnual)}
-        />
-        <Metric
-          icon={ClipboardCheck}
-          label={comparisonLabels ? "Participação atual · Prova Paulista" : "Participação · Prova Paulista"}
-          value={percentage(student.provaPaulista?.participacao)}
-        />
-        <Metric
-          icon={Target}
-          label={comparisonLabels ? "Acertos atuais · Prova Paulista" : "Acertos · Prova Paulista"}
-          value={percentage(student.provaPaulista?.acertos)}
-        />
-      </div>
-    </Tabs.Root>
-  );
+        <Tabs.Content value="pp" className="record-content">
+          <h3 className="record-section-title">{student.provaPaulistaPeriod ? "Prova Paulista · " + periodLabel(student.provaPaulistaPeriod) : "Prova Paulista"}</h3>
+          <div className="academic-metrics">
+            <Metric icon={ClipboardCheck} label="Participação" value={percentage(student.provaPaulista?.participacao)} />
+            <Metric icon={Target} label="Acertos" value={percentage(student.provaPaulista?.acertos)} />
+          </div>
+          <Academic student={student} subjects={subjects} prova />
+        </Tabs.Content>
+        <Tabs.Content value="support" className="record-content"><Support student={student} /></Tabs.Content>
+      </Tabs.Root>
+    </Tabs.Content>
+    <Tabs.Content value="history" className="record-body">
+      <Tabs.Root value={activePanel} onValueChange={choose}>
+        <div className="record-bar"><h2>Evolução do aluno</h2>
+          {hasPair && <Tabs.List aria-label="Período da evolução" className="record-tabs">
+            <Tabs.Trigger value="annual"><CalendarDays />Ano inteiro</Tabs.Trigger>
+            <Tabs.Trigger value="evolution"><BookOpen />Comparar notas</Tabs.Trigger>
+            <Tabs.Trigger value="pair-pp"><ClipboardCheck />Comparar prova</Tabs.Trigger>
+          </Tabs.List>}
+        </div>
+        {hasPair && activePanel !== "annual" && comparisonControls}
+        {hasPair ? <Tabs.Content value="annual" className="record-content">{annualReport}</Tabs.Content> : <div className="record-content">{annualReport}</div>}
+        {hasPair && <>
+          <Tabs.Content value="evolution" className="record-content">{comparisonLabels && (evolution ?
+            <EvolutionDetail row={evolution} beforeLabel={comparisonLabels[0]} afterLabel={comparisonLabels[1]} /> :
+            <div className="empty-panel"><h3>Sem comparação neste intervalo</h3><p>Confira se o aluno tem notas numéricas nas mesmas disciplinas nos dois mapões.</p></div>)}</Tabs.Content>
+          <Tabs.Content value="pair-pp" className="record-content">{comparisonLabels && <ProvaEvolutionSummary comparison={provaEvolution} labels={comparisonLabels} presentation />}</Tabs.Content>
+        </>}
+      </Tabs.Root>
+    </Tabs.Content>
+  </Tabs.Root>;
 }
 
 function Academic({
@@ -161,23 +134,19 @@ function Academic({
   const lowEntries = allEntries.filter(
     ([, value]) => hasValue(value) && isLowGrade(value),
   );
+  const average = studentAverage(student, subjects);
   const entries = !prova && onlyLow ? lowEntries : allEntries;
   return (
     <>
       {!prova && (
         <div className="grade-toolbar">
-          <p role="status">
-            <strong>
-              {lowEntries.length}{" "}
-              {lowEntries.length === 1 ? "nota vermelha" : "notas vermelhas"}
-            </strong>
-          </p>
+          <div className="record-average">Média das notas <strong>{average === null ? "Sem informação" : formatGrade(average)}</strong></div>
           <Button
             variant={onlyLow ? "default" : "outline"}
-            aria-pressed={onlyLow}
+            aria-pressed={onlyLow} aria-label={`Somente notas vermelhas (${lowEntries.length})`}
             onClick={() => onOnlyLowChange?.(!onlyLow)}
           >
-            <Filter aria-hidden="true" /> Somente notas vermelhas
+            <Filter aria-hidden="true" /> Notas vermelhas ({lowEntries.length})
           </Button>
         </div>
       )}
@@ -224,6 +193,7 @@ function Academic({
                 <strong className={missing ? "missing-value" : "grade-value"}>
                   {shown}
                 </strong>
+                {!prova && hasValue(student.absences[subject]) && <small className="record-absences">Faltas · {student.absences[subject]}</small>}
                 {low && (
                   <span className="grade-status">
                     <AlertTriangle aria-hidden="true" />
@@ -284,12 +254,6 @@ function Support({ student }: { student: StudentRecord }) {
   ].filter(Boolean);
   return (
     <>
-      <div className="panel-heading">
-        <div>
-          <p className="eyebrow">Contexto do aluno</p>
-          <h2>Acompanhamento</h2>
-        </div>
-      </div>
       <div
         className="support-scroll"
         tabIndex={0}
@@ -297,6 +261,7 @@ function Support({ student }: { student: StudentRecord }) {
         aria-label="Informações de acompanhamento"
       >
         <dl className="support-grid">
+          <div><dt><CalendarCheck aria-hidden="true" />Frequência anual</dt><dd>{percentage(student.frequenciaAnual)}</dd></div>
           <div>
             <dt>
               <UserRound aria-hidden="true" />

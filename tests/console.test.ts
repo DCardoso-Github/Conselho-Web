@@ -30,6 +30,7 @@ import { compareProvaPaulista, numericPercentage } from "../lib/prova-evolution"
 import { studentDraft, validateStudentDraft } from "../lib/student-edit";
 import { analysisHref, checkpointIndex, defaultComparison, filterAnalysisStudents, inGradeBand, readBand, selectedStudents, studentTimeline } from "../lib/analysis-navigation";
 import { getMeta, setMeta } from "../lib/db";
+import { recordEntry, recordPanel, setRecordView } from "../lib/student-record-view";
 import { annualGrades, annualProva } from "../lib/annual-evolution";
 
 test("analysis filters preserve boundary grades, skip missing data and never duplicate students", () => {
@@ -98,6 +99,21 @@ test("annual Prova Paulista uses only identified results from the selected class
   assert.deepEqual(rows.find(row => row.label === "Acertos")?.values, [0, null, 70, null]);
   assert.deepEqual(rows.find(row => row.label === "Matemática")?.values, [0, null, 70, null]);
   assert.deepEqual(rows.find(row => row.label === "Participação")?.values, [null, null, null, null]);
+});
+
+test("student entry, navigation and older resume points open the appropriate full record", () => {
+  assert.equal(recordEntry(new URLSearchParams()).panel, "grades");
+  assert.equal(recordEntry(new URLSearchParams("scope=evolution")).panel, "evolution");
+  assert.equal(recordEntry(new URLSearchParams("scope=annual")).panel, "annual");
+  assert.equal(recordPanel("summary", "evolution"), "evolution");
+  assert.equal(recordPanel("summary"), "grades");
+  const query = new URLSearchParams("scope=annual&year=2026");
+  const current = { panel: "grades", onlyLow: true, annualYear: 2026, beforeId: "first", afterId: "third" };
+  setRecordView(query, current);
+  assert.deepEqual(recordEntry(query), current);
+  assert.equal(query.get("scope"), "annual");
+  query.set("panel", "pair-pp");
+  assert.equal(recordEntry(query).panel, "pair-pp");
 });
 
 test("presentation checkpoints and projector preferences persist without modifying student data", async () => {

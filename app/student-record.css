@@ -1,0 +1,125 @@
+/* Student record and its council projection share the same reading order. */
+.student-record { display: flex; flex-direction: column; gap: clamp(.8rem,1.3vw,1.4rem); min-width: 0; }
+.record-banner { display: contents; }
+.record-identity { display: flex; align-items: center; gap: 1rem; min-width: 0; padding: clamp(.75rem,1.2vw,1.5rem); border: 1px solid color-mix(in srgb,var(--primary) 36%,var(--border)); border-radius: 1.45rem; background: linear-gradient(145deg,color-mix(in srgb,var(--primary) 15%,var(--card)),var(--card) 80%); }
+.record-identity .profile-photo { position: relative; display: grid; place-items: center; flex: none; width: 100%; height: auto; aspect-ratio: 4/5; border: 1px solid color-mix(in srgb,var(--primary) 35%,var(--border)); border-radius: .95rem; box-shadow: none; background: var(--surface-2,var(--card)); }
+.record-photo-button { position: relative; display: block; flex: none; width: 100%; border-radius: .95rem; cursor: zoom-in; }
+.photo-expand { position: absolute; right: .5rem; bottom: .5rem; display: grid; place-items: center; width: 2rem; height: 2rem; color: white; background: #10182cda; border: 1px solid #ffffff85; border-radius: .6rem; }
+.photo-expand svg { width: 1rem; height: 1rem; }
+.record-photo-dialog { width: min(calc(100vw - 1.5rem),58rem); max-width: none; height: min(92dvh,57rem); display: grid; grid-template-rows: auto minmax(0,1fr); overflow: hidden; padding: 1rem; }
+.record-photo-dialog > div:first-child { align-items: flex-start; text-align: start; padding: 0 3rem 0 .5rem; gap: .1rem; }
+.record-photo-dialog .profile-photo { width: 100%; max-width: none; height: 100%; min-height: 0; aspect-ratio: auto; border: 0; background: var(--background); box-shadow: none; border-radius: .75rem; }
+.record-photo-dialog .profile-photo img { width: 100%; height: 100%; min-height: 0; object-fit: contain; }
+.record-identity .profile-photo img { width: 100%; height: 100%; position: absolute; inset: 0; object-fit: contain; }
+.record-identity .profile-photo > span { font-size: clamp(1.55rem,2.4vw,2.75rem); }
+.record-name { min-width: 0; text-align: start; }
+.record-class { font-size: .85rem; font-weight: 650; color: var(--primary); margin-bottom: .35rem; }
+.record-name h1 { font-size: clamp(1.45rem,1.85vw,2.5rem); font-weight: 720; letter-spacing: -.045em; line-height: 1.08; text-wrap: pretty; overflow-wrap: anywhere; }
+.record-name .student-tutor { justify-content: flex-start; text-align: start; margin-top: .4rem; font-size: .95rem; }
+.record-switch { display: grid; grid-template-columns: 1fr 1fr; flex: 0 1 auto; gap: .3rem; padding: .3rem; border-radius: 1.1rem; background: var(--background); border: 1px solid var(--border); }
+.record-switch button, .record-tabs button { display: inline-flex; justify-content: center; align-items: center; gap: .55rem; min-width: 0; font-weight: 640; line-height: 1.2; cursor: pointer; }
+.record-switch button { min-height: 3.5rem; padding: .75rem clamp(.9rem,1.7vw,2rem); border-radius: .85rem; font-size: clamp(1rem,1.25vw,1.4rem); }
+.record-switch button[data-state=active] { color: var(--primary-foreground); background: var(--primary); }
+.record-switch svg { width: 1.2em; height: 1.2em; flex: none; }
+.record-tabs { display: flex; flex-wrap: wrap; gap: .35rem .6rem; }
+.record-tabs button { min-height: 2.75rem; padding: .55rem .9rem; border-radius: .7rem; color: var(--muted-foreground); }
+.record-tabs button[data-state=active] { color: var(--foreground); background: var(--card); box-shadow: inset 0 -2px var(--primary), inset 0 0 0 1px var(--border); }
+:is(.record-switch,.record-tabs) button:not([data-state=active]):hover { background: var(--secondary); color: var(--foreground); }
+.record-tabs svg { width: 1.05rem; height: 1.05rem; flex: none; }
+.record-body { min-width: 0; }
+.record-bar, .student-record .grade-toolbar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: .55rem 1rem; }
+.record-bar { margin: 0 0 1rem; padding: .15rem .2rem .85rem; border-bottom: 1px solid var(--border); }
+.record-bar h2 { font-size: clamp(1.3rem,1.85vw,2.3rem); letter-spacing: -.035em; font-weight: 680; text-align: start; }
+.record-content[data-state=active], div.record-content:not([role]) { display: grid; gap: .85rem; }
+.student-record .grade-toolbar { padding: .15rem 0; }
+.record-average { display: flex; align-items: baseline; gap: .6rem; font-weight: 550; color: var(--muted-foreground); }
+.record-average strong { font-size: clamp(1.35rem,1.75vw,2rem); color: var(--foreground); font-variant-numeric: tabular-nums; }
+.student-record .all-grades { display: grid; grid-template-columns: repeat(auto-fill,minmax(min(100%,13.6rem),1fr)); grid-auto-rows: auto; gap: clamp(.6rem,1vw,1.15rem); overflow: visible; border-radius: 0; padding: 0; }
+.student-record .all-grades .grade-tile { display: grid; grid-template-columns: 1fr auto; grid-template-rows: auto 1fr auto; align-items: end; align-content: start; gap: .6rem .25rem; text-align: start; padding: clamp(.85rem,1.15vw,1.4rem); border-radius: 1rem; min-height: 8.5rem; box-shadow: none; }
+.student-record .subject-heading { grid-column: 1/-1; align-self: start; justify-content: flex-start; align-items: center; min-height: 0; gap: .6rem; }
+.student-record .subject-symbol { width: 1.8rem; height: 1.8rem; border-radius: .55rem; }
+.student-record .subject-symbol svg { width: 1.1rem; height: 1.1rem; }
+.student-record .all-grades h3 { font-size: clamp(1rem,1.13vw,1.35rem); line-height: 1.2; letter-spacing: -.018em; text-align: start; overflow-wrap: anywhere; }
+.student-record .all-grades .grade-value { font-size: clamp(2.2rem,2.8vw,3.6rem); text-align: start; }
+.student-record .all-grades .missing-value { font-size: 1rem; grid-column: 1/-1; text-align: start; }
+.record-absences { color: var(--muted-foreground); font-size: .85rem; }
+.student-record .all-grades .grade-status { grid-column: 1/-1; justify-content: flex-start; font-size: .85rem; }
+.student-record .all-grades .grade-low::after { display: none; }
+.student-record .academic-metrics { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); }
+.student-record .academic-metrics .metric-tile { flex-direction: row; flex-wrap: wrap; justify-content: space-between; padding: 1rem; box-shadow: none; }
+.record-section-title { text-align: start; font-size: 1.2rem; font-weight: 650; }
+.student-record .support-scroll { padding: 0; max-height: none; overflow: visible; }
+.student-record .support-grid { grid-template-columns: repeat(auto-fit,minmax(min(100%,14rem),1fr)); }
+.student-record .support-grid dt, .student-record .notes-block h3 { justify-content: flex-start; text-align: start; margin-bottom: .4rem; font-size: 1rem; }
+.student-record .support-grid dd, .student-record .notes-block p { text-align: start; font-size: clamp(1.05rem,1.25vw,1.45rem); }
+.student-record .support-grid > div, .student-record .notes-block { box-shadow: none; }
+.student-record .individual-periods { margin-bottom: 1rem; justify-content: flex-start; }
+.student-record .individual-periods label { flex: 1 1 10rem; max-width: 24rem; text-align: start; }
+.student-record .comparison-period-label { text-align: start; color: var(--muted-foreground); }
+.student-record .comparison-summary > span { align-items: flex-start; text-align: start; border: 1px solid var(--border); background: var(--card); padding-inline: clamp(.7rem,1.3vw,1.4rem); }
+.student-record .comparison-subjects article, .student-record .comparison-subjects h3 { text-align: start; justify-content: flex-start; }
+.student-record .prova-presentation-subjects article { align-items: flex-start; text-align: start; }
+.student-record .prova-presentation-subjects h3 { justify-content: flex-start; }
+.student-selection-grid a.evolution-tile { cursor: pointer; }
+.editor-dialog .editor-tabs button[data-state=active] { box-shadow: inset 0 -3px var(--primary); }
+.editor-dialog .editor-section h2 { gap: .65rem; }
+.record-management > div:first-child { align-items: flex-start; text-align: start; padding-inline: 0 2.5rem; }
+.record-management > button:not(:last-child), .record-management label { justify-content: flex-start; min-height: 3.1rem; }
+.record-management .text-destructive { margin-top: .5rem; }
+.detail-screen .presentation-footer { justify-content: space-between; }
+.annual-roster tbody tr { position: relative; }
+.annual-roster td { pointer-events: none; }
+.annual-roster th a::after { content: ""; position: absolute; inset: 0; }
+.annual-roster tbody tr:has(a:hover), .annual-roster tbody tr:focus-within { background: var(--secondary); }
+.projector-mode .student-record .grade-value { font-size: clamp(3rem,3.6vw,4.8rem); }
+.projector-mode .student-record .all-grades h3 { font-size: clamp(1.2rem,1.6vw,1.65rem); }
+@media (min-width: 901px) {
+  .student-record { display: grid; grid-template-columns: clamp(14rem,20vw,23rem) minmax(0,1fr); grid-template-rows: auto minmax(0,1fr); align-content: start; }
+  .record-identity { grid-column: 1; grid-row: 1 / 3; align-self: start; flex-direction: column; align-items: stretch; max-height: 100%; overflow: auto; }
+  .record-identity .profile-photo { max-height: 48dvh; }
+  .record-switch { grid-column: 2; grid-row: 1; justify-self: start; min-width: min(100%,26rem); }
+  .record-body { grid-column: 2; grid-row: 2; }
+}
+@media (max-width: 900px) {
+  .record-identity { flex: none; }
+  .record-identity > .profile-photo, .record-photo-button { width: clamp(7rem,34vw,13rem); }
+  .record-switch { flex: none; }
+}
+@media (min-height: 38rem) {
+  .presentation-screen:is(.detail-screen,.meeting-screen) { height: 100dvh; min-height: 0; overflow: hidden; }
+  .detail-screen > .student-record, .meeting-screen > .meeting-details, .meeting-details > .student-record { flex: 1 1 auto; min-height: 0; }
+  .meeting-screen > .meeting-details { overflow: hidden; }
+  .student-record > .record-body[data-state=active] { flex: 1 1 auto; overflow: auto; min-height: 0; padding: 0 .35rem .4rem; overscroll-behavior: contain; scrollbar-width: thin; }
+}
+@media (max-width: 760px) {
+  .record-switch button { min-height: 2.75rem; }
+  .record-tabs { gap: .15rem; }
+  .record-tabs button { font-size: .92rem; padding: .45rem .55rem; }
+  .student-record .all-grades { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .student-record .subject-heading { align-items: flex-start; }
+  .detail-screen .presentation-footer { justify-content: center; }
+  .detail-screen .keyboard-hint, .detail-screen .jump-counter > span { display: none; }
+  .presentation-screen .presentation-footer .student-navigation { display: grid; grid-template-columns: auto auto auto; width: 100%; justify-content: center; gap: .35rem; }
+  .presentation-screen .presentation-footer .student-navigation button { min-width: 0; min-height: 2.8rem; padding: .4rem .55rem; font-size: .9rem; gap: .25rem; }
+  .presentation-screen .presentation-footer .student-navigation > .sr-only { position: absolute; }
+}
+@media (max-width: 520px) {
+  .record-name h1 { font-size: clamp(1.2rem,5.2vw,1.55rem); }
+  .record-tabs button { gap: .3rem; }
+  .record-absences { grid-column: 1/-1; }
+  .record-tabs svg { display: none; }
+  .detail-screen .presentation-header { justify-content: space-between; gap: .25rem; flex-wrap: nowrap; }
+  .detail-screen .presentation-header > .presentation-actions { flex-wrap: nowrap; }
+  .detail-screen .presentation-header button { font-size: .82rem; padding: .35rem .4rem; min-height: 2.75rem; gap: .25rem; }
+  .detail-screen .presentation-actions { gap: .25rem; }
+  .student-record .grade-toolbar button { font-size: .9rem; }
+}
+@media (max-width: 900px) and (min-height: 38rem) {
+  .presentation-screen .student-record { overflow: auto; scrollbar-width: thin; }
+  .student-record .record-switch { position: sticky; top: 0; z-index: 2; }
+  .student-record > .record-body[data-state=active] { flex: none; overflow: visible; padding-inline: .15rem; }
+}
+@media (max-height: 37.99rem) {
+  .presentation-screen:is(.detail-screen,.meeting-screen) { height: auto; min-height: 100dvh; overflow: visible; }
+  .meeting-screen > .meeting-details { overflow: visible; }
+}

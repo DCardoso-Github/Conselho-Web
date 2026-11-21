@@ -395,7 +395,7 @@ export function ClassEvolutionDashboard({
                     <tr key={student.id}>
                       <th scope="row">
                         <Link
-                          href={`/turmas/${encodeURIComponent(classId)}/alunos/${student.id}`}
+                          href={`/turmas/${encodeURIComponent(classId)}/alunos/${student.id}?${new URLSearchParams({ scope: "all", origin: "class-evolution", panel: "evolution", before: beforeId, after: afterId })}`}
                         >
                           {student.name}
                         </Link>

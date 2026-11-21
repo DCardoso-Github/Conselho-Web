@@ -22,7 +22,7 @@ export function StudentJump({ students, current, onChoose }: {
     </DialogTrigger>
     <DialogContent className="sequence-dialog">
       <DialogHeader><DialogTitle>Ir para aluno</DialogTitle>
-        <DialogDescription>Escolha quem apresentar nesta sequência.</DialogDescription>
+        <DialogDescription>Escolha o aluno cuja ficha deseja abrir.</DialogDescription>
       </DialogHeader>
       <div className="search-field"><Search aria-hidden="true"/><Input aria-label="Buscar na sequência" placeholder="Nome do aluno…" value={query} onChange={e => setQuery(e.target.value)} /></div>
       <ol aria-label="Alunos na sequência" className="sequence-results">

@@ -54,7 +54,7 @@ export function StudentCard({ classId, student, highlight, subjects, selection, 
           {low === 1 ? "" : "s"}
         </p>
         <span className="tile-action">
-          {selection ? (selection.checked ? "Selecionado para exclusão" : "Selecionar aluno") : <>Abrir aluno <ArrowUpRight /></>}
+          {selection ? (selection.checked ? "Selecionado para exclusão" : "Selecionar aluno") : <>Abrir ficha <ArrowUpRight /></>}
         </span>
       </div>
     </>
